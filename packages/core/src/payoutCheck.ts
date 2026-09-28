@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from "viem";
-import type { PayoutRow } from "./csv.js";
+import type { PayoutRow } from "./csv";
 
 export type RowStatus = "SAME_AS_LAST_PAID" | "CHANGED" | "NEW" | "LOOKALIKE" | "INVALID_ADDRESS";
 export type Flag =

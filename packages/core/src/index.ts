@@ -1,2 +1,2 @@
-export * from "./csv.js";
-export * from "./payoutCheck.js";
+export * from "./csv";
+export * from "./payoutCheck";

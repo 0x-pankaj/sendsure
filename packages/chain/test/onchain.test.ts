@@ -16,7 +16,7 @@ import {
   refHashOf,
   registryDomain,
   type Claim,
-} from "../src/index.js";
+} from "../src/index";
 
 const smoke = JSON.parse(readFileSync(new URL("../../../deployments/smoke-test.json", import.meta.url), "utf8"));
 const client = createPublicClient({ chain: arcTestnet, transport: http() });

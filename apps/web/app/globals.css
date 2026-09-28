@@ -1,0 +1,75 @@
+:root {
+  --bg: #f7f8f6;
+  --surface: #ffffff;
+  --ink: #14212a;
+  --muted: #56656d;
+  --line: #d9e0dc;
+  --accent: #1f5fad;
+  --pay: #17744a;
+  --pay-bg: #e1f1e8;
+  --review: #8a5600;
+  --review-bg: #f7ebd2;
+  --stop: #b02a22;
+  --stop-bg: #f9e2df;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1417;
+    --surface: #141c20;
+    --ink: #e3ebe7;
+    --muted: #9aa9a4;
+    --line: #27342f;
+    --accent: #7aaaf0;
+    --pay: #5bc38f;
+    --pay-bg: #11281d;
+    --review: #e6a84e;
+    --review-bg: #2c2211;
+    --stop: #f07b71;
+    --stop-bg: #321614;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; }
+header.site { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.site .wrap { display: flex; gap: 20px; align-items: center; min-height: 56px; flex-wrap: wrap; }
+header.site .brand { font-weight: 700; color: var(--ink); text-decoration: none; }
+header.site nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.95rem; }
+main { padding-block: 32px 64px; }
+footer.site { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; padding-block: 20px; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.15; margin: 0 0 12px; }
+h2 { font-size: 1.3rem; margin: 32px 0 12px; }
+.lede { font-size: 1.1rem; color: var(--muted); max-width: 65ch; margin: 0 0 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; text-decoration: none; }
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+label { font-weight: 600; display: block; margin-bottom: 6px; }
+textarea { width: 100%; min-height: 120px; font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; border: 1px solid var(--line); border-radius: 6px; padding: 10px; background: var(--bg); color: var(--ink); }
+.hint { color: var(--muted); font-size: 0.9rem; margin: 6px 0 0; }
+.chip { display: inline-block; font: 600 0.78rem/1 ui-monospace, Menlo, monospace; letter-spacing: 0.04em; padding: 5px 8px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+.chip.PAY { color: var(--pay); background: var(--pay-bg); border-color: var(--pay); }
+.chip.REVIEW { color: var(--review); background: var(--review-bg); border-color: var(--review); }
+.chip.STOP { color: var(--stop); background: var(--stop-bg); border-color: var(--stop); }
+.summary { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.summary .card { min-width: 180px; }
+.summary b { font-size: 1.6rem; display: block; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.privacy { border-left: 3px solid var(--pay); padding: 8px 12px; background: var(--pay-bg); border-radius: 0 6px 6px 0; max-width: 70ch; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }

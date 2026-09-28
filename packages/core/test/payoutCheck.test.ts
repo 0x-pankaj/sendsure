@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addressKind, checkPayout, looksAlike, normalizeName, parsePayoutCsv, toCsv, checkedRowsToRecords } from "../src/index.js";
+import { addressKind, checkPayout, looksAlike, normalizeName, parsePayoutCsv, toCsv, checkedRowsToRecords } from "../src/index";
 
 const ACME = "0x1111aaaa0000000000000000000000000000beef";
 const ACME_POISONED = "0x1111bbbb0000000000000000000000000000beef";

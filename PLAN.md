@@ -11,7 +11,10 @@
 - **Hackathon-only diff:** https://github.com/0x-pankaj/sendsure/compare/tameion-baseline...main
 - **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.network`.
   USDC `0x3600000000000000000000000000000000000000` (6 decimals). EURC `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a`.
-- **Deployed addresses:** [`deployments/arc-testnet.json`](deployments/arc-testnet.json) once T6 is done.
+- **Deployed addresses:** [`deployments/arc-testnet.json`](deployments/arc-testnet.json).
+- **Run locally:** `pnpm install && pnpm gen && pnpm -r typecheck && pnpm test`; web app:
+  `pnpm --filter @sendsure/web dev`. Stop a local server by its PID, never `pkill -f <pattern>`
+  (the pattern also matches the shell running it).
 - **Circle agent wallet** (Circle CLI, testnet session, owner Pankaj): `0x9f977c4efff254a9284e69a0ae2b03e4ab851c07`.
 - **Private strategy, not in this repo:** competitor analysis, outreach lists and the pre-build review
   live in Pankaj's local `the-pick/` folder. Never copy them here.
@@ -73,7 +76,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | ID | Task | Owner | Done when | Status |
 |---|---|---|---|---|
 | T8 | Monorepo scaffold: pnpm workspaces, TypeScript, `packages/chain` (viem, generated ABIs + addresses, EIP-712 types, claim helpers) | C | typecheck + 6 tests green, incl. live cross-checks against the deployed contracts | ✅ |
-| T9 | **Payout check** (in browser, nothing leaves the machine): load payout CSV + last-paid export → SAME AS LAST PAID / CHANGED / NEW / LOOKALIKE + registry status per row → checked list export | C | works on a sample file; unit tests | ⬜ |
+| T9 | **Payout check** (in browser, nothing leaves the machine): load payout CSV + last-paid export → SAME AS LAST PAID / CHANGED / NEW / LOOKALIKE + registry status per row → checked list export | C | works on a sample file (`apps/web/app/check`, logic in `packages/core`, try `/check?example`); 14 unit tests | ✅ |
 | T10 | Payee verify page: connect wallet, switch to Arc testnet, sign `Bind` (plain-language message), relayer submits `bindWithSig` | C | a real EOA binds on testnet | ⬜ |
 | T11 | Relayer service (gas paid by a funded relayer key; rate-limited) | C | relays bind + change | ⬜ |
 | T12 | Payer onboarding: create Mandate via factory (owner and treasury = payer's own wallet), set caps, approve a capped allowance, open slots, send invites | C | a payer org is created from the UI | ⬜ |
@@ -96,6 +99,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
 | P5 | Keys and accounts: Anthropic API key; Circle Console TEST API key + entity secret (only for the sandbox treasury) | P | handed over via `.env` | ⬜ |
 | P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
+| P7 | Hosting account: confirm which Railway account Claude deploys to (the CLI on this machine is logged in to an account under another name) | P | confirmed | ⬜ |
 
 ### Submission
 | ID | Task | Owner | Done when | Status |

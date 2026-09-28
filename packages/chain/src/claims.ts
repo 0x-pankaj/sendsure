@@ -1,5 +1,5 @@
 import { encodeAbiParameters, hashTypedData, keccak256, toBytes, type Address, type Hex } from "viem";
-import { claimTypes, mandateDomain } from "./typed.js";
+import { claimTypes, mandateDomain } from "./typed";
 
 export interface Claim {
   payeeRef: Hex;

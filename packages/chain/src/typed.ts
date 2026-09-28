@@ -1,6 +1,6 @@
 import type { Address } from "viem";
-import { arcTestnet } from "./chain.js";
-import { deployment } from "./generated.js";
+import { arcTestnet } from "./chain";
+import { deployment } from "./generated";
 
 /** EIP-712 domains. Both include chainId and verifyingContract, so signatures cannot be replayed elsewhere. */
 export const registryDomain = {
