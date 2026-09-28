@@ -65,7 +65,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T2 | Audit the pre-window spike (6 exploit tests) | C | `prior-work/horos-spike/AUDIT.md` | ✅ |
 | T3 | PayeeRegistry + Mandate + MandateFactory | C | compiles, `contracts/README.md` | ✅ |
 | T4 | Tests: 30 Mandate + 14 registry + 3 invariants | C | `forge test` green | ✅ |
-| T5 | Pre-deploy self-review of the contracts (checklist below) | C | findings fixed or written down | ⬜ |
+| T5 | Pre-deploy self-review of the contracts (checklist below) | C | findings fixed or written down | ✅ |
 | T6 | Deploy PayeeRegistry + MandateFactory to Arc testnet, `setFactory`, verify source on the explorer | C | `deployments/arc-testnet.json` + explorer links | ⬜ |
 | T7 | Live smoke test on Arc testnet, labelled first-party: org → slot → bind → claim → co-sign → settle | C | tx hashes in `deployments/smoke-test.md` | ⬜ |
 
@@ -131,12 +131,12 @@ hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV
 - **Caps start at zero.**
 - **`settle()` never reverts on a policy failure;** it emits `Refused` / `Escalated` / `AlreadySettled`.
 
-## T5 pre-deploy review checklist
-- [ ] Only `settle()` can move tokens; no other `transferFrom` path.
-- [ ] Every `settle()` precondition also appears in `check()` (same `_evaluate`).
-- [ ] No owner or agent path can change a bound payout.
-- [ ] EIP-712 domains include chainId and verifyingContract; nonces are per signer.
-- [ ] Reentrancy guard on `settle()`; effects happen before the transfer.
-- [ ] Role separation: agent ≠ approver ≠ payee; owner ≠ agent.
-- [ ] Events carry no names, invoice numbers or real amounts.
-- [ ] The clone initializer can't be re-run; the implementation is locked (`_disableInitializers`).
+## T5 pre-deploy review checklist (done Sep 29; known limits in `contracts/README.md`)
+- [x] Only `settle()` can move tokens; no other `transferFrom` path.
+- [x] Every `settle()` precondition also appears in `check()` (same `_evaluate`).
+- [x] No owner or agent path can change a bound payout.
+- [x] EIP-712 domains include chainId and verifyingContract; nonces are per signer.
+- [x] Reentrancy guard on `settle()`; effects happen before the transfer.
+- [x] Role separation: agent ≠ approver ≠ payee; owner ≠ agent.
+- [x] Events carry no names, invoice numbers or real amounts.
+- [x] The clone initializer can't be re-run; the implementation is locked (`_disableInitializers`).

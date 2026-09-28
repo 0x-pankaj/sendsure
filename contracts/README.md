@@ -53,4 +53,20 @@ The three invariants are:
 cd contracts && forge test
 ```
 
-**Status:** not deployed yet. These contracts get a review before their first Arc testnet deploy.
+## Known limits (from the pre-deploy review, Sep 29)
+
+- **Invite race.** Whoever holds an invite (the unguessable `payeeRef`) can bind first. Three things
+  limit this:
+  - the first payment to any new binding always needs a human co-sign, and the approver sees the address;
+  - the payer can confirm the address out of band and record it as an anchor;
+  - a wrong binding is revoked and re-invited.
+- **Owner can re-vouch.** The owner can revoke a payee and attest a different address. That address is
+  ATTESTED, so every payment to it needs a human co-sign. Payees prove their own keys; owners cannot
+  silently redirect them.
+- **Real Arc USDC not yet tested here.** Unit tests use a mock FiatToken. Arc's USDC behaviour is
+  checked by the live smoke test on testnet (see `deployments/`).
+- **Not audited.** Testnet only.
+
+**Status:** reviewed Sep 29 (one `transferFrom` in the codebase, inside `settle()`; `check()` and
+`settle()` share one rule function; no owner or agent path changes a bound payout; effects happen before
+the transfer; the implementation cannot be initialised). Deployment to Arc testnet is next.
