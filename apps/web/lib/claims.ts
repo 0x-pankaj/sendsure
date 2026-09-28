@@ -222,6 +222,11 @@ export interface ClaimRow {
   created_at: number;
 }
 
+/** An agent of the org (SendSure's Circle agent wallet or server agent). */
+export async function isAgentOf(org: Address, who: Address): Promise<boolean> {
+  return serverClient.readContract({ address: org, abi: mandateAbi, functionName: "isAgent", args: [who] }).catch(() => false);
+}
+
 export async function isOwnerOrApprover(org: Address, who: Address): Promise<boolean> {
   const [owner, approver] = await Promise.all([
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "owner" }).catch(() => null),

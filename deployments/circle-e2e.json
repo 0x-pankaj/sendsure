@@ -1,0 +1,28 @@
+{
+  "note": "First-party end-to-end test: the Circle agent wallet (Circle CLI) settles a SANDBOX org's claim. Throwaway keys, not traction.",
+  "ranAtUnix": 1790628556,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0x472D6531c0d8a87c882d0Ac6084D983eB8c9FBC5",
+  "circleAgentWallet": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
+  "payee": "0xbf2b02b9B9CE0e440Debe59b454Be806aa91A557",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x2d251f909a7307d77995e95a137e42086f43495c9669579e2177b9a36af49862",
+  "settle": "https://explorer.testnet.arc.io/tx/0xa8505ef2eb6317d82eb31a72c88e84defe443bafbcb02c9418f195849986cf7f",
+  "decisionHash": "0x0fab6f0e351a6938dbd9e4db975804a096d2c44955f7c2996a4aadd8a1556afe",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x4837b41cb9d8978c77c5ac5ab5829f243270c30afde8cec23c4e54636d205ea5",
+  "replay": {
+    "chainIntact": true,
+    "signatureOk": true,
+    "checkAtBlock": {
+      "block": 64497603,
+      "outcome": "PAYABLE",
+      "reason": "NONE",
+      "matches": true
+    },
+    "anchored": {
+      "anchorSeq": 1,
+      "tx": "0x4837b41cb9d8978c77c5ac5ab5829f243270c30afde8cec23c4e54636d205ea5",
+      "coversThrough": 1,
+      "matches": true
+    }
+  }
+}

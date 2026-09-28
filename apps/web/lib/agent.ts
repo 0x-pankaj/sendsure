@@ -74,6 +74,8 @@ export interface RunDecision extends Decision {
   decisionHash: Hex;
   seq: number;
   tx?: { hash: Hex; outcome: string } | null;
+  /** Plan-only runs: what an outside executor (the Circle agent wallet) passes to settle(). */
+  settle?: { claimHex: Hex; payeeSig: Hex };
   error?: string;
 }
 
@@ -441,6 +443,7 @@ export async function runAgent(org: Address, opts: { execute: boolean; limit?: n
       seq: logged.seq,
     };
     const now = Math.floor(Date.now() / 1000);
+    if (final.action === "pay" && !opts.execute) d.settle = { claimHex: encodeClaim(item.claim), payeeSig: item.row.payee_sig };
     if (final.action === "pay" && opts.execute) {
       try {
         d.tx = await settleOnChain(org, item, logged.hash);
@@ -516,4 +519,84 @@ export async function runAgent(org: Address, opts: { execute: boolean; limit?: n
     modelSteps: model?.steps ?? [],
     modelError,
   };
+}
+
+// ------------------------------------------------------------------ outside executors (the Circle agent wallet)
+// The Circle agent wallet sends settle()/anchor() from the operator's machine (Circle CLI). The server
+// then records the tx, but only after reading it from the chain: a settle event from this org that
+// carries the decision's hash can only come from an agent (settle is onlyAgent).
+
+export async function recordExecution(org: Address, seq: number, txHash: Hex) {
+  const db = await getDb();
+  const d = await db.first<{ claim_id: Hex; hash: Hex; action: string; tx_hash: Hex | null }>(
+    "SELECT claim_id, hash, action, tx_hash FROM decisions WHERE org = ? AND seq = ?",
+    org,
+    seq,
+  );
+  if (!d || d.action !== "pay") throw new Error("no 'pay' decision with that number");
+  const receipt = await serverClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+  const events = parseEventLogs({
+    abi: mandateAbi,
+    logs: receipt.logs.filter((l) => l.address.toLowerCase() === org.toLowerCase()),
+  });
+  const ev = events.find(
+    (e) =>
+      (SETTLE_EVENTS as readonly string[]).includes(e.eventName) && (e.args as { decisionHash?: Hex }).decisionHash === d.hash,
+  );
+  if (!ev) throw new Error("that transaction has no settle event from this org carrying this decision's hash");
+  const now = Math.floor(Date.now() / 1000);
+  await db.run(
+    "UPDATE decisions SET executor = ?, tx_hash = ?, tx_outcome = ? WHERE org = ? AND seq = ?",
+    "circle-agent-wallet",
+    txHash,
+    ev.eventName,
+    org,
+    seq,
+  );
+  if (ev.eventName === "Settled") {
+    await db.run(
+      "UPDATE claims SET status = 'settled', settle_tx = ?, last_outcome = 'SETTLED', last_reason = 'NONE', updated_at = ? WHERE claim_id = ?",
+      txHash,
+      now,
+      d.claim_id,
+    );
+  }
+  return { seq, outcome: ev.eventName, txHash };
+}
+
+/** What the next anchor should be, or null if the head is already anchored. */
+export async function anchorPlan(org: Address) {
+  const db = await getDb();
+  const h = await head(db, org);
+  if (h.seq === 0) return null;
+  const last = await db.first<{ decision_seq: number }>(
+    "SELECT decision_seq FROM anchors WHERE org = ? ORDER BY anchor_seq DESC LIMIT 1",
+    org,
+  );
+  if (last && last.decision_seq >= h.seq) return null;
+  const onchainSeq = await serverClient.readContract({ address: org, abi: mandateAbi, functionName: "anchorSeq" });
+  return { head: h.hash, decisionSeq: h.seq, anchorSeq: Number(onchainSeq + 1n) };
+}
+
+export async function recordAnchor(org: Address, txHash: Hex) {
+  const db = await getDb();
+  const receipt = await serverClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+  const [ev] = parseEventLogs({
+    abi: mandateAbi,
+    logs: receipt.logs.filter((l) => l.address.toLowerCase() === org.toLowerCase()),
+    eventName: "Anchored",
+  });
+  if (!ev) throw new Error("that transaction has no Anchored event from this org");
+  const row = await db.first<{ seq: number }>("SELECT seq FROM decisions WHERE org = ? AND hash = ?", org, ev.args.head);
+  if (!row) throw new Error("the anchored head is not in this org's decision log");
+  await db.run(
+    "INSERT OR REPLACE INTO anchors (org, anchor_seq, decision_seq, head, tx_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    org,
+    Number(ev.args.seq),
+    row.seq,
+    ev.args.head,
+    txHash,
+    Math.floor(Date.now() / 1000),
+  );
+  return { anchorSeq: Number(ev.args.seq), decisionSeq: row.seq, txHash };
 }

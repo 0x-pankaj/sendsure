@@ -1,7 +1,7 @@
 // Server only. Sign-in with a wallet signature; the server returns a short HMAC token.
 // WebCrypto only, so it runs the same on Node and on Cloudflare Workers.
 import { getAddress, isAddress, verifyMessage, type Address, type Hex } from "viem";
-import { RelayError } from "./relayer";
+import { RelayError, serverClient } from "./relayer";
 import { signInMessage } from "./signin";
 
 export { signInMessage };
@@ -50,11 +50,12 @@ export async function signIn(body: unknown, nowMs = Date.now()) {
     throw new RelayError(400, "The sign-in message is too old. Please try again.", "Expired");
   }
   const address = getAddress(b.address);
-  const ok = await verifyMessage({
-    address,
-    message: signInMessage(address, b.issuedAt, b.nonce),
-    signature: b.signature as Hex,
-  }).catch(() => false);
+  const message = signInMessage(address, b.issuedAt, b.nonce);
+  const signature = b.signature as Hex;
+  // Plain wallets are checked offline; smart accounts (e.g. the Circle agent wallet) on-chain (ERC-1271).
+  const ok =
+    (await verifyMessage({ address, message, signature }).catch(() => false)) ||
+    (await serverClient.verifyMessage({ address, message, signature }).catch(() => false));
   if (!ok) throw new RelayError(400, "The signature does not match the address.", "BadSignature");
   return { address, ...(await issueToken(address, nowMs)) };
 }
