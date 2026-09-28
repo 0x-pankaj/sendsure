@@ -1,0 +1,142 @@
+# SendSure build plan: the source of truth
+
+> **Any new session starts here.** Read "Resume here", do the next unchecked task, then follow the
+> working agreement. This file is updated in the same commit as the work it describes.
+
+## Resume here
+
+- **Status:** see the task table; ✅ = done and pushed.
+- **Next task:** the first ⬜ in [Tasks](#tasks), in order.
+- **Repo:** https://github.com/0x-pankaj/sendsure (public, MIT).
+- **Hackathon-only diff:** https://github.com/0x-pankaj/sendsure/compare/tameion-baseline...main
+- **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.network`.
+  USDC `0x3600000000000000000000000000000000000000` (6 decimals). EURC `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a`.
+- **Deployed addresses:** [`deployments/arc-testnet.json`](deployments/arc-testnet.json) once T6 is done.
+- **Circle agent wallet** (Circle CLI, testnet session, owner Pankaj): `0x9f977c4efff254a9284e69a0ae2b03e4ab851c07`.
+- **Private strategy, not in this repo:** competitor analysis, outreach lists and the pre-build review
+  live in Pankaj's local `the-pick/` folder. Never copy them here.
+
+## What we're building
+
+SendSure is a payables agent for teams that pay contractors in stablecoins. It pays only a payee who
+proved their own address, only for a claim that payee signed, and only inside a budget an Arc contract
+enforces. Then it writes each payment into the books the team already keeps.
+
+**Traction unit:** the *payout check*. A payer checks their real payout list before sending it; each
+row is compared with the address they paid last time and with the payee's own proof. No contractor
+action is needed. The same run is then rehearsed on Arc testnet under the contract's rules.
+
+## Working agreement (every session)
+
+1. **One task at a time.** Finish it: tests pass, then commit, then push, then tick it here, all in the
+   same commit.
+2. **After each milestone (M1–M6),** post `arc-canteen update product`.
+   - Keep it short and factual, and include the commit link.
+   - Pipe it in as lines with no blank lines: `printf '%s\n' "line" "line" "" | arc-canteen update product`.
+3. **Traction updates only report real people.** Use `arc-canteen update traction` only for real
+   contacts or users, and label first-party vs external. Sandbox or demo activity never counts.
+4. **Secrets never go in git.** Keys live in `.env` (gitignored) or the host's secret store.
+5. **Testnet only.** Nothing is ever sent on mainnet.
+6. **Claims must be true and provable.** Never say "stablecoins have nothing like this". Claim the
+   combination, and link a tx or a test for every claim.
+7. **When scope and traction conflict, traction wins.** See the kill switch.
+
+## Milestones
+
+| # | Milestone | Target date | Proof |
+|---|---|---|---|
+| M1 | Contracts built and tested | Tue Sep 29 | 47 tests green ✅ |
+| M2 | Contracts live on Arc testnet, first real settle | Tue Sep 29 | explorer links |
+| M3 | Payout check + payee verify page live on a URL | Wed Sep 30 | live URL |
+| M4 | **Must-work demo, hosted:** payee binds → signs claim → agent proposes run with dry run + reasons → approver co-signs → agent wallet settles → receipt + beancount entry → dashboard counts it; a wallet-change attempt is refused | Thu Oct 1 | live URL + tx |
+| M5 | Agent judgment on messy input + MCP + judge path `/try` + first Loom + first form submission | Sat Oct 3 | Loom, form |
+| M6 | Final: README in house style, video under 3 minutes, evidence folder, numbers frozen at Oct 10 23:59 ET | Sat Oct 10 | submitted |
+
+Deadline: **Sat Oct 10, 11:59 PM ET = Sun Oct 11, 09:44 Kathmandu.** Submit by Sat Oct 10 evening.
+
+## Tasks
+
+Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
+
+### Contracts
+| ID | Task | Owner | Done when | Status |
+|---|---|---|---|---|
+| T1 | Baseline commit + `tameion-baseline` tag + BASELINE.md | C | tag pushed, diff link works | ✅ |
+| T2 | Audit the pre-window spike (6 exploit tests) | C | `prior-work/horos-spike/AUDIT.md` | ✅ |
+| T3 | PayeeRegistry + Mandate + MandateFactory | C | compiles, `contracts/README.md` | ✅ |
+| T4 | Tests: 30 Mandate + 14 registry + 3 invariants | C | `forge test` green | ✅ |
+| T5 | Pre-deploy self-review of the contracts (checklist below) | C | findings fixed or written down | ⬜ |
+| T6 | Deploy PayeeRegistry + MandateFactory to Arc testnet, `setFactory`, verify source on the explorer | C | `deployments/arc-testnet.json` + explorer links | ⬜ |
+| T7 | Live smoke test on Arc testnet, labelled first-party: org → slot → bind → claim → co-sign → settle | C | tx hashes in `deployments/smoke-test.md` | ⬜ |
+
+### App (web + worker)
+| ID | Task | Owner | Done when | Status |
+|---|---|---|---|---|
+| T8 | Monorepo scaffold: pnpm workspaces, TypeScript, `packages/chain` (viem, ABIs, addresses), `packages/core` (claim + EIP-712 helpers) | C | `pnpm build` green | ⬜ |
+| T9 | **Payout check** (in browser, nothing leaves the machine): load payout CSV + last-paid export → SAME AS LAST PAID / CHANGED / NEW / LOOKALIKE + registry status per row → checked list export | C | works on a sample file; unit tests | ⬜ |
+| T10 | Payee verify page: connect wallet, switch to Arc testnet, sign `Bind` (plain-language message), relayer submits `bindWithSig` | C | a real EOA binds on testnet | ⬜ |
+| T11 | Relayer service (gas paid by a funded relayer key; rate-limited) | C | relays bind + change | ⬜ |
+| T12 | Payer onboarding: create Mandate via factory (owner and treasury = payer's own wallet), set caps, approve a capped allowance, open slots, send invites | C | a payer org is created from the UI | ⬜ |
+| T13 | Claims: payee signs a claim on their page; payer uploads an invoice → extraction (two passes: citations first, then a strict tool call) → payee confirms | C | claim stored and signed | ⬜ |
+| T14 | Agent loop (Claude API, tool-only, no shell): get_claims, vop_match, check (eth_call `check()`), propose_run, request_cosign, settle via Circle agent wallet (`circle wallet execute`), anchor decision log | C | one full run on testnet with reasons | ⬜ |
+| T15 | Decision log: hash-chained JSONL, signed, anchored on-chain; `replay <id>` re-checks signatures + `check()` at the recorded block (never re-asks the model) | C | replay works | ⬜ |
+| T16 | Indexer (events → Postgres, ≤ 9,999-block windows, cursor, fallback RPC) + receipts + dashboard with three tiers (external / first-party / sandbox excluded) | C | dashboard shows real tx | ⬜ |
+| T17 | Sandbox org (tier SANDBOX) + `/try` judge path with no wallet: look-alike refusal via `check()`, recorded refusal tx, public verify lookup | C | `/try` works logged out | ⬜ |
+| T18 | Hosting: always-on host (Railway), Postgres, domain + TLS, secrets in the host store, `/status` page | C+P | live URL | ⬜ |
+| T19 | Books: beancount writer (6 decimals, explicit tolerance, balance assertion from chain) + `bean-check --json` | C | sample ledger passes | ⬜ |
+| T20 | MCP server on the sandbox org only: `dry_run` by default, idempotency signal on every tool, rate limits | C | a judge's Claude can call it | ⬜ |
+| T21 | Agent judgment inbox: duplicate invoice under a new number, claim missing evidence, look-alike "new wallet" email with a hidden instruction → reasons shown, `settle()` refuses | C | demo scene recorded | ⬜ |
+
+### Traction (every day, 2 hours)
+| ID | Task | Owner | Done when | Status |
+|---|---|---|---|---|
+| P1 | Buy the domain (sendsure.com or sendsure.xyz) and tell Claude | P | domain bought | ⬜ |
+| P2 | Confirm the Luma registration; use GitHub `0x-pankaj` (with the hyphen) everywhere | P | confirmed | ⬜ |
+| P3 | Organizer questions in a public Canteen channel: does a testnet rehearsal / payout check count as a business onboarded; the event_name; a test-USDC grant; ask for 2–3 intros | P | posted | ⬜ |
+| P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
+| P5 | Keys and accounts: Anthropic API key; Circle Console TEST API key + entity secret (only for the sandbox treasury) | P | handed over via `.env` | ⬜ |
+| P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
+
+### Submission
+| ID | Task | Owner | Done when | Status |
+|---|---|---|---|---|
+| S1 | First Loom (60–90 s) + first form submission with repo + diff link | C+P | submitted (target Sat Oct 3) | ⬜ |
+| S2 | README in house style: "X does Y, here is the file"; Circle surfaces table with a proof column; prior art and what's different; threat model; "who can move money" matrix | C | reviewed | ⬜ |
+| S3 | Evidence folder: traction.json (every counted org, run, settle with tx), redacted decision log, anchor txs; nightly DB backup off-host | C | committed at the freeze | ⬜ |
+| S4 | Final video: 4–5 scenes, at most 2:45, captions, sandbox scenes labelled | C+P | uploaded | ⬜ |
+| S5 | Final submission + final `arc-canteen update product` and `update traction`; re-login the Circle CLI on Oct 10 | P | submitted by Oct 10 evening | ⬜ |
+
+## Deferred: only if ahead after Mon Oct 5
+Onramp "Add funds" · Earn/USYC · cross-chain payouts via CCTP · paid x402 payee lookup for other agents ·
+hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV formats · passkey payee UI
+(the contract already supports `bind()` from a smart account).
+
+## Kill switch
+- **Tue Sep 29 (today):** by tonight, 30+ messages sent, 6+ calls booked, 1+ org activated. If not,
+  switch to intro-first outreach and cut scope further.
+- **Thu Oct 1:** 3+ orgs active, or cut everything in *Deferred* and spend the extra time onboarding.
+- **Any new idea after Wed Oct 7:** refuse it. The last days are for packaging.
+
+## Locked decisions
+- **Name:** SendSure.
+- **Licence:** MIT; the Odoo add-on is LGPL-3.
+- **Testnet only.**
+- **No code reused** from earlier events.
+- **Money stays in the payer's own wallet;** the contract holds only a capped allowance. A Circle
+  developer-controlled treasury is used only for the sandbox and for labelled custodial payers.
+- **The approver co-signs the exact claim** (payee, amount, invoice), not just the invoice.
+- **ATTESTED (payer-vouched) addresses** always need a co-sign, and that co-sign stands in for the
+  payee's signature.
+- **First payment to a new or changed address** always needs a co-sign.
+- **Caps start at zero.**
+- **`settle()` never reverts on a policy failure;** it emits `Refused` / `Escalated` / `AlreadySettled`.
+
+## T5 pre-deploy review checklist
+- [ ] Only `settle()` can move tokens; no other `transferFrom` path.
+- [ ] Every `settle()` precondition also appears in `check()` (same `_evaluate`).
+- [ ] No owner or agent path can change a bound payout.
+- [ ] EIP-712 domains include chainId and verifyingContract; nonces are per signer.
+- [ ] Reentrancy guard on `settle()`; effects happen before the transfer.
+- [ ] Role separation: agent ≠ approver ≠ payee; owner ≠ agent.
+- [ ] Events carry no names, invoice numbers or real amounts.
+- [ ] The clone initializer can't be re-run; the implementation is locked (`_disableInitializers`).
