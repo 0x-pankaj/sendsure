@@ -343,7 +343,8 @@ async function anchorHead(db: Db, org: Address) {
 
 // ------------------------------------------------------------------ the run
 
-export async function runAgent(org: Address, opts: { execute: boolean; limit?: number }): Promise<RunResult> {
+/** `minBlock`: evaluate at this block or later (e.g. just after a co-sign), never at a stale one. */
+export async function runAgent(org: Address, opts: { execute: boolean; limit?: number; minBlock?: bigint }): Promise<RunResult> {
   const db = await getDb();
   const runId = crypto.randomUUID();
   const started = Math.floor(Date.now() / 1000);
@@ -353,7 +354,12 @@ export async function runAgent(org: Address, opts: { execute: boolean; limit?: n
     opts.limit ?? 25,
   );
   const history = await db.all<ClaimRecord>("SELECT * FROM claims WHERE org = ? ORDER BY created_at", org);
-  const block = await serverClient.getBlockNumber();
+  // cacheTime 0: viem otherwise reuses a block number for a few seconds, which could predate a co-sign.
+  let block = await serverClient.getBlockNumber({ cacheTime: 0 });
+  for (let i = 0; opts.minBlock && block < opts.minBlock && i < 15; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    block = await serverClient.getBlockNumber({ cacheTime: 0 });
+  }
 
   const items: Item[] = await Promise.all(
     open.map(async (row) => {

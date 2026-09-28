@@ -51,7 +51,7 @@ export async function orgBooks(org: Address) {
     });
   }
   const now = Math.floor(Date.now() / 1000);
-  const latest = await serverClient.getBlockNumber();
+  const latest = await serverClient.getBlockNumber({ cacheTime: 0 });
   const balances = [];
   for (const d of [...new Set(payments.map((p) => p.date))].sort()) {
     const endOfDay = Math.floor(Date.parse(`${d}T23:59:59Z`) / 1000);

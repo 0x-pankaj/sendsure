@@ -1,0 +1,35 @@
+{
+  "note": "Live /try walkthrough on the SANDBOX demo org. Not traction.",
+  "ranAtUnix": 1790630057,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "bind": {
+    "payeeRef": "0x0452557cda985bf56842093c2a837b04b2eae44e7a363d894a2c7b1ec98dd2cc",
+    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
+    "openTx": "https://explorer.testnet.arc.io/tx/0x34b464f48c81df1587198e42d182850351731b32520bb55112b512a240bf2d1c",
+    "bindTx": "https://explorer.testnet.arc.io/tx/0x423d35d572e9ada226de7225be06a4a9c9cac19efbf93c2061d65ec1bd9c9721",
+    "says": "This is now the only address SendSure will ever pay for this payee."
+  },
+  "attack": {
+    "attacker": "0xc72640B5ca23CbA1dD2e0b3C5186e637A0c68B13",
+    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
+    "refusedTx": "https://explorer.testnet.arc.io/tx/0x6a081b4fdba073041930b4ac4e8c2d7023b45739fb551faf6107e4f24b0b78af",
+    "says": "Refused on-chain: the claim is not signed by the payee's proven address (BAD_SIGNATURE). Nothing moved."
+  },
+  "change": {
+    "attacker": "0xc72640B5ca23CbA1dD2e0b3C5186e637A0c68B13",
+    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
+    "relayerSays": "The current payout address did not sign this change.",
+    "contractSays": "BadSignature",
+    "says": "A change needs the current wallet AND the new one, then a 1-day wait the payer can cancel. An email or a new key alone can't do it."
+  },
+  "pay": {
+    "claimId": "0x34dc3694fc58721180221ea81f4445f84861ea4af0da307faeac517ba4b1e3a7",
+    "invoice": "INV-DEMO-F97CF4",
+    "stored": "ESCALATED: First payment to a new or changed address needs a human co-sign.",
+    "firstRun": "escalate: First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it.",
+    "cosignTx": "https://explorer.testnet.arc.io/tx/0x991505406c433ff358930cae737f4e8710254b7a38f476ee333c8dad8ce03924",
+    "secondRun": "pay: Passes every rule, and a person co-signed this exact claim.",
+    "settleTx": "https://explorer.testnet.arc.io/tx/0x7efd8c1fb98c8a29f48499261b9be8a94e898cb3a6d1bd61e8b22dbc705fc49f",
+    "receipt": "/receipt?tx=0x7efd8c1fb98c8a29f48499261b9be8a94e898cb3a6d1bd61e8b22dbc705fc49f"
+  }
+}

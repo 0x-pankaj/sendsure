@@ -33,7 +33,7 @@ export async function indexerTick(opts: { maxWindows?: number; minIntervalSec?: 
   );
   if (cur && now - cur.updated_at < (opts.minIntervalSec ?? 0))
     return { block: cur.block, updatedAt: cur.updated_at, ran: false };
-  const latest = (await serverClient.getBlockNumber()) - 2n;
+  const latest = (await serverClient.getBlockNumber({ cacheTime: 0 })) - 2n;
   let from = cur ? BigInt(cur.block) + 1n : DEPLOY_BLOCK;
   let windows = 0;
   while (from <= latest && windows < (opts.maxWindows ?? 3)) {

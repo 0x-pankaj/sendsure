@@ -43,7 +43,7 @@ const CLAIM_FAULTS = new Set<Reason>([
   "OVER_CLAIM_MAX",
 ]);
 
-async function orgSalt(org: Address): Promise<Hex> {
+export async function orgSalt(org: Address): Promise<Hex> {
   const db = await getDb();
   const row = await db.first<{ ref_salt: Hex }>("SELECT ref_salt FROM orgs WHERE org = ?", org);
   if (row) return row.ref_salt;
