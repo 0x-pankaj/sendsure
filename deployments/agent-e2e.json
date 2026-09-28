@@ -1,9 +1,9 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790628106,
+  "ranAtUnix": 1790628942,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0xbcb2c2F7f793aFeAB2EB72BE0BB433a0d0BBcF8F",
-  "payee": "0xbA93cf2AF8A79E321c0d9996A7C905C29E283C2F",
+  "org": "0x2B0045E24a7Bb10d507b8461e6Da0B0b0Bc7cAc2",
+  "payee": "0x53CC78E9F5eE116Ef7A0e12Dd77AD2a2B8Da591a",
   "planner": "rules",
   "runs": [
     {
@@ -14,8 +14,8 @@
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0xc4657dd59e244cb5809829f1d67eb2de5986401440e466ec627be9c2e774987f",
-      "decisionHash": "0x4c08f28a48b95a2df95425f7705cb536a8a8550626af3f135ad0988a5cdac29c"
+      "tx": "https://explorer.testnet.arc.io/tx/0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e",
+      "decisionHash": "0xf53976d4d44b3b5e88a84ed998b93d8db966e5750a2f8164eeaf3d9b297fc2d1"
     },
     {
       "invoice": "INV-B",
@@ -23,20 +23,20 @@
       "reason": "Held for a person: same amount as another claim from this payee in the last 60 days; the work period overlaps another claim from this payee; the description asks to change payment details, or to hurry."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0xdcb963935362264b98f5f4e7fdbd97c4a8f35ca97359577df8bf4ea11e01de0d",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x3308b8eee81b7caa292ef6333ee57d6965a4c2c1d7001f7f86c4a87d315e7426",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x6f0a850a0d1c7bf8c8adfd2c32e83fad231d93cd7443bc3c303ed1344b47c99c",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x585354edd616b693a5730b086cca57aebfa5f66e7f35f55d3799a625004a10cc",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64496717,
+      "block": 64498355,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0xc4657dd59e244cb5809829f1d67eb2de5986401440e466ec627be9c2e774987f",
+      "tx": "0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e",
       "event": "Settled",
       "carriesDecisionHash": true
     }

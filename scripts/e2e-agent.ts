@@ -6,6 +6,7 @@
 //   4. the payee claims 0.3 USDC again for INV-B asking to "pay my new wallet, urgent": run #3 holds it
 //   5. the decision log is intact and its head is anchored on-chain
 //   pnpm tsx scripts/e2e-agent.ts [--base http://localhost:3000]
+import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPublicClient, createWalletClient, erc20Abi, http, parseEther, parseEventLogs, type Address, type Hex } from "viem";
@@ -32,6 +33,7 @@ import {
   type Claim,
   type OrgRules,
 } from "@sendsure/chain";
+import { toBeancount } from "@sendsure/core";
 import { arg, loadEnv, need } from "./lib/env";
 import { api, bindMessage, check, failed, postRelay, signInAs } from "./lib/relay";
 
@@ -138,6 +140,23 @@ const runs = await api(base, `/api/agent/runs?org=${org}`, { token: ownerToken }
 const anchorHead = await client.readContract({ address: org, abi: mandateAbi, functionName: "anchorHead" });
 check(runs.body.logIntact === true, `decision log intact (${runs.body.decisions?.length} entries)`);
 check(anchorHead === runs.body.anchor?.head, `log head anchored on-chain (anchor #${runs.body.anchor?.anchor_seq})`);
+
+// 7. Books: the payment from its Settled event, the day's closing balance from the chain; bean-check.
+const books = (await api(base, `/api/org/books?org=${org}`, { token: ownerToken })).body as Record<string, any>;
+const ledger = toBeancount({
+  title: "SendSure e2e sandbox org",
+  org,
+  treasury: books.treasury,
+  payments: (books.payments as any[]).map((p) => ({ ...p, payee: "Test payee", amount: BigInt(p.amount) })),
+  balances: (books.balances as any[]).map((b) => ({ ...b, amount: BigInt(b.amount) })),
+});
+const ledgerPath = resolve(import.meta.dirname, "../deployments/books-e2e.beancount");
+writeFileSync(ledgerPath, ledger);
+const bean = spawnSync(process.env.BEAN_CHECK ?? "bean-check", [ledgerPath], { encoding: "utf8" });
+check(
+  books.payments?.length === 1 && (bean.error ? true : bean.status === 0),
+  `books: ${books.payments?.length} payment, ${books.balances?.length} chain balance check; bean-check ${bean.error ? "not installed (skipped)" : bean.status === 0 ? "passes" : `FAILS: ${bean.stdout}${bean.stderr}`}`,
+);
 
 const out = {
   note: "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",

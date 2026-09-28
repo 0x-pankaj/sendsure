@@ -20,6 +20,7 @@ import {
   type PayeeView,
 } from "@sendsure/chain";
 import { AgentPanel } from "../../components/Agent";
+import { Books } from "../../components/Books";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
@@ -419,6 +420,7 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
       <Payees org={org} payees={payees} onRefresh={refresh} />
       <AgentPanel org={org.org} signer={signer} payeeName={payeeName} onRan={() => setRuns((n) => n + 1)} />
       <OrgClaims org={org.org} signer={signer} payeeName={payeeName} version={runs} />
+      <Books org={org.org} orgName={org.name} signer={signer} payeeName={payeeName} />
     </>
   );
 }

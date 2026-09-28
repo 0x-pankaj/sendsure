@@ -35,7 +35,9 @@ describe("parsePayoutCsv", () => {
   });
 
   it("reads a Safe CSV-airdrop file (no name column: the address is the payee key)", () => {
-    const { rows } = parsePayoutCsv(`token_type,token_address,receiver,amount,id\nerc20,0x3600000000000000000000000000000000000000,${CAROL},25.5,\n`);
+    const { rows } = parsePayoutCsv(
+      `token_type,token_address,receiver,amount,id\nerc20,0x3600000000000000000000000000000000000000,${CAROL},25.5,\n`,
+    );
     expect(rows[0]).toMatchObject({ payee: CAROL, address: CAROL, amount: 25.5 });
   });
 });
@@ -91,6 +93,8 @@ describe("checkPayout", () => {
   });
   it("exports a checked list", () => {
     const csv = toCsv(checkedRowsToRecords(rows));
-    expect(csv.split(/\r?\n/)[0]).toBe("payee,address,amount,token,chain,reference,action,status,flags,last_paid_address,lookalike_of,explanation");
+    expect(csv.split(/\r?\n/)[0]).toBe(
+      "payee,address,amount,token,chain,reference,action,status,flags,last_paid_address,lookalike_of,explanation",
+    );
   });
 });

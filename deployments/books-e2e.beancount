@@ -1,0 +1,29 @@
+; SendSure books: SendSure e2e sandbox org
+; Org 0x2B0045E24a7Bb10d507b8461e6Da0B0b0Bc7cAc2 on Arc testnet. Treasury 0x30e7D47a55e950eF2E7843dA4efAAb05846fDFA4.
+; Each payment carries its claim id, the agent's decision hash and its Arc transaction.
+; Balances come from the chain; movements outside SendSure are computed from them, never guessed.
+option "title" "SendSure e2e sandbox org"
+option "operating_currency" "USDC"
+option "inferred_tolerance_default" "USDC:0.000001"
+
+2026-09-28 commodity USDC
+  name: "USDC on Arc testnet (6 decimals)"
+
+2026-09-28 open Assets:Arc:Treasury USDC
+2026-09-28 open Equity:Treasury-Other-Flows USDC
+2026-09-28 open Expenses:Contractors:Test-payee USDC
+
+2026-09-28 * "Treasury" "Movements outside SendSure (deposits, gas, other transfers), from the chain balance"
+  Assets:Arc:Treasury  0.698109 USDC
+  Equity:Treasury-Other-Flows
+
+2026-09-28 * "Test payee" "INV-A"
+  arc-tx: "0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e"
+  claim-id: "0xc268899d16f4bc5bb30c5746b98b7cf1ff6c4a6d07593109309c1b605bbcfc1f"
+  decision-hash: "0xf53976d4d44b3b5e88a84ed998b93d8db966e5750a2f8164eeaf3d9b297fc2d1"
+  payout: "0x53CC78E9F5eE116Ef7A0e12Dd77AD2a2B8Da591a"
+  Expenses:Contractors:Test-payee  0.300000 USDC
+  Assets:Arc:Treasury  -0.300000 USDC
+
+2026-09-29 balance Assets:Arc:Treasury  0.398109 ~ 0.000001 USDC
+  block: "64498419"

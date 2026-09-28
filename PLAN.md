@@ -97,7 +97,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T16 | Indexer (Workers cron: events → D1, ≤ 9,999-block windows, cursor) + receipts + `/status` + dashboard with three tiers (external / first-party / sandbox excluded) | C | dashboard shows real tx | ⬜ |
 | T17 | Sandbox org (tier SANDBOX) + `/try` judge path with no wallet: look-alike refusal via `check()`, recorded refusal tx, public verify lookup | C | `/try` works logged out | ⬜ |
 | T18 | Hosting: always-on host, database, domain + TLS, secrets in the host store, `/status` page | C+P | live URL ✅ Cloudflare Workers + D1 (Pankaj's choice; Hono split only if Workers limits bite). All 4 e2e suites pass against the live URL (31/31). Left: domain (P1), `/status` (with T16) | ✅ |
-| T19 | Books: beancount writer (6 decimals, explicit tolerance, balance assertion from chain) + `bean-check --json` | C | sample ledger passes | ⬜ |
+| T19 | Books: beancount writer (6 decimals, explicit tolerance, balance assertion from chain) + `bean-check` | C | sample ledger passes: `packages/core/src/beancount.ts`; `/org` → "Download books"; live ledger from `e2e:agent` passes `bean-check` ([file](deployments/books-e2e.beancount): the co-sign's gas shows up as an outside movement, the closing balance is read from the chain) | ✅ |
 | T20 | MCP server on the sandbox org only: `dry_run` by default, idempotency signal on every tool, rate limits | C | a judge's Claude can call it | ⬜ |
 | T21 | Agent judgment inbox: duplicate invoice under a new number, claim missing evidence, look-alike "new wallet" email with a hidden instruction → reasons shown, `settle()` refuses | C | demo scene recorded | ⬜ |
 
