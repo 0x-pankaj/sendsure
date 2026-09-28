@@ -118,7 +118,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | ID | Task | Owner | Done when | Status |
 |---|---|---|---|---|
 | S1 | First Loom (60–90 s) + first form submission with repo + diff link | C+P | submitted (target Sat Oct 3) | ⬜ |
-| S2 | README in house style: "X does Y, here is the file"; Circle surfaces table with a proof column; prior art and what's different; threat model; "who can move money" matrix | C | reviewed | ⬜ |
+| S2 | README in house style: "X does Y, here is the file"; Circle surfaces table with a proof column; prior art and what's different; threat model; "who can move money" matrix | C | reviewed: drafted Sep 29 with every claim linked to a file, test or live run; Pankaj to read it once. Update the numbers at the freeze | ✅ |
 | S3 | Evidence folder: traction.json (every counted org, run, settle with tx), redacted decision log, anchor txs; nightly DB backup off-host | C | committed at the freeze | ⬜ |
 | S4 | Final video: 4–5 scenes, at most 2:45, captions, sandbox scenes labelled | C+P | uploaded | ⬜ |
 | S5 | Final submission + final `arc-canteen update product` and `update traction`; re-login the Circle CLI on Oct 10 | P | submitted by Oct 10 evening | ⬜ |
