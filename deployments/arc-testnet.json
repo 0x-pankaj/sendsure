@@ -1,0 +1,31 @@
+{
+  "network": "Arc testnet",
+  "chainId": 5042002,
+  "explorer": "https://explorer.testnet.arc.io",
+  "deployedAtUtc": "2026-09-28T18:55:28+00:00",
+  "block": 64484273,
+  "sourceCommit": "0c077aaf967cb53f019ab1e8561ebb15a8c9870e",
+  "deployer": "0x38B01c787BFbA932d4601f0f761C950930700809",
+  "usdc": "0x3600000000000000000000000000000000000000",
+  "contracts": {
+    "PayeeRegistry": {
+      "address": "0x53f0761fC833064Ca78fc09f6E37aa20eCb21378",
+      "deployTx": "0xcc3b5927b63a4347641d6a3b60ff2ff6d6d371eaabb9a5f8d102a4c94a38fa35",
+      "verified": true,
+      "url": "https://explorer.testnet.arc.io/address/0x53f0761fC833064Ca78fc09f6E37aa20eCb21378"
+    },
+    "MandateFactory": {
+      "address": "0x8c474aCDDe8bD150B65234582171Fd3f70A49FC2",
+      "deployTx": "0xe3591b4e33c4a1b3547e0cbfcd3db6557786492a452ee3d21dc4b24d4f1e8b2d",
+      "verified": true,
+      "url": "https://explorer.testnet.arc.io/address/0x8c474aCDDe8bD150B65234582171Fd3f70A49FC2"
+    },
+    "MandateImplementation": {
+      "address": "0x6B2690Fc4b4216f2A181376f13aA72FE1f40EC05",
+      "deployedBy": "MandateFactory constructor",
+      "verified": true,
+      "url": "https://explorer.testnet.arc.io/address/0x6B2690Fc4b4216f2A181376f13aA72FE1f40EC05"
+    }
+  },
+  "setFactoryTx": "0xf2b9ce0dd86c184379cd71ec00a18c621782af3707070918d1d2d123f61e843a"
+}

@@ -66,7 +66,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T3 | PayeeRegistry + Mandate + MandateFactory | C | compiles, `contracts/README.md` | ✅ |
 | T4 | Tests: 30 Mandate + 14 registry + 3 invariants | C | `forge test` green | ✅ |
 | T5 | Pre-deploy self-review of the contracts (checklist below) | C | findings fixed or written down | ✅ |
-| T6 | Deploy PayeeRegistry + MandateFactory to Arc testnet, `setFactory`, verify source on the explorer | C | `deployments/arc-testnet.json` + explorer links | ⬜ |
+| T6 | Deploy PayeeRegistry + MandateFactory to Arc testnet, `setFactory`, verify source on the explorer | C | `deployments/arc-testnet.json` + explorer links | ✅ |
 | T7 | Live smoke test on Arc testnet, labelled first-party: org → slot → bind → claim → co-sign → settle | C | tx hashes in `deployments/smoke-test.md` | ⬜ |
 
 ### App (web + worker)
