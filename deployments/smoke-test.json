@@ -1,0 +1,65 @@
+{
+  "label": "First-party smoke test on Arc testnet, SANDBOX tier. Synthetic payee. Not traction.",
+  "ranAtUnix": 1790622048,
+  "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
+  "payee": "0x3460E7c7aA9439db630eAf9468653920e9900Dad",
+  "agentWallet": "0x9f977c4efff254a9284e69a0ae2b03e4ab851c07",
+  "payeeUsdcBefore": 0,
+  "payeeUsdcAfter": 1000000,
+  "steps": [
+    {
+      "step": "createMandate (SANDBOX tier)",
+      "tx": "0x4e4b530dae4080c8a192dab933e88e51f5f7ca2e38b6452dda4ca175896052f1",
+      "url": "https://explorer.testnet.arc.io/tx/0x4e4b530dae4080c8a192dab933e88e51f5f7ca2e38b6452dda4ca175896052f1",
+      "note": "org 0x8C50103bE05877E41Fea5b3181c94E8123328e81"
+    },
+    {
+      "step": "approve 5 USDC",
+      "tx": "0xe525fb44584a8413462517c439ebcf87b1615b3b7aad36106ae33cdf2f87df70",
+      "url": "https://explorer.testnet.arc.io/tx/0xe525fb44584a8413462517c439ebcf87b1615b3b7aad36106ae33cdf2f87df70",
+      "note": ""
+    },
+    {
+      "step": "openSlots",
+      "tx": "0x8f4f574b056d3ae4740794030c5c162a73eba5eb8c8b40cbc4ecf20d39490b09",
+      "url": "https://explorer.testnet.arc.io/tx/0x8f4f574b056d3ae4740794030c5c162a73eba5eb8c8b40cbc4ecf20d39490b09",
+      "note": ""
+    },
+    {
+      "step": "bindWithSig (payee-signed, relayed)",
+      "tx": "0x06523d95e49e47a738689ad86d4c0eaf65bad5ca3873bf8d795682c34e2d2c84",
+      "url": "https://explorer.testnet.arc.io/tx/0x06523d95e49e47a738689ad86d4c0eaf65bad5ca3873bf8d795682c34e2d2c84",
+      "note": ""
+    },
+    {
+      "step": "agent wallet settle #1",
+      "tx": "0xdacff4413f731b8a77d197873e38cd6e7f71aafd2c1afb2945339f8131327550",
+      "url": "https://explorer.testnet.arc.io/tx/0xdacff4413f731b8a77d197873e38cd6e7f71aafd2c1afb2945339f8131327550",
+      "note": "['Escalated NEEDS_COSIGN_NEW_PAYOUT']"
+    },
+    {
+      "step": "approver cosign",
+      "tx": "0xb06cdf8cbe00105d65635270159e0f02d5652e7167964d1f3a1ed6a2030667e1",
+      "url": "https://explorer.testnet.arc.io/tx/0xb06cdf8cbe00105d65635270159e0f02d5652e7167964d1f3a1ed6a2030667e1",
+      "note": ""
+    },
+    {
+      "step": "agent wallet settle #2",
+      "tx": "0x0cd7c6f2d144619e95d638c1cc89f762529d8ccee53bd6498e9ae5a299f0b2b4",
+      "url": "https://explorer.testnet.arc.io/tx/0x0cd7c6f2d144619e95d638c1cc89f762529d8ccee53bd6498e9ae5a299f0b2b4",
+      "note": "['Settled']"
+    },
+    {
+      "step": "retry settle",
+      "tx": "0x76bba941dc7015cd6c9a36a45f7c359bb14fe4d536ded2de5c3f00e85c0a405c",
+      "url": "https://explorer.testnet.arc.io/tx/0x76bba941dc7015cd6c9a36a45f7c359bb14fe4d536ded2de5c3f00e85c0a405c",
+      "note": "['AlreadySettled']"
+    },
+    {
+      "step": "forged claim settle",
+      "tx": "0xccffa554edf6c20b012cab57445229b6553425db86f114a0a1f003f71a10cfe3",
+      "url": "https://explorer.testnet.arc.io/tx/0xccffa554edf6c20b012cab57445229b6553425db86f114a0a1f003f71a10cfe3",
+      "note": "['Refused BAD_SIGNATURE']"
+    }
+  ]
+}

@@ -46,7 +46,7 @@ action is needed. The same run is then rehearsed on Arc testnet under the contra
 | # | Milestone | Target date | Proof |
 |---|---|---|---|
 | M1 | Contracts built and tested | Tue Sep 29 | 47 tests green ✅ |
-| M2 | Contracts live on Arc testnet, first real settle | Tue Sep 29 | explorer links |
+| M2 | Contracts live on Arc testnet, first real settle | Tue Sep 29 | explorer links ✅ ([smoke test](deployments/smoke-test.md)) |
 | M3 | Payout check + payee verify page live on a URL | Wed Sep 30 | live URL |
 | M4 | **Must-work demo, hosted:** payee binds → signs claim → agent proposes run with dry run + reasons → approver co-signs → agent wallet settles → receipt + beancount entry → dashboard counts it; a wallet-change attempt is refused | Thu Oct 1 | live URL + tx |
 | M5 | Agent judgment on messy input + MCP + judge path `/try` + first Loom + first form submission | Sat Oct 3 | Loom, form |
@@ -67,7 +67,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T4 | Tests: 30 Mandate + 14 registry + 3 invariants | C | `forge test` green | ✅ |
 | T5 | Pre-deploy self-review of the contracts (checklist below) | C | findings fixed or written down | ✅ |
 | T6 | Deploy PayeeRegistry + MandateFactory to Arc testnet, `setFactory`, verify source on the explorer | C | `deployments/arc-testnet.json` + explorer links | ✅ |
-| T7 | Live smoke test on Arc testnet, labelled first-party: org → slot → bind → claim → co-sign → settle | C | tx hashes in `deployments/smoke-test.md` | ⬜ |
+| T7 | Live smoke test on Arc testnet, labelled first-party: org → slot → bind → claim → co-sign → settle | C | tx hashes in `deployments/smoke-test.md` | ✅ |
 
 ### App (web + worker)
 | ID | Task | Owner | Done when | Status |
