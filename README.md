@@ -9,6 +9,16 @@ budget an Arc contract enforces. Then it writes each payment into the books the 
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
 Arc testnet (chain 5042002).
 
+## Use it from your agent (MCP)
+
+```bash
+claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp
+```
+
+Tools: `check_payout_list` (run the payout check on a CSV), `verify_payee_address`, `get_payment_receipt`,
+`get_sendsure_stats`, and `run_demo_scene` (sandbox demo org only; a dry run unless `dry_run: false`; the same
+`idempotency_key` never runs a scene twice).
+
 ## What's here
 
 | Folder | What it is |
