@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
 import { explorerTx, formatUsdc, usdc, type Claim } from "@sendsure/chain";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
-import { signClaim, walletErrorText, type Signer } from "../lib/wallet";
+import { sendCosign, signClaim, walletErrorText, type Signer } from "../lib/wallet";
 
 export interface ClaimView {
   claim_id: Hex;
@@ -20,6 +20,9 @@ export interface ClaimView {
   last_reason: string | null;
   reason_text: string | null;
   settle_tx: string | null;
+  agent_action?: string | null;
+  agent_reason?: string | null;
+  claim_hex?: Hex;
   created_at: number;
 }
 
@@ -30,13 +33,19 @@ export function claimStatus(c: ClaimView): [chip: string, label: string, detail:
   if (c.status === "settled") return ["PAY", "Paid", null];
   if (c.status === "refused") return ["STOP", "Refused", c.reason_text];
   if (c.status === "withdrawn") return ["STOP", "Withdrawn", null];
+  if (c.agent_action === "escalate") return ["REVIEW", "Needs a co-sign", c.agent_reason ?? c.reason_text];
+  if (c.agent_action === "hold") return ["STOP", "On hold", c.agent_reason ?? c.reason_text];
   if (c.last_outcome === "PAYABLE") return ["PAY", "Ready to pay", "The SendSure agent pays it on its next run."];
   if (c.last_outcome === "ESCALATED") return ["REVIEW", "Needs a co-sign", c.reason_text];
   return ["STOP", "On hold", c.reason_text];
 }
 
-export function ClaimTable(props: { claims: ClaimView[]; payeeName?: (ref: Hex) => string }) {
-  const { claims, payeeName } = props;
+export function ClaimTable(props: {
+  claims: ClaimView[];
+  payeeName?: (ref: Hex) => string;
+  action?: (c: ClaimView) => React.ReactNode;
+}) {
+  const { claims, payeeName, action } = props;
   if (!claims.length) return <p className="hint">No claims yet.</p>;
   return (
     <div className="table-wrap">
@@ -72,6 +81,7 @@ export function ClaimTable(props: { claims: ClaimView[]; payeeName?: (ref: Hex) 
                       <a href={explorerTx(c.settle_tx)}>payment tx</a>
                     </div>
                   )}
+                  {action?.(c)}
                 </td>
               </tr>
             );
@@ -237,10 +247,12 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
 }
 
 /** The payer's side: every claim sent to this org. Payee names come from this browser only. */
-export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref: Hex) => string }) {
-  const { org, signer, payeeName } = props;
+export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref: Hex) => string; version?: number }) {
+  const { org, signer, payeeName, version } = props;
   const [claims, setClaims] = useState<ClaimView[] | null>(null);
   const [error, setError] = useState("");
+  const [cosigning, setCosigning] = useState<Hex | null>(null);
+  const [cosigned, setCosigned] = useState<Record<string, Hex>>({});
 
   const load = useCallback(async () => {
     setError("");
@@ -252,6 +264,50 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
     }
   }, [org, signer]);
 
+  // Reload after an agent run (the parent bumps `version`), once claims are shown.
+  useEffect(() => {
+    if (version && claims) void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
+
+  async function cosign(c: ClaimView) {
+    if (!c.claim_hex) return;
+    setError("");
+    setCosigning(c.claim_id);
+    try {
+      const tx = await sendCosign(signer, org, c.claim_hex);
+      setCosigned((m) => ({ ...m, [c.claim_id]: tx }));
+    } catch (err) {
+      const text = walletErrorText(err);
+      setError(
+        /insufficient funds|gas/i.test(text)
+          ? "Your wallet needs a little testnet USDC for gas: faucet.circle.com (Arc testnet)."
+          : text,
+      );
+    } finally {
+      setCosigning(null);
+    }
+  }
+
+  const cosignButton = (c: ClaimView) => {
+    const needs = c.status === "open" && (c.agent_action === "escalate" || c.last_outcome === "ESCALATED");
+    if (cosigned[c.claim_id]) {
+      return (
+        <div className="hint">
+          Co-signed (<a href={explorerTx(cosigned[c.claim_id]!)}>tx</a>). Run the agent to pay it.
+        </div>
+      );
+    }
+    if (!needs || !c.claim_hex) return null;
+    return (
+      <div style={{ marginTop: 6 }}>
+        <button className="btn secondary" disabled={cosigning !== null} onClick={() => void cosign(c)}>
+          {cosigning === c.claim_id ? "Check your wallet…" : "Co-sign this claim"}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div style={{ maxWidth: 900, marginTop: 20 }}>
       <div className="row" style={{ justifyContent: "space-between" }}>
@@ -260,7 +316,7 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
           {claims ? "Refresh" : "Show claims (sign in)"}
         </button>
       </div>
-      {claims && <ClaimTable claims={claims} payeeName={payeeName} />}
+      {claims && <ClaimTable claims={claims} payeeName={payeeName} action={cosignButton} />}
       {error && <p className="notice">{error}</p>}
     </div>
   );

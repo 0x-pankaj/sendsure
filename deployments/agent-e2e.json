@@ -1,0 +1,44 @@
+{
+  "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
+  "ranAtUnix": 1790628106,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0xbcb2c2F7f793aFeAB2EB72BE0BB433a0d0BBcF8F",
+  "payee": "0xbA93cf2AF8A79E321c0d9996A7C905C29E283C2F",
+  "planner": "rules",
+  "runs": [
+    {
+      "invoice": "INV-A",
+      "action": "escalate",
+      "reason": "First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it."
+    },
+    {
+      "invoice": "INV-A",
+      "action": "pay",
+      "tx": "https://explorer.testnet.arc.io/tx/0xc4657dd59e244cb5809829f1d67eb2de5986401440e466ec627be9c2e774987f",
+      "decisionHash": "0x4c08f28a48b95a2df95425f7705cb536a8a8550626af3f135ad0988a5cdac29c"
+    },
+    {
+      "invoice": "INV-B",
+      "action": "escalate",
+      "reason": "Held for a person: same amount as another claim from this payee in the last 60 days; the work period overlaps another claim from this payee; the description asks to change payment details, or to hurry."
+    }
+  ],
+  "cosign": "https://explorer.testnet.arc.io/tx/0xdcb963935362264b98f5f4e7fdbd97c4a8f35ca97359577df8bf4ea11e01de0d",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x3308b8eee81b7caa292ef6333ee57d6965a4c2c1d7001f7f86c4a87d315e7426",
+  "logIntact": true,
+  "replay": {
+    "chainIntact": true,
+    "signatureOk": true,
+    "checkAtBlock": {
+      "block": 64496717,
+      "outcome": "PAYABLE",
+      "reason": "NONE",
+      "matches": true
+    },
+    "payment": {
+      "tx": "0xc4657dd59e244cb5809829f1d67eb2de5986401440e466ec627be9c2e774987f",
+      "event": "Settled",
+      "carriesDecisionHash": true
+    }
+  }
+}

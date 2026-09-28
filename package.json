@@ -14,7 +14,8 @@
     "e2e:bind": "tsx scripts/e2e-bind.ts",
     "e2e:change": "tsx scripts/e2e-change.ts",
     "e2e:org": "tsx scripts/e2e-org.ts",
-    "e2e:claim": "tsx scripts/e2e-claim.ts"
+    "e2e:claim": "tsx scripts/e2e-claim.ts",
+    "e2e:agent": "tsx scripts/e2e-agent.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

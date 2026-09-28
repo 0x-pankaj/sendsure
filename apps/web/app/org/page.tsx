@@ -19,6 +19,7 @@ import {
   type OrgRules,
   type PayeeView,
 } from "@sendsure/chain";
+import { AgentPanel } from "../../components/Agent";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
@@ -332,6 +333,8 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
   const [view, setView] = useState<MandateView | null>(null);
   const [payees, setPayees] = useState<Record<string, PayeeView>>({});
   const [loadError, setLoadError] = useState("");
+  const [runs, setRuns] = useState(0);
+  const payeeName = (ref: Hex) => org.vendors.find((v) => v.payeeRef.toLowerCase() === ref.toLowerCase())?.name ?? short(ref);
   /** Set right after invites were opened: re-read until they show up, in case the RPC node lags a block. */
   const justInvited = useRef(false);
 
@@ -414,11 +417,8 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
         }}
       />
       <Payees org={org} payees={payees} onRefresh={refresh} />
-      <OrgClaims
-        org={org.org}
-        signer={signer}
-        payeeName={(ref) => org.vendors.find((v) => v.payeeRef.toLowerCase() === ref.toLowerCase())?.name ?? short(ref)}
-      />
+      <AgentPanel org={org.org} signer={signer} payeeName={payeeName} onRan={() => setRuns((n) => n + 1)} />
+      <OrgClaims org={org.org} signer={signer} payeeName={payeeName} version={runs} />
     </>
   );
 }

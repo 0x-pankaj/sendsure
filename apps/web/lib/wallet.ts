@@ -1,10 +1,20 @@
-import { createWalletClient, custom, type Address, type EIP1193Provider, type Hex, type LocalAccount, type WalletClient } from "viem";
+import {
+  createWalletClient,
+  custom,
+  http,
+  type Address,
+  type EIP1193Provider,
+  type Hex,
+  type LocalAccount,
+  type WalletClient,
+} from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   arcTestnet,
   bindTypedData,
   changeTypedData,
   claimTypes,
+  mandateAbi,
   mandateDomain,
   permitTypedData,
   type BindMessage,
@@ -21,8 +31,7 @@ declare global {
 
 /** Who signs: a browser wallet (MetaMask, Rabby, ...) or a throwaway test wallet kept in this tab. */
 export type Signer =
-  | { kind: "browser"; address: Address; client: WalletClient }
-  | { kind: "test"; address: Address; account: LocalAccount };
+  { kind: "browser"; address: Address; client: WalletClient } | { kind: "test"; address: Address; account: LocalAccount };
 
 export const hasBrowserWallet = () => typeof window !== "undefined" && Boolean(window.ethereum);
 
@@ -124,4 +133,13 @@ export function walletErrorText(err: unknown): string {
     return "You cancelled in your wallet. Nothing was signed or sent.";
   }
   return messageOf(err) || "Something went wrong. Please try again.";
+}
+
+/** An approver co-signs one exact claim on-chain (a transaction from their own wallet: it needs gas). */
+export async function sendCosign(s: Signer, org: Address, claimHex: Hex): Promise<Hex> {
+  const call = { address: org, abi: mandateAbi, functionName: "cosign", args: [claimHex], chain: arcTestnet } as const;
+  if (s.kind === "test") {
+    return createWalletClient({ account: s.account, chain: arcTestnet, transport: http() }).writeContract(call);
+  }
+  return s.client.writeContract({ ...call, account: s.address });
 }

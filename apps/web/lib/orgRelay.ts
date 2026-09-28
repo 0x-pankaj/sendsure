@@ -230,7 +230,9 @@ function makeAgent() {
     throw new RelayError(503, "AGENT_PRIVATE_KEY is not the SendSure server agent.", "NOT_CONFIGURED");
   return createWalletClient({ account, chain: arcTestnet, transport: http(process.env.ARC_RPC_URL || undefined) });
 }
-const agent = () => (agentClient ??= makeAgent());
+/** SendSure's server agent (an agent of every UI-created org): opens invites, settles, anchors. */
+export const agentWallet = () => (agentClient ??= makeAgent());
+const agent = agentWallet;
 
 export const MAX_INVITES_PER_BATCH = 50;
 const INVITE_TTL_SECONDS = 15 * 60;

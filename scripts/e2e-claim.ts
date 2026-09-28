@@ -57,11 +57,11 @@ const created = await api(base, "/api/org/create", {
 const org = created.body.org as Address;
 check(created.status === 200 && Boolean(org), `sandbox org created ${org}`);
 const funder = createWalletClient({ account: privateKeyToAccount(need("DEPLOYER_PRIVATE_KEY") as Hex), chain: arcTestnet, transport: http() });
-await client.waitForTransactionReceipt({ hash: await funder.sendTransaction({ to: owner.address, value: parseEther("1") }) });
+await client.waitForTransactionReceipt({ hash: await funder.sendTransaction({ to: owner.address, value: parseEther("0.7") }) });
 const nonce = await client.readContract({ address: deployment.usdc as Address, abi: usdcPermitAbi, functionName: "nonces", args: [owner.address] });
 const permit = { owner: owner.address, spender: org, value: usdc(10), nonce, deadline: now() + 1800n };
 const budget = await api(base, "/api/org/budget", { body: { ...permit, signature: await owner.signTypedData(permitTypedData(permit)) } });
-check(budget.status === 200, `treasury funded with 1 USDC, budget 10 USDC`);
+check(budget.status === 200, `treasury funded with 0.7 USDC, budget 10 USDC`);
 
 // 2. Invite + bind.
 const payeeRef = randomBytes32();

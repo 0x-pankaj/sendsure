@@ -217,10 +217,12 @@ export interface ClaimRow {
   last_outcome: string | null;
   last_reason: string | null;
   settle_tx: string | null;
+  agent_action: string | null;
+  agent_reason: string | null;
   created_at: number;
 }
 
-async function isOwnerOrApprover(org: Address, who: Address): Promise<boolean> {
+export async function isOwnerOrApprover(org: Address, who: Address): Promise<boolean> {
   const [owner, approver] = await Promise.all([
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "owner" }).catch(() => null),
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "isApprover", args: [who] }).catch(() => false),
@@ -233,7 +235,7 @@ export async function listClaims(session: Address, orgParam: string | null, paye
   const org = toAddress(orgParam, "org");
   const db = await getDb();
   const columns = `claim_id, org, payee_ref, payout, amount, invoice_ref, period_start, period_end, valid_until,
-    description, status, last_outcome, last_reason, settle_tx, created_at`;
+    description, status, last_outcome, last_reason, agent_action, agent_reason, settle_tx, created_at`;
   if (payeeRef) {
     if (!isBytes32(payeeRef)) throw new RelayError(400, "payeeRef must be 32 bytes of hex.", "BAD_INPUT");
     const p = await readPayee(serverClient, org, payeeRef);
@@ -249,8 +251,26 @@ export async function listClaims(session: Address, orgParam: string | null, paye
   }
   if (!(await isOwnerOrApprover(org, session)))
     throw new RelayError(403, "Only the payer's owner and approvers can see claims.", "FORBIDDEN");
-  const rows = await db.all<ClaimRow>(`SELECT ${columns} FROM claims WHERE org = ? ORDER BY created_at DESC LIMIT 200`, org);
-  return { claims: rows.map(withText) };
+  const rows = await db.all<ClaimRow & { token: Address; ref_hash: Hex; nonce: string }>(
+    `SELECT ${columns}, token, ref_hash, nonce FROM claims WHERE org = ? ORDER BY created_at DESC LIMIT 200`,
+    org,
+  );
+  // Approvers co-sign the exact claim on-chain, so they get its abi-encoded bytes.
+  return {
+    claims: rows.map((r) => ({
+      ...withText(r),
+      claim_hex: encodeClaim({
+        payeeRef: r.payee_ref,
+        token: r.token,
+        amount: BigInt(r.amount),
+        refHash: r.ref_hash,
+        periodStart: BigInt(r.period_start),
+        periodEnd: BigInt(r.period_end),
+        nonce: BigInt(r.nonce),
+        validUntil: BigInt(r.valid_until),
+      }),
+    })),
+  };
 }
 
 const withText = (r: ClaimRow) => ({
