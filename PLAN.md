@@ -12,8 +12,11 @@
 - **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.network`.
   USDC `0x3600000000000000000000000000000000000000` (6 decimals). EURC `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a`.
 - **Deployed addresses:** [`deployments/arc-testnet.json`](deployments/arc-testnet.json).
-- **Run locally:** `pnpm install && pnpm gen && pnpm -r typecheck && pnpm test`; web app:
-  `pnpm --filter @sendsure/web dev`. Stop a local server by its PID, never `pkill -f <pattern>`
+- **Run locally:** `pnpm install && pnpm gen && pnpm typecheck && pnpm test`; web app:
+  `pnpm --filter @sendsure/web dev`. The server needs `apps/web/.env.local` (gitignored):
+  `RELAYER_PRIVATE_KEY` (pays gas, no role; `0x1B66…8b73`) and `AGENT_PRIVATE_KEY` (the SendSure server
+  agent `0xdE71…3E30`, = `FALLBACK_AGENT` in `contracts/.env`). Live checks against a running server:
+  `pnpm e2e:bind|e2e:change|e2e:org --base http://127.0.0.1:3100`. Stop a local server by its PID, never `pkill -f <pattern>`
   (the pattern also matches the shell running it).
 - **Circle agent wallet** (Circle CLI, testnet session, owner Pankaj): `0x9f977c4efff254a9284e69a0ae2b03e4ab851c07`.
 - **Private strategy, not in this repo:** competitor analysis, outreach lists and the pre-build review
@@ -79,7 +82,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T9 | **Payout check** (in browser, nothing leaves the machine): load payout CSV + last-paid export → SAME AS LAST PAID / CHANGED / NEW / LOOKALIKE + registry status per row → checked list export | C | works on a sample file (`apps/web/app/check`, logic in `packages/core`, try `/check?example`); 14 unit tests | ✅ |
 | T10 | Payee verify page: connect wallet, switch to Arc testnet, sign `Bind` (plain-language message), relayer submits `bindWithSig` | C | a real EOA binds on testnet: fresh EOA via `pnpm e2e:bind` ([run](deployments/relay-e2e.json): forged sig and replay refused), and the page itself with the in-browser test wallet. A MetaMask run by a real payee is still to come (P4) | ✅ |
 | T11 | Relayer service (gas paid by a funded relayer key; rate-limited) | C | relays bind + change: `pnpm e2e:change` ([run](deployments/relay-e2e-change.json): attacker's change and re-bind refused, both-key change waits 24 h, replay refused, payer cancels) + change UI on `/verify` | ✅ |
-| T12 | Payer onboarding: create Mandate via factory (owner and treasury = payer's own wallet), set caps, approve a capped allowance, open slots, send invites | C | a payer org is created from the UI | ⬜ |
+| T12 | Payer onboarding: create Mandate via factory (owner and treasury = payer's own wallet), set caps, approve a capped allowance, open slots, send invites | C | a payer org is created from the UI: `/org` with a test wallet (create → budget → 3 invites, all gasless). `pnpm e2e:org` ([run](deployments/org-e2e.json)): org in someone else's name refused, stranger's invites refused, replay refused, payee binds. Test-wallet orgs are tier SANDBOX | ✅ |
 | T13 | Claims: payee signs a claim on their page; payer uploads an invoice → extraction (two passes: citations first, then a strict tool call) → payee confirms | C | claim stored and signed | ⬜ |
 | T14 | Agent loop (Claude API, tool-only, no shell): get_claims, vop_match, check (eth_call `check()`), propose_run, request_cosign, settle via Circle agent wallet (`circle wallet execute`), anchor decision log | C | one full run on testnet with reasons | ⬜ |
 | T15 | Decision log: hash-chained JSONL, signed, anchored on-chain; `replay <id>` re-checks signatures + `check()` at the recorded block (never re-asks the model) | C | replay works | ⬜ |

@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a className="brand" href="/">SendSure</a>
             <nav aria-label="Main">
               <a href="/check">Check a payout</a>
+              <a href="/org">For payers</a>
               <a href="https://github.com/0x-pankaj/sendsure">GitHub</a>
             </nav>
           </div>

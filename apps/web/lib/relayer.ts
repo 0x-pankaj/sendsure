@@ -54,7 +54,7 @@ function makeWallet() {
   const account = privateKeyToAccount(key as Hex, { nonceManager });
   return createWalletClient({ account, chain: arcTestnet, transport });
 }
-function relayer() {
+export function relayer() {
   walletClient ??= makeWallet();
   return walletClient;
 }
@@ -78,17 +78,17 @@ export function clientIp(req: Request): string {
 }
 
 export const LIMITS = {
-  perIp: { max: 12, windowMs: 10 * 60_000 },
+  perIp: { max: 30, windowMs: 10 * 60_000 },
   perPayout: { max: 3, windowMs: 60 * 60_000 },
   global: { max: 500, windowMs: 24 * 60 * 60_000 },
 } as const;
 
 // ------------------------------------------------------------------ input checks
 
-const isBytes32 = (v: unknown): v is Hex => typeof v === "string" && /^0x[0-9a-fA-F]{64}$/.test(v);
-const isSignature = (v: unknown): v is Hex => typeof v === "string" && /^0x[0-9a-fA-F]{130}$/.test(v);
+export const isBytes32 = (v: unknown): v is Hex => typeof v === "string" && /^0x[0-9a-fA-F]{64}$/.test(v);
+export const isSignature = (v: unknown): v is Hex => typeof v === "string" && /^0x[0-9a-fA-F]{130}$/.test(v);
 
-function toUint(v: unknown, bits: number, field: string): bigint {
+export function toUint(v: unknown, bits: number, field: string): bigint {
   if (typeof v !== "string" && typeof v !== "number") throw new RelayError(400, `${field} is missing.`, "BAD_INPUT");
   let n: bigint;
   try {
@@ -100,7 +100,7 @@ function toUint(v: unknown, bits: number, field: string): bigint {
   return n;
 }
 
-function toAddress(v: unknown, field: string): Address {
+export function toAddress(v: unknown, field: string): Address {
   if (typeof v !== "string" || !isAddress(v, { strict: false })) {
     throw new RelayError(400, `${field} is not an address.`, "BAD_INPUT");
   }
@@ -113,12 +113,12 @@ export interface BindRequest {
 }
 
 /** Validates a bind request body. Only plain binds are relayed (no real-account commitment yet). */
-function toObject(body: unknown): Record<string, unknown> {
+export function toObject(body: unknown): Record<string, unknown> {
   if (typeof body !== "object" || body === null) throw new RelayError(400, "Send a JSON object.", "BAD_INPUT");
   return body as Record<string, unknown>;
 }
 
-function toValidUntil(v: unknown, nowSec: number): bigint {
+export function toValidUntil(v: unknown, nowSec: number): bigint {
   const validUntil = toUint(v, 64, "validUntil");
   if (validUntil <= BigInt(nowSec)) throw new RelayError(400, REGISTRY_ERROR_TEXT.Expired!, "Expired");
   if (validUntil > BigInt(nowSec + MAX_SIGNATURE_TTL_SECONDS)) {
@@ -170,6 +170,13 @@ export function parseChange(body: unknown, nowSec = Math.floor(Date.now() / 1000
   return { message, oldSig: b.oldSig, newSig: b.newSig };
 }
 
+const MANDATE_ERROR_TEXT: Record<string, string> = {
+  BadInit: "Those org settings are not allowed.",
+  RoleConflict: "An agent cannot also be the owner, the treasury or an approver.",
+  NotOwnerOrAgent: "Only the org owner or a SendSure agent can open invites.",
+  ZeroAddress: "An address is empty.",
+};
+
 /** Turns a contract revert into the payee-facing text; anything else is an RPC problem. */
 export function toRelayError(err: unknown): RelayError {
   if (err instanceof RelayError) return err;
@@ -177,7 +184,8 @@ export function toRelayError(err: unknown): RelayError {
     const revert = err.walk((e) => e instanceof ContractFunctionRevertedError);
     if (revert instanceof ContractFunctionRevertedError) {
       const name = revert.data?.errorName ?? "";
-      let text = REGISTRY_ERROR_TEXT[name] ?? `The registry refused it (${name || "unknown reason"}).`;
+      let text =
+        REGISTRY_ERROR_TEXT[name] ?? MANDATE_ERROR_TEXT[name] ?? `The chain refused it (${name || revert.reason || "unknown reason"}).`;
       if (name === "BadState") {
         const state = PAYEE_STATES[Number(revert.data?.args?.[0] ?? 0)] ?? "unknown";
         text = state === "BOUND" ? "This invite was already used." : `This invite is not open (it is ${state}).`;
@@ -201,9 +209,11 @@ function serial<T>(fn: () => Promise<T>): Promise<T> {
 export interface RelayResult {
   txHash: Hex;
   status: "success" | "reverted" | "pending";
+  /** Set when the transaction created an org. */
+  org?: Address;
 }
 
-async function sendAndWait(send: () => Promise<Hex>): Promise<RelayResult> {
+export async function sendAndWait(send: () => Promise<Hex>): Promise<RelayResult> {
   const txHash = await serial(send);
   try {
     const receipt = await serverClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 });
@@ -291,14 +301,21 @@ export async function relayChange(req: ChangeRequest): Promise<RelayResult> {
 }
 
 export interface RelayKind<T> {
+  /** Names the per-endpoint daily cap, which bounds what the relayer can spend on gas. */
+  name: string;
+  perDay: number;
   parse: (body: unknown) => T;
   /** Offline signature check. Runs before the per-address limit, so nobody can use up another address's quota. */
   verify: (parsed: T) => Promise<void>;
   payoutOf: (parsed: T) => string;
   submit: (parsed: T) => Promise<RelayResult>;
+  /** Limit per signer / org key; defaults to LIMITS.perPayout. */
+  perKey?: { max: number; windowMs: number };
 }
 
 export const BIND: RelayKind<BindRequest> = {
+  name: "bind",
+  perDay: 200,
   parse: (body) => parseBind(body),
   verify: verifyBind,
   payoutOf: (b) => b.message.payout,
@@ -306,6 +323,8 @@ export const BIND: RelayKind<BindRequest> = {
 };
 
 export const CHANGE: RelayKind<ChangeRequest> = {
+  name: "change",
+  perDay: 100,
   parse: (body) => parseChange(body),
   verify: verifyChange,
   payoutOf: (c) => c.message.oldPayout,
@@ -315,7 +334,10 @@ export const CHANGE: RelayKind<ChangeRequest> = {
 /** One handler for every relay route: global and per-IP limits, parse, verify, per-address limit, submit. */
 export async function relayRoute<T>(req: Request, kind: RelayKind<T>): Promise<Response> {
   try {
-    if (!allow("global", LIMITS.global.max, LIMITS.global.windowMs)) {
+    if (
+      !allow("global", LIMITS.global.max, LIMITS.global.windowMs) ||
+      !allow(`day:${kind.name}`, kind.perDay, LIMITS.global.windowMs)
+    ) {
       throw new RelayError(429, "The relayer is busy today. Please try again tomorrow.", "RATE_LIMITED");
     }
     if (!allow(`ip:${clientIp(req)}`, LIMITS.perIp.max, LIMITS.perIp.windowMs)) {
@@ -323,7 +345,8 @@ export async function relayRoute<T>(req: Request, kind: RelayKind<T>): Promise<R
     }
     const parsed = kind.parse(await req.json().catch(() => null));
     await kind.verify(parsed);
-    if (!allow(`payout:${kind.payoutOf(parsed)}`, LIMITS.perPayout.max, LIMITS.perPayout.windowMs)) {
+    const perKey = kind.perKey ?? LIMITS.perPayout;
+    if (!allow(`payout:${kind.payoutOf(parsed)}`, perKey.max, perKey.windowMs)) {
       throw new RelayError(429, "Too many tries for this address. Please wait an hour.", "RATE_LIMITED");
     }
     return Response.json(await kind.submit(parsed));

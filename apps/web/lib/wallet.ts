@@ -1,6 +1,14 @@
 import { createWalletClient, custom, type Address, type EIP1193Provider, type Hex, type LocalAccount, type WalletClient } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { arcTestnet, bindTypedData, changeTypedData, type BindMessage, type ChangeMessage } from "@sendsure/chain";
+import {
+  arcTestnet,
+  bindTypedData,
+  changeTypedData,
+  permitTypedData,
+  type BindMessage,
+  type ChangeMessage,
+  type PermitMessage,
+} from "@sendsure/chain";
 
 declare global {
   interface Window {
@@ -74,6 +82,16 @@ export async function switchToArc(s: Signer): Promise<void> {
 
 export async function signBind(s: Signer, message: BindMessage): Promise<Hex> {
   const typed = bindTypedData(message);
+  return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
+}
+
+/** A plain-text message (the wallet shows it word for word). */
+export async function signText(s: Signer, message: string): Promise<Hex> {
+  return s.kind === "test" ? s.account.signMessage({ message }) : s.client.signMessage({ account: s.address, message });
+}
+
+export async function signPermit(s: Signer, message: PermitMessage): Promise<Hex> {
+  const typed = permitTypedData(message);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 

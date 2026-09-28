@@ -1,0 +1,25 @@
+{
+  "note": "First-party end-to-end test with throwaway keys; org tier SANDBOX. Not traction.",
+  "ranAtUnix": 1790625121,
+  "base": "http://127.0.0.1:3100",
+  "org": "0xE35578315E1bE69424bd2Cc638e86614338cC886",
+  "owner": "0xB32965C8A3BA649fC8dadF5c6BcDAcc947F7acf6",
+  "checks": {
+    "strangerCreate": "400 BadSignature",
+    "created": "200 tier 2",
+    "allowanceUsdc": "10",
+    "strangerInvites": "400 BadSignature",
+    "invitesOpened": [
+      "OPEN",
+      "OPEN"
+    ],
+    "invitesReplay": "409 NonceUsed",
+    "payeeBound": "BOUND"
+  },
+  "links": {
+    "createOrg": "https://explorer.testnet.arc.io/tx/0x7200c23baf1ff8acaffd1f25f66842c761ecaf7c0a5d9e12fb181a458b2236b5",
+    "budget": "https://explorer.testnet.arc.io/tx/0x8878f59e8f6e64dd7a5eac0453f38a1ff3d36053015bbe1abf78acbf91207f06",
+    "invites": "https://explorer.testnet.arc.io/tx/0x06b43f5502e373235e76a4dfc4af78585bee9a660ea411484f19f7c4c39d3e5e",
+    "bind": "https://explorer.testnet.arc.io/tx/0x41a1e2a727517b0c9172c9f67a6efa5bf41889cdc28a9ed35d19613f91ce7844"
+  }
+}
