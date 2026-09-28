@@ -1,20 +1,20 @@
 {
   "note": "First-party end-to-end test on the SANDBOX org with a throwaway key. Not traction.",
-  "ranAtUnix": 1790624327,
-  "relayerBase": "http://127.0.0.1:3100",
+  "ranAtUnix": 1790626898,
+  "relayerBase": "https://sendsure.0xpankaj.workers.dev",
   "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
-  "payeeRef": "0xb5a5a7ee908f4c108ebd4d357a71f8f20150bd67a76c0483d55554c2f6e7fbb1",
-  "payout": "0x123cb14A5887525Fc68412e9083c08083009C3aD",
-  "openSlotTx": "0x1ab64e815187e2ccb92289dcf6139dfd785b6135925d50a3889a5c4d0c8293fd",
-  "bindTx": "0xfb2e20b0eed16ee2feff70e60103c81631eca1163e88fc4d383772a79324cde2",
+  "payeeRef": "0x0d6b3f95b5ff31037b1ac3532555e7d508aa6feeb2aa04ea461ef82f52116843",
+  "payout": "0xe01DaC66a2706F0ADDaDB225d094822E05CC58CC",
+  "openSlotTx": "0xaf034eb5d2db98c188176abd584561075acac5100b0f81263431a290dbb455f1",
+  "bindTx": "0x02e51b47ed5575ba6a041cec5de99c25ccdf419e70eb122421c4fdea7913bb5b",
   "checks": {
     "forgedRefused": "BadSignature",
     "bound": "BOUND/PROVEN",
     "replayRefused": "NonceUsed"
   },
   "links": {
-    "openSlot": "https://explorer.testnet.arc.io/tx/0x1ab64e815187e2ccb92289dcf6139dfd785b6135925d50a3889a5c4d0c8293fd",
-    "bind": "https://explorer.testnet.arc.io/tx/0xfb2e20b0eed16ee2feff70e60103c81631eca1163e88fc4d383772a79324cde2",
-    "payout": "https://explorer.testnet.arc.io/address/0x123cb14A5887525Fc68412e9083c08083009C3aD"
+    "openSlot": "https://explorer.testnet.arc.io/tx/0xaf034eb5d2db98c188176abd584561075acac5100b0f81263431a290dbb455f1",
+    "bind": "https://explorer.testnet.arc.io/tx/0x02e51b47ed5575ba6a041cec5de99c25ccdf419e70eb122421c4fdea7913bb5b",
+    "payout": "https://explorer.testnet.arc.io/address/0xe01DaC66a2706F0ADDaDB225d094822E05CC58CC"
   }
 }

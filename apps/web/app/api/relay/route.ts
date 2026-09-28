@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     return Response.json(await relayerStatus());
-  } catch {
+  } catch (err) {
+    console.error("relay status: cannot reach Arc testnet", err);
     return Response.json({ configured: true, error: "Could not reach Arc testnet." }, { status: 502 });
   }
 }

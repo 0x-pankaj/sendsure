@@ -136,7 +136,7 @@ export async function submitCreateOrg(req: CreateOrgRequest): Promise<RelayResul
       functionName: "createMandate",
       args: [params],
     });
-    const result = await sendAndWait(() => wallet.writeContract(request));
+    const result = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
     if (result.status === "success") {
       const receipt = await serverClient.getTransactionReceipt({ hash: result.txHash });
       const [created] = parseEventLogs({ abi: mandateFactoryAbi, logs: receipt.logs, eventName: "MandateCreated" });
@@ -203,7 +203,7 @@ export async function submitPermit(req: PermitRequest): Promise<RelayResult> {
       functionName: "permit",
       args: [m.owner, m.spender, m.value, m.deadline, Number(v ?? BigInt(yParity + 27)), r, s],
     });
-    return await sendAndWait(() => wallet.writeContract(request));
+    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }
@@ -279,7 +279,7 @@ export async function submitInvites(req: InvitesRequest): Promise<RelayResult> {
       args: [req.payeeRefs],
     });
     usedInviteSignatures.add(req.signature.toLowerCase());
-    return await sendAndWait(() => wallet.writeContract(request));
+    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }

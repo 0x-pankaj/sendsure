@@ -1,8 +1,14 @@
 {
-  // Cloudflare config for SendSure's database (D1). Apply migrations with:
-  //   npx wrangler d1 migrations apply sendsure --remote
+  // SendSure on Cloudflare Workers (OpenNext) with its D1 database.
+  //   build + deploy:  pnpm --filter @sendsure/web cf:deploy
+  //   migrations:      npx wrangler d1 migrations apply sendsure --remote
+  //   secrets (never in this file): RELAYER_PRIVATE_KEY, AGENT_PRIVATE_KEY, SESSION_SECRET, MESH_API_KEY
   "name": "sendsure",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
   "d1_databases": [
     {
       "binding": "DB",

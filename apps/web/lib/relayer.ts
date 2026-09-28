@@ -193,6 +193,7 @@ export function toRelayError(err: unknown): RelayError {
       return new RelayError(409, text, name || "REVERTED");
     }
   }
+  console.error("relayer: RPC error", err instanceof BaseError ? err.shortMessage : err, err instanceof BaseError ? err.details : "");
   return new RelayError(502, "Could not reach Arc testnet. Please try again in a minute.", "RPC_ERROR");
 }
 
@@ -213,8 +214,23 @@ export interface RelayResult {
   org?: Address;
 }
 
-export async function sendAndWait(send: () => Promise<Hex>): Promise<RelayResult> {
-  const txHash = await serial(send);
+const isNonceError = (err: unknown) =>
+  /nonce too low|nonce has already been used|already known|replacement transaction underpriced/i.test(String(err));
+
+/**
+ * Sends one transaction and waits for it. On Cloudflare several isolates can send at once, so a nonce
+ * clash is possible: then the account's nonce is re-read and the send retried (3 tries in all).
+ */
+export async function sendAndWait(send: () => Promise<Hex>, from?: Address): Promise<RelayResult> {
+  let txHash: Hex | undefined;
+  for (let attempt = 1; !txHash; attempt++) {
+    try {
+      txHash = await serial(send);
+    } catch (err) {
+      if (!from || attempt >= 3 || !isNonceError(err)) throw err;
+      nonceManager.reset({ address: from, chainId: arcTestnet.id });
+    }
+  }
   try {
     const receipt = await serverClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 });
     return { txHash, status: receipt.status };
@@ -245,7 +261,7 @@ export async function submitBind(req: BindRequest): Promise<RelayResult> {
       functionName: "bindWithSig",
       args: [m.org, m.payeeRef, m.payout, m.realAccountCommit, m.realProofType, m.nonce, m.validUntil, signature],
     });
-    return await sendAndWait(() => wallet.writeContract(request));
+    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }
@@ -284,7 +300,7 @@ export async function submitChange(req: ChangeRequest): Promise<RelayResult> {
       functionName: "requestChange",
       args: [m.org, m.payeeRef, m.newPayout, m.nonce, m.validUntil, oldSig, newSig],
     });
-    return await sendAndWait(() => wallet.writeContract(request));
+    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }

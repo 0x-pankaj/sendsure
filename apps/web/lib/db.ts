@@ -1,7 +1,5 @@
-// Server only. SendSure's database: Cloudflare D1 in production, a local SQLite file in development
-// and tests. Both run the same SQL files from apps/web/migrations.
-import { mkdirSync, readFileSync, readdirSync } from "node:fs";
-import path from "node:path";
+// Server only. SendSure's database: Cloudflare D1 in production (the Worker's DB binding), a local
+// SQLite file under Node for development and tests. Both run the SQL files in apps/web/migrations.
 
 export type Row = Record<string, unknown>;
 
@@ -48,33 +46,26 @@ export function d1Db(binding: D1Like): Db {
   };
 }
 
-/** Local SQLite via node:sqlite, with the D1 migrations applied (tracked like wrangler does). */
-export async function sqliteDb(file: string, migrationsDir = path.join(process.cwd(), "migrations")): Promise<Db> {
-  const { DatabaseSync } = await import("node:sqlite");
-  if (file !== ":memory:") mkdirSync(path.dirname(file), { recursive: true });
-  const db = new DatabaseSync(file);
-  db.exec("CREATE TABLE IF NOT EXISTS d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TEXT)");
-  const applied = new Set((db.prepare("SELECT name FROM d1_migrations").all() as { name: string }[]).map((r) => r.name));
-  for (const name of readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".sql"))
-    .sort()) {
-    if (applied.has(name)) continue;
-    db.exec(readFileSync(path.join(migrationsDir, name), "utf8"));
-    db.prepare("INSERT INTO d1_migrations (name, applied_at) VALUES (?, datetime('now'))").run(name);
-  }
-  type Param = string | number | bigint | null;
-  const args = (p: unknown[]) => p.map((v) => (v === undefined ? null : (v as Param)));
-  return {
-    all: async <T>(sql: string, ...p: unknown[]) => db.prepare(sql).all(...args(p)) as T[],
-    first: async <T>(sql: string, ...p: unknown[]) => (db.prepare(sql).get(...args(p)) as T | undefined) ?? null,
-    run: async (sql, ...p) => ({ changes: Number(db.prepare(sql).run(...args(p)).changes) }),
-  };
-}
-
 let current: Promise<Db> | undefined;
 
+/** The Worker's D1 binding when running on Cloudflare; null under plain Node. */
+async function cloudflareD1(): Promise<D1Like | null> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const { env } = await getCloudflareContext({ async: true });
+    return (env as { DB?: D1Like }).DB ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function getDb(): Promise<Db> {
-  current ??= sqliteDb(process.env.SENDSURE_DB_FILE ?? path.join(process.cwd(), "data", "sendsure.db"));
+  current ??= (async () => {
+    const d1 = await cloudflareD1();
+    if (d1) return d1Db(d1);
+    const { sqliteDb } = await import("./dbLocal");
+    return sqliteDb(process.env.SENDSURE_DB_FILE ?? "data/sendsure.db");
+  })();
   return current;
 }
 

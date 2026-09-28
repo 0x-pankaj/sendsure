@@ -2,7 +2,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { normalizeInvoiceRef } from "@sendsure/chain";
-import { sqliteDb } from "../lib/db";
+import { sqliteDb } from "../lib/dbLocal";
 import { issueToken, readToken, signIn, signInMessage } from "../lib/session";
 
 beforeAll(() => {

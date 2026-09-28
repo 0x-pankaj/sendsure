@@ -4,6 +4,8 @@ SendSure is a payables agent for teams that pay contractors in stablecoins. It p
 who has proven their own payout address, only for a claim that payee signed, and only inside a
 budget an Arc contract enforces. Then it writes each payment into the books the team already keeps.
 
+**Live (Arc testnet):** https://sendsure.0xpankaj.workers.dev · try [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example)
+
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
 Arc testnet (chain 5042002).
 

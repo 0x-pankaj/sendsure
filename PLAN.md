@@ -7,6 +7,10 @@
 
 - **Status:** see the task table; ✅ = done and pushed.
 - **Next task:** the first ⬜ in [Tasks](#tasks), in order.
+- **Live:** https://sendsure.0xpankaj.workers.dev (Cloudflare Workers on Pankaj's account, OpenNext; D1 `sendsure`).
+  Deploy: `pnpm --filter @sendsure/web cf:deploy`. Worker secrets (Cloudflare, never in git): `RELAYER_PRIVATE_KEY`,
+  `AGENT_PRIVATE_KEY`, `SESSION_SECRET`, `ARC_RPC_URL` (the arc-canteen RPC with Pankaj's token: Arc's public RPC
+  rate-limits Cloudflare's shared IPs). Upload them with `wrangler secret bulk` from `.env.local`, never echoed.
 - **Repo:** https://github.com/0x-pankaj/sendsure (public, MIT).
 - **Hackathon-only diff:** https://github.com/0x-pankaj/sendsure/compare/tameion-baseline...main
 - **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.network`.
@@ -53,7 +57,7 @@ action is needed. The same run is then rehearsed on Arc testnet under the contra
 |---|---|---|---|
 | M1 | Contracts built and tested | Tue Sep 29 | 47 tests green ✅ |
 | M2 | Contracts live on Arc testnet, first real settle | Tue Sep 29 | explorer links ✅ ([smoke test](deployments/smoke-test.md)) |
-| M3 | Payout check + payee verify page live on a URL | Wed Sep 30 | live URL |
+| M3 | Payout check + payee verify page live on a URL | Wed Sep 30 | live URL ✅ https://sendsure.0xpankaj.workers.dev (Sep 29) |
 | M4 | **Must-work demo, hosted:** payee binds → signs claim → agent proposes run with dry run + reasons → approver co-signs → agent wallet settles → receipt + beancount entry → dashboard counts it; a wallet-change attempt is refused | Thu Oct 1 | live URL + tx |
 | M5 | Agent judgment on messy input + MCP + judge path `/try` + first Loom + first form submission | Sat Oct 3 | Loom, form |
 | M6 | Final: README in house style, video under 3 minutes, evidence folder, numbers frozen at Oct 10 23:59 ET | Sat Oct 10 | submitted |
@@ -89,7 +93,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T15 | Decision log: hash-chained JSONL, signed, anchored on-chain; `replay <id>` re-checks signatures + `check()` at the recorded block (never re-asks the model) | C | replay works | ⬜ |
 | T16 | Indexer (events → Postgres, ≤ 9,999-block windows, cursor, fallback RPC) + receipts + dashboard with three tiers (external / first-party / sandbox excluded) | C | dashboard shows real tx | ⬜ |
 | T17 | Sandbox org (tier SANDBOX) + `/try` judge path with no wallet: look-alike refusal via `check()`, recorded refusal tx, public verify lookup | C | `/try` works logged out | ⬜ |
-| T18 | Hosting: always-on host (Railway), Postgres, domain + TLS, secrets in the host store, `/status` page | C+P | live URL | ⬜ |
+| T18 | Hosting: always-on host, database, domain + TLS, secrets in the host store, `/status` page | C+P | live URL ✅ Cloudflare Workers + D1 (Pankaj's choice; Hono split only if Workers limits bite). All 4 e2e suites pass against the live URL (31/31). Left: domain (P1), `/status` (with T16) | ✅ |
 | T19 | Books: beancount writer (6 decimals, explicit tolerance, balance assertion from chain) + `bean-check --json` | C | sample ledger passes | ⬜ |
 | T20 | MCP server on the sandbox org only: `dry_run` by default, idempotency signal on every tool, rate limits | C | a judge's Claude can call it | ⬜ |
 | T21 | Agent judgment inbox: duplicate invoice under a new number, claim missing evidence, look-alike "new wallet" email with a hidden instruction → reasons shown, `settle()` refuses | C | demo scene recorded | ⬜ |
@@ -103,7 +107,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
 | P5 | Keys: **MeshAPI key** (`MESH_API_KEY=rsk_…`, for all AI) and a Circle Console TEST API key + entity secret (sandbox treasury), written into `apps/web/.env.local` yourself (never in chat) | P | in `.env.local` | ⬜ |
 | P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
-| P7 | Hosting: Cloudflare (Pankaj's own account, wrangler logged in Sep 29) holds the D1 database; confirm the web app is hosted there too (Workers) instead of the Railway account on this machine, which belongs to another project | P | confirmed | ⬜ |
+| P7 | Hosting account: Cloudflare, Pankaj's own (he chose Workers on Sep 29: "if not work then split backend with hono") | P | confirmed | ✅ |
 
 ### Submission
 | ID | Task | Owner | Done when | Status |
@@ -128,6 +132,8 @@ hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV
 ## Locked decisions
 - **Name:** SendSure.
 - **AI:** all model calls go through **MeshAPI** (`https://api.meshapi.ai/v1`, OpenAI-compatible; Claude models as `anthropic/…`). Said by Pankaj, Sep 29.
+- **Hosting:** **Cloudflare Workers** (OpenNext) on Pankaj's account. If Workers limits ever bite, split the API into a
+  Hono Worker and serve the pages statically (Pankaj, Sep 29).
 - **Database:** **Cloudflare D1** `sendsure` (ENAM, id `4b2134c8-7d8c-4200-b611-8f521767ca3d`) on Pankaj's account; SQL in `apps/web/migrations`, applied with `npx wrangler d1 migrations apply sendsure --remote`. Local development and tests run the same SQL on node:sqlite. Said by Pankaj, Sep 29.
 - **Licence:** MIT; the Odoo add-on is LGPL-3.
 - **Testnet only.**

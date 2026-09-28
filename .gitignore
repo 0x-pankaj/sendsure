@@ -28,3 +28,7 @@ apps/web/data/
 *.db-wal
 *.db-shm
 .wrangler/
+
+# Cloudflare / OpenNext build output and local secrets
+.open-next/
+.dev.vars

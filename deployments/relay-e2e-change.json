@@ -1,25 +1,25 @@
 {
   "note": "First-party end-to-end test on the SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790624340,
-  "relayerBase": "http://127.0.0.1:3100",
+  "ranAtUnix": 1790626913,
+  "relayerBase": "https://sendsure.0xpankaj.workers.dev",
   "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
-  "payeeRef": "0xec505eadbbe421b34cb86ef29dcebc9dc8868df8be71ff17d9073b3baeedd24e",
-  "payeeA": "0xe77dFFFc5384f5704f4ce4a50694AD68771F0F41",
-  "newAddressC": "0x30507b4c49D6b47BBCacB619EaEb8e1DD82E6353",
-  "attacker": "0x692E3834950FA45cA0452CcA12Bd165f3A231FD2",
+  "payeeRef": "0xbd32390fce5cfef0dcb61ac812291858730a5666e08d3fb9fcc9e18c9613a74f",
+  "payeeA": "0xB160aD3edceC79b3564e386663Ec6BDeD9E384d5",
+  "newAddressC": "0x326Bf70a6C89819f8d58AF391be53eD622AC2Afc",
+  "attacker": "0x0e97c9cd1483D002Eb591cB21049233C9245e4f1",
   "checks": {
     "attackerChange": "400 BadSignature",
     "attackerRebind": "409 BadState",
     "realChange": "200 success",
-    "pendingNewPayout": "0x30507b4c49D6b47BBCacB619EaEb8e1DD82E6353",
+    "pendingNewPayout": "0x326Bf70a6C89819f8d58AF391be53eD622AC2Afc",
     "waitHours": 24,
     "replay": "409 ChangeAlreadyPending",
     "cancelledByPayer": true
   },
   "links": {
-    "openSlot": "https://explorer.testnet.arc.io/tx/0x38a0a78ec661eb69f91f956d1025faa5d2d3556d82c54666470a99c7c74f40c2",
-    "bind": "https://explorer.testnet.arc.io/tx/0x5fcc5f2e1b739d2f8e027533a56c2e7bdd758b782fd48127498ed8288f4b1679",
-    "change": "https://explorer.testnet.arc.io/tx/0x26a4d9337ab847ceb4b7958480ac4faaf6111a3a42894175c93a64d5084c8f71",
-    "cancel": "https://explorer.testnet.arc.io/tx/0x9c6a2e4bebffae60d296a3cd403dc98c684fbba156bfeeaf97a837164fbe2bed"
+    "openSlot": "https://explorer.testnet.arc.io/tx/0xb94b2f39b748ca1e95c29bbf46b8f300bc4c0302fb36bed25fc18840bc5c57f4",
+    "bind": "https://explorer.testnet.arc.io/tx/0x24af5308b4c3248035fc16c07cf192dad941f6483c2072bde58d0bdeb8d429bc",
+    "change": "https://explorer.testnet.arc.io/tx/0x662fa9ee740c7f3833d3d522b6c225bfd9d7dfe777d57bb95d4457a7155d5bb3",
+    "cancel": "https://explorer.testnet.arc.io/tx/0x86a6527b1726067d69fcd56d0f8f5aa88418df5704b05f1b6fc771301a2266b9"
   }
 }
