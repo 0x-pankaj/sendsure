@@ -7,6 +7,12 @@ budget an Arc contract enforces. Then it writes each payment into the books the 
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
 Arc testnet (chain 5042002).
 
+## What's here
+
+| Folder | What it is |
+|---|---|
+| [`contracts/`](contracts/) | PayeeRegistry and Mandate: the rules that decide whether money moves, with 47 tests. |
+
 ## What existed before the hackathon
 
 Everything in [`prior-work/`](prior-work/) existed before the window opened (Sun Sep 27, 00:00 ET)
