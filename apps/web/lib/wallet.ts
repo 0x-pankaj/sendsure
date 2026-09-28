@@ -4,9 +4,12 @@ import {
   arcTestnet,
   bindTypedData,
   changeTypedData,
+  claimTypes,
+  mandateDomain,
   permitTypedData,
   type BindMessage,
   type ChangeMessage,
+  type Claim,
   type PermitMessage,
 } from "@sendsure/chain";
 
@@ -92,6 +95,12 @@ export async function signText(s: Signer, message: string): Promise<Hex> {
 
 export async function signPermit(s: Signer, message: PermitMessage): Promise<Hex> {
   const typed = permitTypedData(message);
+  return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
+}
+
+/** The payee signs one claim for one invoice (EIP-712, the payer org's Mandate domain). */
+export async function signClaim(s: Signer, org: Address, claim: Claim): Promise<Hex> {
+  const typed = { domain: mandateDomain(org), types: claimTypes, primaryType: "Claim", message: claim } as const;
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 

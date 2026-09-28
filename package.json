@@ -13,7 +13,8 @@
     "invite": "tsx scripts/invite.ts",
     "e2e:bind": "tsx scripts/e2e-bind.ts",
     "e2e:change": "tsx scripts/e2e-change.ts",
-    "e2e:org": "tsx scripts/e2e-org.ts"
+    "e2e:org": "tsx scripts/e2e-org.ts",
+    "e2e:claim": "tsx scripts/e2e-claim.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

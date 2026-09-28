@@ -20,3 +20,11 @@ __pycache__/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# App data (SQLite)
+apps/web/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.wrangler/

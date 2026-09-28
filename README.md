@@ -14,8 +14,9 @@ Arc testnet (chain 5042002).
 | [`contracts/`](contracts/) | PayeeRegistry and Mandate: the rules that decide whether money moves, with 47 tests. |
 | [`packages/chain/`](packages/chain/) | TypeScript view of the contracts: addresses, ABIs, EIP-712 types, claim and registry helpers. Tests cross-check them against the live contracts. |
 | [`packages/core/`](packages/core/) | The payout check: compares a payout list with the last one you paid (changed, new, look-alike, duplicate). |
-| [`apps/web/`](apps/web/) | The web app. `/check` runs the payout check in your browser. `/org` sets up a payer: create the org, set a budget, invite payees, all by signing (SendSure pays the gas). `/verify` is where a payee proves their address by signing once, or moves to a new address (both keys sign, then a wait the payer can cancel). `/api/relay/*` and `/api/org/*` check each signature, simulate, then submit. |
-| [`scripts/`](scripts/) | `invite.ts` opens an invite for a payee. `e2e-bind.ts`, `e2e-change.ts` and `e2e-org.ts` run the flows end to end on Arc testnet ([bind](deployments/relay-e2e.json), [change](deployments/relay-e2e-change.json), [org](deployments/org-e2e.json)). |
+| [`apps/web/`](apps/web/) | The web app. `/check` runs the payout check in your browser. `/org` sets up a payer: create the org, set a budget, invite payees, all by signing (SendSure pays the gas). `/verify` is where a payee proves their address by signing once, sends signed claims for invoices, or moves to a new address (both keys sign, then a wait the payer can cancel). `/api/relay/*` and `/api/org/*` check each signature, simulate, then submit. |
+| [`apps/web/migrations/`](apps/web/migrations/) | The database schema (Cloudflare D1; the same SQL runs on local SQLite for tests). No payee names are stored. |
+| [`scripts/`](scripts/) | `invite.ts` opens an invite for a payee. `e2e-bind.ts`, `e2e-change.ts`, `e2e-org.ts` and `e2e-claim.ts` run the flows end to end on Arc testnet ([bind](deployments/relay-e2e.json), [change](deployments/relay-e2e-change.json), [org](deployments/org-e2e.json), [claim](deployments/claim-e2e.json)). |
 | [`deployments/`](deployments/) | Deployed addresses and first-party test runs with explorer links. These are sandbox runs, not traction. |
 
 Run it: `pnpm install && pnpm test`, then `pnpm --filter @sendsure/web dev`. The relayer needs

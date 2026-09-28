@@ -83,7 +83,8 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T10 | Payee verify page: connect wallet, switch to Arc testnet, sign `Bind` (plain-language message), relayer submits `bindWithSig` | C | a real EOA binds on testnet: fresh EOA via `pnpm e2e:bind` ([run](deployments/relay-e2e.json): forged sig and replay refused), and the page itself with the in-browser test wallet. A MetaMask run by a real payee is still to come (P4) | ✅ |
 | T11 | Relayer service (gas paid by a funded relayer key; rate-limited) | C | relays bind + change: `pnpm e2e:change` ([run](deployments/relay-e2e-change.json): attacker's change and re-bind refused, both-key change waits 24 h, replay refused, payer cancels) + change UI on `/verify` | ✅ |
 | T12 | Payer onboarding: create Mandate via factory (owner and treasury = payer's own wallet), set caps, approve a capped allowance, open slots, send invites | C | a payer org is created from the UI: `/org` with a test wallet (create → budget → 3 invites, all gasless). `pnpm e2e:org` ([run](deployments/org-e2e.json)): org in someone else's name refused, stranger's invites refused, replay refused, payee binds. Test-wallet orgs are tier SANDBOX | ✅ |
-| T13 | Claims: payee signs a claim on their page; payer uploads an invoice → extraction (two passes: citations first, then a strict tool call) → payee confirms | C | claim stored and signed | ⬜ |
+| T13 | Claims: the payee signs a claim on their page (invoice no., amount, work period); the server keeps each org's secret ref salt, runs the contract's own `check()` and stores it; payer and payee see their claims (wallet sign-in) | C | claim stored and signed: `pnpm e2e:claim` ([run](deployments/claim-e2e.json)): stored as ESCALATED (first payment needs a co-sign); same invoice typed differently, another key's signature and a mismatched invoice no. refused; a stranger can't list claims. Also sent from `/verify` in the browser | ✅ |
+| T13b | Invoice extraction: payer uploads an invoice → AI via **MeshAPI** (pass 1: every field with a verbatim quote, checked against the text in code; pass 2: strict JSON schema) → payee confirms by signing | C | needs `MESH_API_KEY` (P5) | ⬜ |
 | T14 | Agent loop (Claude API, tool-only, no shell): get_claims, vop_match, check (eth_call `check()`), propose_run, request_cosign, settle via Circle agent wallet (`circle wallet execute`), anchor decision log | C | one full run on testnet with reasons | ⬜ |
 | T15 | Decision log: hash-chained JSONL, signed, anchored on-chain; `replay <id>` re-checks signatures + `check()` at the recorded block (never re-asks the model) | C | replay works | ⬜ |
 | T16 | Indexer (events → Postgres, ≤ 9,999-block windows, cursor, fallback RPC) + receipts + dashboard with three tiers (external / first-party / sandbox excluded) | C | dashboard shows real tx | ⬜ |
@@ -100,9 +101,9 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | P2 | Confirm the Luma registration; use GitHub `0x-pankaj` (with the hyphen) everywhere | P | confirmed | ⬜ |
 | P3 | Organizer questions in a public Canteen channel: does a testnet rehearsal / payout check count as a business onboarded; the event_name; a test-USDC grant; ask for 2–3 intros | P | posted | ⬜ |
 | P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
-| P5 | Keys and accounts: Anthropic API key; Circle Console TEST API key + entity secret (only for the sandbox treasury) | P | handed over via `.env` | ⬜ |
+| P5 | Keys: **MeshAPI key** (`MESH_API_KEY=rsk_…`, for all AI) and a Circle Console TEST API key + entity secret (sandbox treasury), written into `apps/web/.env.local` yourself (never in chat) | P | in `.env.local` | ⬜ |
 | P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
-| P7 | Hosting account: confirm which Railway account Claude deploys to (the CLI on this machine is logged in to an account under another name) | P | confirmed | ⬜ |
+| P7 | Hosting: Cloudflare (Pankaj's own account, wrangler logged in Sep 29) holds the D1 database; confirm the web app is hosted there too (Workers) instead of the Railway account on this machine, which belongs to another project | P | confirmed | ⬜ |
 
 ### Submission
 | ID | Task | Owner | Done when | Status |
@@ -126,6 +127,8 @@ hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV
 
 ## Locked decisions
 - **Name:** SendSure.
+- **AI:** all model calls go through **MeshAPI** (`https://api.meshapi.ai/v1`, OpenAI-compatible; Claude models as `anthropic/…`). Said by Pankaj, Sep 29.
+- **Database:** **Cloudflare D1** `sendsure` (ENAM, id `4b2134c8-7d8c-4200-b611-8f521767ca3d`) on Pankaj's account; SQL in `apps/web/migrations`, applied with `npx wrangler d1 migrations apply sendsure --remote`. Local development and tests run the same SQL on node:sqlite. Said by Pankaj, Sep 29.
 - **Licence:** MIT; the Odoo add-on is LGPL-3.
 - **Testnet only.**
 - **No code reused** from earlier events.

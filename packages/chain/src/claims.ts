@@ -42,6 +42,10 @@ export const keccakText = (text: string): Hex => keccak256(toBytes(text));
 export const payeeRefOf = (salt: Hex, vendorId: string): Hex =>
   keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "string" }], [salt, vendorId]));
 
-/** refHash = keccak256(abi.encode(payer salt, invoice reference)). Never includes the amount. */
+/** "inv  001 " and "INV 001" are the same invoice: trim, collapse spaces, upper-case. */
+export const normalizeInvoiceRef = (invoiceRef: string): string =>
+  invoiceRef.normalize("NFKC").trim().replace(/\s+/g, " ").toUpperCase();
+
+/** refHash = keccak256(abi.encode(payer salt, normalized invoice reference)). Never includes the amount. */
 export const refHashOf = (salt: Hex, invoiceRef: string): Hex =>
-  keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "string" }], [salt, invoiceRef.trim()]));
+  keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "string" }], [salt, normalizeInvoiceRef(invoiceRef)]));

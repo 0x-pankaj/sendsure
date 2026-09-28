@@ -45,3 +45,25 @@ export function check(ok: boolean, what: string): void {
   if (!ok) failures++;
 }
 export const failed = () => failures;
+
+// ------------------------------------------------------------------ app API helpers (sessions, orgs)
+
+export async function api(base: string, path: string, init: { body?: unknown; token?: string } = {}) {
+  const res = await fetch(`${base}${path}`, {
+    method: init.body === undefined ? "GET" : "POST",
+    headers: { "content-type": "application/json", ...(init.token ? { authorization: `Bearer ${init.token}` } : {}) },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
+  });
+  return { status: res.status, body: (await res.json()) as Record<string, any> };
+}
+
+/** Sign in like the web app does; returns the session token. */
+export async function signInAs(base: string, account: PrivateKeyAccount): Promise<string> {
+  const { signInMessage } = await import("../../apps/web/lib/signin");
+  const issuedAt = new Date().toISOString();
+  const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+  const signature = await account.signMessage({ message: signInMessage(account.address, issuedAt, nonce) });
+  const r = await api(base, "/api/session", { body: { address: account.address, issuedAt, nonce, signature } });
+  if (r.status !== 200) throw new Error(`sign-in failed: ${JSON.stringify(r.body)}`);
+  return r.body.token as string;
+}

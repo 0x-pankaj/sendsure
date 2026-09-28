@@ -1,0 +1,14 @@
+{
+  // Cloudflare config for SendSure's database (D1). Apply migrations with:
+  //   npx wrangler d1 migrations apply sendsure --remote
+  "name": "sendsure",
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sendsure",
+      "database_id": "4b2134c8-7d8c-4200-b611-8f521767ca3d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

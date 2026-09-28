@@ -21,6 +21,7 @@ import {
   type PayeeView,
   type PendingChange,
 } from "@sendsure/chain";
+import { PayeeClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
 import {
   connectBrowserWallet,
@@ -315,6 +316,28 @@ export default function VerifyPage() {
                 )}
             </BindingState>
           )}
+
+          {loaded.payee.state === "BOUND" && !signer && (
+            <div className="card" style={{ maxWidth: 760, marginTop: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Is this you?</h3>
+              <p className="hint">Connect the wallet {payer} pays to send a claim or change your address.</p>
+              <div className="row">
+                <button className="btn" disabled={busy !== ""} onClick={() => connect("browser")}>
+                  {busy === "connect" ? "Waiting for your wallet…" : "Connect wallet"}
+                </button>
+                <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
+                  Use the test wallet from this tab
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loaded.payee.state === "BOUND" &&
+            signer &&
+            same(signer.address, loaded.payee.payout) &&
+            !loaded.payee.changePending && (
+              <PayeeClaims org={invite.org} payeeRef={invite.payeeRef} signer={signer} payer={payer} />
+            )}
 
           {error && (
             <p className="notice" role="alert">
