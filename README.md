@@ -14,8 +14,8 @@ Arc testnet (chain 5042002).
 | [`contracts/`](contracts/) | PayeeRegistry and Mandate: the rules that decide whether money moves, with 47 tests. |
 | [`packages/chain/`](packages/chain/) | TypeScript view of the contracts: addresses, ABIs, EIP-712 types, claim and registry helpers. Tests cross-check them against the live contracts. |
 | [`packages/core/`](packages/core/) | The payout check: compares a payout list with the last one you paid (changed, new, look-alike, duplicate). |
-| [`apps/web/`](apps/web/) | The web app. `/check` runs the payout check in your browser. `/verify` is where a payee proves their address by signing once. `/api/relay/bind` pays the gas for that signature. |
-| [`scripts/`](scripts/) | `invite.ts` opens an invite for a payee. `e2e-bind.ts` runs the payee flow end to end on Arc testnet ([latest run](deployments/relay-e2e.json)). |
+| [`apps/web/`](apps/web/) | The web app. `/check` runs the payout check in your browser. `/verify` is where a payee proves their address by signing once, or moves to a new address (both keys sign, then a 1-day wait the payer can cancel). `/api/relay/*` pays the gas for those signatures. |
+| [`scripts/`](scripts/) | `invite.ts` opens an invite for a payee. `e2e-bind.ts` and `e2e-change.ts` run the payee flows end to end on Arc testnet ([bind run](deployments/relay-e2e.json), [change run](deployments/relay-e2e-change.json)). |
 | [`deployments/`](deployments/) | Deployed addresses and first-party test runs with explorer links. These are sandbox runs, not traction. |
 
 Run it: `pnpm install && pnpm test`, then `pnpm --filter @sendsure/web dev`. The relayer needs

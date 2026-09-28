@@ -14,16 +14,21 @@ import {
   randomNonce,
   readOrg,
   readPayee,
+  readPendingChange,
   type BindMessage,
+  type ChangeMessage,
   type OrgView,
   type PayeeView,
+  type PendingChange,
 } from "@sendsure/chain";
 import { publicClient } from "../../lib/arc";
 import {
   connectBrowserWallet,
   hasBrowserWallet,
   isOnArc,
+  newTestWallet,
   signBind,
+  signChange,
   switchToArc,
   testWallet,
   walletErrorText,
@@ -40,7 +45,7 @@ type Loaded =
   | { kind: "loading" }
   | { kind: "bad-link" }
   | { kind: "error"; text: string }
-  | { kind: "ready"; org: OrgView; payee: PayeeView };
+  | { kind: "ready"; org: OrgView; payee: PayeeView; pending: PendingChange | null };
 
 type Busy = "" | "connect" | "switch" | "sign" | "relay" | "self";
 
@@ -65,16 +70,21 @@ export default function VerifyPage() {
   const [error, setError] = useState("");
   const [relayFailed, setRelayFailed] = useState(false);
   const [tx, setTx] = useState<{ hash: Hex; status: string } | null>(null);
+  const [changing, setChanging] = useState(false);
 
   useEffect(() => setInvite(readInvite()), []);
 
-  /** Reads the invite. After our own transaction, `untilChanged` re-reads briefly in case the RPC node lags a block. */
-  const refresh = useCallback(async (inv: Invite, untilChanged = false) => {
+  /** Reads the invite. After our own transaction, `until` re-reads briefly in case the RPC node lags a block. */
+  const refresh = useCallback(async (inv: Invite, until?: (p: PayeeView) => boolean) => {
     try {
       for (let attempt = 0; ; attempt++) {
-        const [org, payee] = await Promise.all([readOrg(publicClient, inv.org), readPayee(publicClient, inv.org, inv.payeeRef)]);
-        if (!untilChanged || payee.state !== "OPEN" || attempt >= 5) {
-          setLoaded({ kind: "ready", org, payee });
+        const [org, payee, pending] = await Promise.all([
+          readOrg(publicClient, inv.org),
+          readPayee(publicClient, inv.org, inv.payeeRef),
+          readPendingChange(publicClient, inv.org, inv.payeeRef),
+        ]);
+        if (!until || until(payee) || attempt >= 5) {
+          setLoaded({ kind: "ready", org, payee, pending });
           return;
         }
         await new Promise((r) => setTimeout(r, 1000));
@@ -95,6 +105,7 @@ export default function VerifyPage() {
     if (signer?.kind !== "browser" || !provider) return;
     const onChain = () => void isOnArc(signer).then(setOnArc, () => setOnArc(false));
     const onAccounts = () => {
+      if (changing) return; // switching to the new address is part of the change flow
       setSigner(null);
       setError("Your wallet switched accounts. Connect again to continue.");
     };
@@ -104,7 +115,7 @@ export default function VerifyPage() {
       provider.removeListener("chainChanged", onChain);
       provider.removeListener("accountsChanged", onAccounts);
     };
-  }, [signer]);
+  }, [signer, changing]);
 
   async function connect(kind: Signer["kind"]) {
     setError("");
@@ -154,7 +165,12 @@ export default function VerifyPage() {
       const res = await fetch("/api/relay/bind", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...message, nonce: message.nonce.toString(), validUntil: message.validUntil.toString(), signature }),
+        body: JSON.stringify({
+          ...message,
+          nonce: message.nonce.toString(),
+          validUntil: message.validUntil.toString(),
+          signature,
+        }),
       });
       const out = (await res.json().catch(() => ({}))) as { txHash?: Hex; status?: string; error?: string };
       if (!res.ok || !out.txHash) {
@@ -162,7 +178,7 @@ export default function VerifyPage() {
         throw new Error(out.error ?? `The relayer answered ${res.status}.`);
       }
       setTx({ hash: out.txHash, status: out.status ?? "pending" });
-      await refresh(invite, true);
+      await refresh(invite, (p) => p.state !== "OPEN");
     } catch (err) {
       setError(walletErrorText(err));
     } finally {
@@ -186,7 +202,7 @@ export default function VerifyPage() {
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       setTx({ hash, status: receipt.status });
-      await refresh(invite, true);
+      await refresh(invite, (p) => p.state !== "OPEN");
     } catch (err) {
       setError(walletErrorText(err));
     } finally {
@@ -205,8 +221,8 @@ export default function VerifyPage() {
       {loaded.kind === "ready" && invite && (
         <>
           <p className="lede">
-            {payer} wants to pay you through SendSure. Sign once with the wallet you want to be paid to. After that, SendSure
-            pays only that address, and changing it needs a signature from this wallet too.
+            {payer} wants to pay you through SendSure. Sign once with the wallet you want to be paid to. After that, SendSure pays
+            only that address, and changing it needs a signature from this wallet too.
           </p>
           <InviteFacts invite={invite} payee={loaded.payee} />
 
@@ -232,7 +248,9 @@ export default function VerifyPage() {
                       </button>
                     </div>
                     <p className="hint">
-                      {hasBrowserWallet() ? "Works with MetaMask, Rabby and other browser wallets. " : "No browser wallet found. "}
+                      {hasBrowserWallet()
+                        ? "Works with MetaMask, Rabby and other browser wallets. "
+                        : "No browser wallet found. "}
                       The test wallet is for trying SendSure on testnet only. For real payouts, use your own wallet.
                     </p>
                   </>
@@ -277,14 +295,39 @@ export default function VerifyPage() {
               mine={same(signer?.address, loaded.payee.payout) || Boolean(tx)}
               connected={Boolean(signer)}
               testWalletUsed={signer?.kind === "test"}
-            />
+              pending={loaded.pending}
+            >
+              {signer &&
+                same(signer.address, loaded.payee.payout) &&
+                loaded.payee.tier === "PROVEN" &&
+                !loaded.payee.changePending && (
+                  <ChangeAddress
+                    invite={invite}
+                    signer={signer}
+                    payer={payer}
+                    cooldown={loaded.org.changeCooldown}
+                    onBusy={setChanging}
+                    onDone={async (hash) => {
+                      setTx({ hash, status: "success" });
+                      await refresh(invite, (p) => p.changePending);
+                    }}
+                  />
+                )}
+            </BindingState>
           )}
 
-          {error && <p className="notice" role="alert">{error}</p>}
+          {error && (
+            <p className="notice" role="alert">
+              {error}
+            </p>
+          )}
           {tx && (
             <p className="hint">
-              Transaction ({tx.status}): <a className="mono" href={explorerTx(tx.hash)}>{short(tx.hash)}</a>. The gas was paid by
-              the SendSure relayer.
+              Transaction ({tx.status}):{" "}
+              <a className="mono" href={explorerTx(tx.hash)}>
+                {short(tx.hash)}
+              </a>
+              . The gas was paid by the SendSure relayer.
             </p>
           )}
         </>
@@ -307,11 +350,14 @@ function InviteFacts({ invite, payee }: { invite: Invite; payee: PayeeView }) {
       <dl className="facts">
         <dt>From</dt>
         <dd>
-          {invite.payer || "(no name in the link)"} <span className="hint">· the name comes from the link, not from the chain</span>
+          {invite.payer || "(no name in the link)"}{" "}
+          <span className="hint">· the name comes from the link, not from the chain</span>
         </dd>
         <dt>Payer contract</dt>
         <dd>
-          <a className="mono" href={explorerAddress(invite.org)}>{invite.org}</a>
+          <a className="mono" href={explorerAddress(invite.org)}>
+            {invite.org}
+          </a>
         </dd>
         <dt>Invite</dt>
         <dd>
@@ -329,30 +375,53 @@ function BindingState(props: {
   mine: boolean;
   connected: boolean;
   testWalletUsed: boolean;
+  pending: PendingChange | null;
+  children?: React.ReactNode;
 }) {
-  const { payee, org, payer, mine, connected, testWalletUsed } = props;
+  const { payee, org, payer, mine, connected, testWalletUsed, pending, children } = props;
+  const pendingNotice = pending && (
+    <div className="notice warn">
+      <p>
+        <b>A change of payout address is waiting.</b> From {new Date(Number(pending.effectiveAt) * 1000).toLocaleString()},{" "}
+        {payer} pays <span className="mono">{pending.newPayout}</span> instead of <span className="mono">{payee.payout}</span>.
+      </p>
+      <p>
+        Until then, payments still go to the current address. If this change was not you, tell {payer} now: they can cancel it.
+      </p>
+    </div>
+  );
   if (payee.state === "NONE") {
-    return <p className="notice warn">{payer} has not opened this invite yet. Ask them to send the link again once it is ready.</p>;
+    return (
+      <p className="notice warn">{payer} has not opened this invite yet. Ask them to send the link again once it is ready.</p>
+    );
   }
   if (payee.state === "REVOKED") {
     return <p className="notice">{payer} cancelled this invite. Ask them for a new link.</p>;
   }
   if (payee.state === "FROZEN") {
-    return <p className="notice warn">{payer} froze this payee while they check something. No payments go out until they unfreeze it.</p>;
+    return (
+      <p className="notice warn">
+        {payer} froze this payee while they check something. No payments go out until they unfreeze it.
+      </p>
+    );
   }
   const activeAt = new Date(Number(payee.activeAt) * 1000);
   const waiting = payee.activeAt * 1000n > BigInt(Date.now());
   if (!mine) {
     return (
-      <div className="notice warn">
-        <p>
-          <b>{connected ? "This invite was already used by another address." : "This invite is already confirmed."}</b> {payer}{" "}
-          can pay only <span className="mono">{payee.payout}</span>.
-        </p>
-        <p>If that is not your address, tell {payer} now. They can freeze it before any payment goes out.</p>
-      </div>
+      <>
+        <div className="notice warn">
+          <p>
+            <b>{connected ? "This invite was already used by another address." : "This invite is already confirmed."}</b> {payer}{" "}
+            can pay only <span className="mono">{payee.payout}</span>.
+          </p>
+          <p>If that is not your address, tell {payer} now. They can freeze it before any payment goes out.</p>
+        </div>
+        {pendingNotice}
+      </>
     );
   }
+  if (pending) return pendingNotice;
   return (
     <div className="notice ok">
       <p>
@@ -363,10 +432,161 @@ function BindingState(props: {
         The first payment to a new address still needs a person at {payer} to approve it.
       </p>
       <p>
-        To change this address later, you sign with this wallet and the new one, and the change waits {formatDuration(org.changeCooldown)}{" "}
-        before it counts.
+        To change this address later, you sign with this wallet and the new one, and the change waits{" "}
+        {formatDuration(org.changeCooldown)} before it counts.
       </p>
-      {testWalletUsed && <p className="hint">You used a test wallet made in this browser tab. It disappears when you close the tab.</p>}
+      {testWalletUsed && (
+        <p className="hint">You used a test wallet made in this browser tab. It disappears when you close the tab.</p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Move payouts to a new address. The registry needs BOTH keys to sign the same ChangePayout, then
+ * waits the org's change cooldown; the payer can cancel in that window.
+ */
+function ChangeAddress(props: {
+  invite: Invite;
+  signer: Signer;
+  payer: string;
+  cooldown: bigint;
+  onBusy: (busy: boolean) => void;
+  onDone: (hash: Hex) => Promise<void>;
+}) {
+  const { invite, signer, payer, cooldown, onBusy, onDone } = props;
+  const [open, setOpen] = useState(false);
+  const [newAddress, setNewAddress] = useState("");
+  const [pendingSig, setPendingSig] = useState<{ message: ChangeMessage; oldSig: Hex } | null>(null);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+
+  const messageFor = (newPayout: Address): ChangeMessage => ({
+    org: invite.org,
+    payeeRef: invite.payeeRef,
+    oldPayout: signer.address,
+    newPayout,
+    nonce: randomNonce(),
+    validUntil: BigInt(Math.floor(Date.now() / 1000) + SIGNATURE_TTL_SECONDS),
+  });
+
+  async function run(step: string, fn: () => Promise<void>) {
+    setError("");
+    setBusy(step);
+    onBusy(true);
+    try {
+      await fn();
+    } catch (err) {
+      setError(walletErrorText(err));
+    } finally {
+      setBusy("");
+      onBusy(false);
+    }
+  }
+
+  async function relay(message: ChangeMessage, oldSig: Hex, newSig: Hex) {
+    const res = await fetch("/api/relay/change", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ...message,
+        nonce: message.nonce.toString(),
+        validUntil: message.validUntil.toString(),
+        oldSig,
+        newSig,
+      }),
+    });
+    const out = (await res.json().catch(() => ({}))) as { txHash?: Hex; error?: string };
+    if (!res.ok || !out.txHash) throw new Error(out.error ?? `The relayer answered ${res.status}.`);
+    setPendingSig(null);
+    setOpen(false);
+    await onDone(out.txHash);
+  }
+
+  // Test wallet: make a second throwaway wallet and sign with both, in one click.
+  const tryWithTestWallets = () =>
+    run("test", async () => {
+      const next = newTestWallet();
+      const message = messageFor(next.address);
+      await relay(message, await signChange(signer, message), await signChange(next, message));
+    });
+
+  // Browser wallet, step 1: the current address signs the change to the address typed in.
+  const signWithCurrent = () =>
+    run("old", async () => {
+      if (!isAddress(newAddress.trim(), { strict: false })) throw new Error("Enter the new address (0x…).");
+      const newPayout = getAddress(newAddress.trim());
+      if (same(newPayout, signer.address)) throw new Error("That is the address you use now.");
+      const message = messageFor(newPayout);
+      setPendingSig({ message, oldSig: await signChange(signer, message) });
+    });
+
+  // Browser wallet, step 2: the new address signs the same change.
+  const signWithNew = () =>
+    run("new", async () => {
+      if (!pendingSig) return;
+      const next = await connectBrowserWallet(true);
+      if (!same(next.address, pendingSig.message.newPayout)) {
+        throw new Error(
+          `Your wallet is on ${short(next.address)}. Switch it to ${short(pendingSig.message.newPayout)} and try again.`,
+        );
+      }
+      await relay(pendingSig.message, pendingSig.oldSig, await signChange(next, pendingSig.message));
+    });
+
+  if (!open) {
+    return (
+      <p>
+        <button className="linkish" onClick={() => setOpen(true)}>
+          Need to be paid to a different address?
+        </button>
+      </p>
+    );
+  }
+  return (
+    <div className="card" style={{ marginTop: 12 }}>
+      <h3 style={{ marginTop: 0 }}>Change your payout address</h3>
+      <p className="hint">
+        Both wallets sign: the one you use now and the new one. Then the change waits {formatDuration(cooldown)}, and {payer} can
+        cancel it in that time. Someone who only has your new address, or only an email from you, cannot move your payouts.
+      </p>
+      {signer.kind === "test" ? (
+        <button className="btn" disabled={busy !== ""} onClick={tryWithTestWallets}>
+          {busy ? "Signing and recording…" : "Try it with a new test wallet"}
+        </button>
+      ) : !pendingSig ? (
+        <>
+          <label htmlFor="new-address">New address</label>
+          <input
+            id="new-address"
+            className="mono"
+            style={{ width: "100%", maxWidth: 460, padding: 8 }}
+            placeholder="0x…"
+            value={newAddress}
+            onChange={(e) => setNewAddress(e.target.value)}
+          />
+          <div className="row" style={{ marginTop: 10 }}>
+            <button className="btn" disabled={busy !== ""} onClick={signWithCurrent}>
+              {busy === "old" ? "Check your wallet…" : "1. Sign with the wallet you use now"}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p>
+            Now open your wallet and switch to <span className="mono">{pendingSig.message.newPayout}</span>.
+          </p>
+          <button className="btn" disabled={busy !== ""} onClick={signWithNew}>
+            {busy === "new" ? "Check your wallet…" : "2. Sign with the new wallet"}
+          </button>
+        </>
+      )}
+      {error && (
+        <p className="notice" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -375,8 +595,8 @@ function BadLink() {
   return (
     <>
       <p className="lede">
-        This page is for people who get paid. Your payer sends you a link to it, and you sign once with your wallet to
-        prove the address is yours.
+        This page is for people who get paid. Your payer sends you a link to it, and you sign once with your wallet to prove the
+        address is yours.
       </p>
       <p className="notice warn">This link is missing the invite details. Ask your payer to send the link again.</p>
       <p className="hint">

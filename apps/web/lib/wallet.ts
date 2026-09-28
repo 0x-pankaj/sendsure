@@ -1,6 +1,6 @@
 import { createWalletClient, custom, type Address, type EIP1193Provider, type Hex, type LocalAccount, type WalletClient } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { arcTestnet, bindTypedData, type BindMessage } from "@sendsure/chain";
+import { arcTestnet, bindTypedData, changeTypedData, type BindMessage, type ChangeMessage } from "@sendsure/chain";
 
 declare global {
   interface Window {
@@ -15,9 +15,11 @@ export type Signer =
 
 export const hasBrowserWallet = () => typeof window !== "undefined" && Boolean(window.ethereum);
 
-export async function connectBrowserWallet(): Promise<Signer> {
+/** `pickAccount` asks the wallet to show its account picker (used when switching to a new address). */
+export async function connectBrowserWallet(pickAccount = false): Promise<Signer> {
   if (!window.ethereum) throw new Error("No wallet found in this browser. Install MetaMask or Rabby, or use a test wallet.");
   const client = createWalletClient({ chain: arcTestnet, transport: custom(window.ethereum) });
+  if (pickAccount) await client.requestPermissions({ eth_accounts: {} }).catch(() => undefined);
   const [address] = await client.requestAddresses();
   if (!address) throw new Error("The wallet did not share an address.");
   return { kind: "browser", address, client };
@@ -42,6 +44,18 @@ export function testWallet(): Signer {
   return { kind: "test", address: account.address, account };
 }
 
+/** Testnet only: a second throwaway wallet, to try moving payouts to a new address. */
+export function newTestWallet(): Signer {
+  const key = generatePrivateKey();
+  try {
+    sessionStorage.setItem(`${TEST_KEY}.next`, key);
+  } catch {
+    // Private mode: the new key simply is not kept.
+  }
+  const account = privateKeyToAccount(key);
+  return { kind: "test", address: account.address, account };
+}
+
 export async function isOnArc(s: Signer): Promise<boolean> {
   return s.kind === "test" || (await s.client.getChainId()) === arcTestnet.id;
 }
@@ -60,6 +74,11 @@ export async function switchToArc(s: Signer): Promise<void> {
 
 export async function signBind(s: Signer, message: BindMessage): Promise<Hex> {
   const typed = bindTypedData(message);
+  return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
+}
+
+export async function signChange(s: Signer, message: ChangeMessage): Promise<Hex> {
+  const typed = changeTypedData(message);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 

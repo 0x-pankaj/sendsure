@@ -11,7 +11,8 @@
     "typecheck": "pnpm -r typecheck && tsc -p scripts/tsconfig.json",
     "test": "pnpm -r test",
     "invite": "tsx scripts/invite.ts",
-    "e2e:bind": "tsx scripts/e2e-bind.ts"
+    "e2e:bind": "tsx scripts/e2e-bind.ts",
+    "e2e:change": "tsx scripts/e2e-change.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

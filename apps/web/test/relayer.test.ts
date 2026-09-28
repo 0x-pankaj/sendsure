@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { ZERO_BYTES32, bindTypedData, randomBytes32, type BindMessage } from "@sendsure/chain";
-import { RelayError, allow, parseBind, relayBind } from "../lib/relayer";
+import { ZERO_BYTES32, bindTypedData, changeTypedData, randomBytes32, type BindMessage } from "@sendsure/chain";
+import { BIND, LIMITS, RelayError, allow, parseBind, parseChange, relayBind, relayRoute, verifyChange } from "../lib/relayer";
 
 const now = 1_800_000_000;
 const payee = privateKeyToAccount(generatePrivateKey());
@@ -65,5 +65,61 @@ describe("allow (rate limit)", () => {
     expect(allow(key, 2, 1000, 10)).toBe(true);
     expect(allow(key, 2, 1000, 20)).toBe(false);
     expect(allow(key, 2, 1000, 1500)).toBe(true);
+  });
+});
+
+describe("change requests", () => {
+  const realNow = () => Math.floor(Date.now() / 1000);
+  const oldKey = privateKeyToAccount(generatePrivateKey());
+  const newKey = privateKeyToAccount(generatePrivateKey());
+  const changeBody = (over: Record<string, unknown> = {}) => ({
+    org,
+    payeeRef: randomBytes32(),
+    oldPayout: oldKey.address,
+    newPayout: newKey.address,
+    nonce: "7",
+    validUntil: String(realNow() + 1800),
+    oldSig: `0x${"11".repeat(65)}`,
+    newSig: `0x${"11".repeat(65)}`,
+    ...over,
+  });
+
+  it("rejects a change to the same address", () => {
+    expect(() => parseChange(changeBody({ newPayout: oldKey.address }), realNow())).toThrow(/same as the current/);
+  });
+
+  it("needs both the current and the new key", async () => {
+    const { message } = parseChange(changeBody(), realNow());
+    const typed = changeTypedData(message);
+    const intruder = privateKeyToAccount(generatePrivateKey());
+    const good = { oldSig: await oldKey.signTypedData(typed), newSig: await newKey.signTypedData(typed) };
+    await expect(verifyChange({ message, ...good })).resolves.toBeUndefined();
+    await expect(verifyChange({ message, ...good, oldSig: await intruder.signTypedData(typed) })).rejects.toThrow(
+      /current payout address did not sign/,
+    );
+    await expect(verifyChange({ message, ...good, newSig: await intruder.signTypedData(typed) })).rejects.toThrow(
+      /new payout address did not sign/,
+    );
+  });
+});
+
+describe("relayRoute", () => {
+  it("junk requests naming someone else's address do not use up that address's quota", async () => {
+    const victim = privateKeyToAccount(generatePrivateKey()).address;
+    const junk = () =>
+      new Request("http://relay.test/api/relay/bind", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": `10.0.0.${Math.floor(Math.random() * 250)}` },
+        body: JSON.stringify({ ...body({ payout: victim, validUntil: String(Math.floor(Date.now() / 1000) + 600) }) }),
+      });
+    for (let i = 0; i < 5; i++) {
+      const res = await relayRoute(junk(), BIND);
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { code: string }).code).toBe("BadSignature");
+    }
+    // The victim still has the full per-address quota.
+    for (let i = 0; i < LIMITS.perPayout.max; i++) {
+      expect(allow(`payout:${victim}`, LIMITS.perPayout.max, LIMITS.perPayout.windowMs)).toBe(true);
+    }
   });
 });

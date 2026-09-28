@@ -91,6 +91,28 @@ export async function readPayee(client: Reader, org: Address, payeeRef: Hex): Pr
   };
 }
 
+export interface PendingChange {
+  newPayout: Address;
+  effectiveAt: bigint;
+}
+
+/** The change waiting for its cooldown, if any (null once it has matured or when there is none). */
+export async function readPendingChange(
+  client: Reader,
+  org: Address,
+  payeeRef: Hex,
+  nowSec = BigInt(Math.floor(Date.now() / 1000)),
+): Promise<PendingChange | null> {
+  const b = await client.readContract({
+    address: registry,
+    abi: payeeRegistryAbi,
+    functionName: "bindingOf",
+    args: [org, payeeRef],
+  });
+  if (b.pendingPayout === "0x0000000000000000000000000000000000000000" || b.pendingAt <= nowSec) return null;
+  return { newPayout: b.pendingPayout, effectiveAt: b.pendingAt };
+}
+
 export async function readOrg(client: Reader, org: Address): Promise<OrgView> {
   const [registered, firstBindCooldown, changeCooldown] = await client.readContract({
     address: registry,

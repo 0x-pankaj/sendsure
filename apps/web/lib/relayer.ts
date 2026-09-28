@@ -21,9 +21,12 @@ import {
   ZERO_BYTES32,
   arcTestnet,
   bindTypedData,
+  changeTypedData,
   deployment,
   payeeRegistryAbi,
+  readPayee,
   type BindMessage,
+  type ChangeMessage,
 } from "@sendsure/chain";
 
 /** An error the relayer returns to the caller as { error, code } with an HTTP status. */
@@ -75,7 +78,7 @@ export function clientIp(req: Request): string {
 }
 
 export const LIMITS = {
-  perIp: { max: 6, windowMs: 10 * 60_000 },
+  perIp: { max: 12, windowMs: 10 * 60_000 },
   perPayout: { max: 3, windowMs: 60 * 60_000 },
   global: { max: 500, windowMs: 24 * 60 * 60_000 },
 } as const;
@@ -110,16 +113,25 @@ export interface BindRequest {
 }
 
 /** Validates a bind request body. Only plain binds are relayed (no real-account commitment yet). */
-export function parseBind(body: unknown, nowSec = Math.floor(Date.now() / 1000)): BindRequest {
+function toObject(body: unknown): Record<string, unknown> {
   if (typeof body !== "object" || body === null) throw new RelayError(400, "Send a JSON object.", "BAD_INPUT");
-  const b = body as Record<string, unknown>;
-  if (!isBytes32(b.payeeRef)) throw new RelayError(400, "payeeRef must be 32 bytes of hex.", "BAD_INPUT");
-  if (!isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
-  const validUntil = toUint(b.validUntil, 64, "validUntil");
+  return body as Record<string, unknown>;
+}
+
+function toValidUntil(v: unknown, nowSec: number): bigint {
+  const validUntil = toUint(v, 64, "validUntil");
   if (validUntil <= BigInt(nowSec)) throw new RelayError(400, REGISTRY_ERROR_TEXT.Expired!, "Expired");
   if (validUntil > BigInt(nowSec + MAX_SIGNATURE_TTL_SECONDS)) {
     throw new RelayError(400, "validUntil is too far ahead (at most 24 hours).", "BAD_INPUT");
   }
+  return validUntil;
+}
+
+export function parseBind(body: unknown, nowSec = Math.floor(Date.now() / 1000)): BindRequest {
+  const b = toObject(body);
+  if (!isBytes32(b.payeeRef)) throw new RelayError(400, "payeeRef must be 32 bytes of hex.", "BAD_INPUT");
+  if (!isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
+  const validUntil = toValidUntil(b.validUntil, nowSec);
   return {
     message: {
       org: toAddress(b.org, "org"),
@@ -132,6 +144,30 @@ export function parseBind(body: unknown, nowSec = Math.floor(Date.now() / 1000))
     },
     signature: b.signature,
   };
+}
+
+export interface ChangeRequest {
+  message: ChangeMessage;
+  oldSig: Hex;
+  newSig: Hex;
+}
+
+/** Validates a change request: both the old and the new payout address must have signed. */
+export function parseChange(body: unknown, nowSec = Math.floor(Date.now() / 1000)): ChangeRequest {
+  const b = toObject(body);
+  if (!isBytes32(b.payeeRef)) throw new RelayError(400, "payeeRef must be 32 bytes of hex.", "BAD_INPUT");
+  if (!isSignature(b.oldSig)) throw new RelayError(400, "oldSig must be 65 bytes of hex.", "BAD_INPUT");
+  if (!isSignature(b.newSig)) throw new RelayError(400, "newSig must be 65 bytes of hex.", "BAD_INPUT");
+  const message: ChangeMessage = {
+    org: toAddress(b.org, "org"),
+    payeeRef: b.payeeRef,
+    oldPayout: toAddress(b.oldPayout, "oldPayout"),
+    newPayout: toAddress(b.newPayout, "newPayout"),
+    nonce: toUint(b.nonce, 256, "nonce"),
+    validUntil: toValidUntil(b.validUntil, nowSec),
+  };
+  if (message.oldPayout === message.newPayout) throw new RelayError(400, REGISTRY_ERROR_TEXT.SamePayout!, "SamePayout");
+  return { message, oldSig: b.oldSig, newSig: b.newSig };
 }
 
 /** Turns a contract revert into the payee-facing text; anything else is an RPC problem. */
@@ -177,15 +213,19 @@ async function sendAndWait(send: () => Promise<Hex>): Promise<RelayResult> {
   }
 }
 
-/**
- * Relays a payee's signed Bind. The signature is checked here first (no RPC), then the call is
- * simulated, so the relayer never pays gas for a transaction the registry would reject.
- */
-export async function relayBind(req: BindRequest): Promise<RelayResult> {
+/** Offline check (no RPC): the payout address itself signed this Bind. */
+export async function verifyBind(req: BindRequest): Promise<void> {
   const { message: m, signature } = req;
   const signer = await recoverTypedDataAddress({ ...bindTypedData(m), signature }).catch(() => null);
   if (!signer || signer !== m.payout) throw new RelayError(400, REGISTRY_ERROR_TEXT.BadSignature!, "BadSignature");
+}
 
+/**
+ * Submits a verified Bind. The call is simulated first, so the relayer never pays gas for a
+ * transaction the registry would reject.
+ */
+export async function submitBind(req: BindRequest): Promise<RelayResult> {
+  const { message: m, signature } = req;
   const wallet = relayer();
   try {
     const { request } = await serverClient.simulateContract({
@@ -198,6 +238,99 @@ export async function relayBind(req: BindRequest): Promise<RelayResult> {
     return await sendAndWait(() => wallet.writeContract(request));
   } catch (err) {
     throw toRelayError(err);
+  }
+}
+
+/** Offline check (no RPC): BOTH the current payout and the new one signed this change. */
+export async function verifyChange(req: ChangeRequest): Promise<void> {
+  const { message: m, oldSig, newSig } = req;
+  const typed = changeTypedData(m);
+  const [oldSigner, newSigner] = await Promise.all([
+    recoverTypedDataAddress({ ...typed, signature: oldSig }).catch(() => null),
+    recoverTypedDataAddress({ ...typed, signature: newSig }).catch(() => null),
+  ]);
+  if (oldSigner !== m.oldPayout) {
+    throw new RelayError(400, "The current payout address did not sign this change.", "BadSignature");
+  }
+  if (newSigner !== m.newPayout) throw new RelayError(400, "The new payout address did not sign this change.", "BadSignature");
+}
+
+/**
+ * Submits a verified change. The registry holds it for the org's change cooldown; until then
+ * payments still go to the current address, and the payer or the current payout can cancel it.
+ */
+export async function submitChange(req: ChangeRequest): Promise<RelayResult> {
+  const { message: m, oldSig, newSig } = req;
+  const wallet = relayer();
+  try {
+    const current = await readPayee(serverClient, m.org, m.payeeRef);
+    if (current.payout !== m.oldPayout) {
+      throw new RelayError(409, `The current payout address is ${current.payout}, not ${m.oldPayout}.`, "NotPayout");
+    }
+    const { request } = await serverClient.simulateContract({
+      account: wallet.account,
+      address: registry,
+      abi: payeeRegistryAbi,
+      functionName: "requestChange",
+      args: [m.org, m.payeeRef, m.newPayout, m.nonce, m.validUntil, oldSig, newSig],
+    });
+    return await sendAndWait(() => wallet.writeContract(request));
+  } catch (err) {
+    throw toRelayError(err);
+  }
+}
+
+export async function relayBind(req: BindRequest): Promise<RelayResult> {
+  await verifyBind(req);
+  return submitBind(req);
+}
+
+export async function relayChange(req: ChangeRequest): Promise<RelayResult> {
+  await verifyChange(req);
+  return submitChange(req);
+}
+
+export interface RelayKind<T> {
+  parse: (body: unknown) => T;
+  /** Offline signature check. Runs before the per-address limit, so nobody can use up another address's quota. */
+  verify: (parsed: T) => Promise<void>;
+  payoutOf: (parsed: T) => string;
+  submit: (parsed: T) => Promise<RelayResult>;
+}
+
+export const BIND: RelayKind<BindRequest> = {
+  parse: (body) => parseBind(body),
+  verify: verifyBind,
+  payoutOf: (b) => b.message.payout,
+  submit: submitBind,
+};
+
+export const CHANGE: RelayKind<ChangeRequest> = {
+  parse: (body) => parseChange(body),
+  verify: verifyChange,
+  payoutOf: (c) => c.message.oldPayout,
+  submit: submitChange,
+};
+
+/** One handler for every relay route: global and per-IP limits, parse, verify, per-address limit, submit. */
+export async function relayRoute<T>(req: Request, kind: RelayKind<T>): Promise<Response> {
+  try {
+    if (!allow("global", LIMITS.global.max, LIMITS.global.windowMs)) {
+      throw new RelayError(429, "The relayer is busy today. Please try again tomorrow.", "RATE_LIMITED");
+    }
+    if (!allow(`ip:${clientIp(req)}`, LIMITS.perIp.max, LIMITS.perIp.windowMs)) {
+      throw new RelayError(429, "Too many tries from this network. Please wait 10 minutes.", "RATE_LIMITED");
+    }
+    const parsed = kind.parse(await req.json().catch(() => null));
+    await kind.verify(parsed);
+    if (!allow(`payout:${kind.payoutOf(parsed)}`, LIMITS.perPayout.max, LIMITS.perPayout.windowMs)) {
+      throw new RelayError(429, "Too many tries for this address. Please wait an hour.", "RATE_LIMITED");
+    }
+    return Response.json(await kind.submit(parsed));
+  } catch (err) {
+    if (err instanceof RelayError) return Response.json({ error: err.message, code: err.code }, { status: err.status });
+    console.error("relay failed", err);
+    return Response.json({ error: "The relay failed. Please try again.", code: "INTERNAL" }, { status: 500 });
   }
 }
 
