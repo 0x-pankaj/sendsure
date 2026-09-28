@@ -24,6 +24,19 @@ importers:
         specifier: 2.56.9
         version: 2.56.9(typescript@5.9.3)
 
+  packages/core:
+    dependencies:
+      papaparse:
+        specifier: 5.7.0
+        version: 5.7.0
+      viem:
+        specifier: 2.56.9
+        version: 2.56.9(typescript@5.9.3)
+    devDependencies:
+      '@types/papaparse':
+        specifier: 5.5.2
+        version: 5.5.2
+
 packages:
 
   '@adraffy/ens-normalize@1.11.1':
@@ -366,6 +379,9 @@ packages:
   '@types/node@22.20.4':
     resolution: {integrity: sha512-zJRE40jpHtKqE/C4fgHrAKQLJuSpzEnP9ff9Y7YtoR3Wd2pwqzlekDeEuUQXjRd+QCYnVnNwuJYmhdk9XV8gvA==}
 
+  '@types/papaparse@5.5.2':
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
+
   '@vitest/expect@3.2.7':
     resolution: {integrity: sha512-E8eBXaKibuvH2pSZErOjdVb5vF4PbKYcrnluBTYxEk1l/VhhwZg1kZQsdtjq+CsF5CFydf2Rdkz7jDHKSisi3w==}
 
@@ -496,6 +512,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  papaparse@5.7.0:
+    resolution: {integrity: sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA==}
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
@@ -860,6 +879,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/papaparse@5.5.2':
+    dependencies:
+      '@types/node': 22.20.4
+
   '@vitest/expect@3.2.7':
     dependencies:
       '@types/chai': 5.2.3
@@ -1002,6 +1025,8 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - zod
+
+  papaparse@5.7.0: {}
 
   pathe@2.0.3: {}
 
