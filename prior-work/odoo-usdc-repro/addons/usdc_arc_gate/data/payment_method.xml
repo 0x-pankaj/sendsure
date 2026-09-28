@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_method_usdc_arc" model="account.payment.method">
+        <field name="name">USDC on Arc</field>
+        <field name="code">usdc_arc</field>
+        <field name="payment_type">outbound</field>
+    </record>
+</odoo>

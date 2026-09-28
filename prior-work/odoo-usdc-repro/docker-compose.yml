@@ -1,0 +1,21 @@
+# Throwaway Odoo 19 Community + Postgres for the USDC repro. Nothing persists after `docker compose down`.
+name: odoo-usdc-repro
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+  odoo:
+    image: odoo:19
+    depends_on: [db]
+    ports: ["127.0.0.1:18069:8069"]
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: odoo
+    volumes:
+      - ./addons:/mnt/extra-addons
+    # Creates the database on first start, installs Invoicing (account) and the add-on.
+    command: ["odoo", "-d", "usdc_repro", "-i", "account,usdc_arc_gate"]

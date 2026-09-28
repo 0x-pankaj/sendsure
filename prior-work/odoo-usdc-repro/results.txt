@@ -1,0 +1,39 @@
+Waiting for Odoo at http://127.0.0.1:18069. The first start installs Invoicing and takes a few minutes.
+Odoo 19.0-20260908 Community · company 'My Company' · company currency USD
+
+[1] Currency code 'USDC'
+  CONFIRMED      'USDC' as a currency code is cut to 'USD'
+                 refused with 'The operation cannot be completed: The currency code must be unique!': 'USDC' is truncated to 'USD', which already exists (size = 3)
+
+Setup: USDC as a 6-decimal currency (code USC), a USDC wallet journal, a vendor with an
+untrusted wallet address, an agent user with only the Invoicing role, and four vendor bills.
+
+[2] The trusted-account gate
+  CONFIRMED      Community's built-in 'Manual' method never checks trust
+                 agent paid INV-101 to the untrusted wallet 0x1111111111111111111111111111111111111111; bill is 'paid'
+  CONFIRMED      'USDC on Arc' (opted in) refuses an untrusted wallet
+                 refused: To record payments with USDC on Arc, the recipient bank account must be manually validated. You should go on the partner bank account in order to validate it.
+  CONFIRMED      The agent cannot mark a wallet as trusted
+                 refused: You do not have the rights to trust or un-trust accounts.
+  CONFIRMED      After a human trusts it, the same agent payment goes through
+                 INV-102 is now 'paid'
+  CONFIRMED      A trusted wallet's address can't be edited, even by an admin
+                 refused: You cannot modify the account number or partner of an account that has been trusted.
+
+[3] A six-decimal USDC payment against a two-decimal USD bill
+  CONFIRMED      249.995 USDC marks a $250.00 bill paid, with no write-off
+                 INV-103 ($250.00) paid with 249.995000 USC: bill 'paid', open balance 0.00, 2 lines in the payment entry, 0 exchange-difference entries
+  CONFIRMED      Contrast: 249.994999 USDC leaves a 0.01 balance open
+                 INV-104 ($250.00) paid with 249.994999 USC: bill 'partial', open balance 0.01, 2 lines in the payment entry, 0 exchange-difference entries
+
+Summary
+  'USDC' as a currency code is cut to 'USD'                     CONFIRMED
+  Community's built-in 'Manual' method never checks trust       CONFIRMED
+  'USDC on Arc' (opted in) refuses an untrusted wallet          CONFIRMED
+  The agent cannot mark a wallet as trusted                     CONFIRMED
+  After a human trusts it, the same agent payment goes through  CONFIRMED
+  A trusted wallet's address can't be edited, even by an admin  CONFIRMED
+  249.995 USDC marks a $250.00 bill paid, with no write-off     CONFIRMED
+  Contrast: 249.994999 USDC leaves a 0.01 balance open          CONFIRMED
+
+Odoo 19.0-20260908 Community. To throw everything away: docker compose down

@@ -1,0 +1,17 @@
+# Foundry
+out/
+cache/
+broadcast/*/31337/
+# Node
+node_modules/
+.next/
+dist/
+# Python
+__pycache__/
+*.pyc
+.venv/
+# Secrets and local state
+.env
+.env.*
+!.env.example
+*.key
