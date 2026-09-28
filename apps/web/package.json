@@ -9,9 +9,9 @@
     "start": "next start -p ${PORT:-3000}",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:build": "NEXT_PUBLIC_COMMIT_SHA=$(git rev-parse --short HEAD) opennextjs-cloudflare build",
+    "cf:preview": "NEXT_PUBLIC_COMMIT_SHA=$(git rev-parse --short HEAD) opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "NEXT_PUBLIC_COMMIT_SHA=$(git rev-parse --short HEAD) opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@sendsure/chain": "workspace:*",
