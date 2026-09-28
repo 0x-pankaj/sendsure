@@ -1,0 +1,20 @@
+{
+  "note": "First-party end-to-end test on the SANDBOX org with a throwaway key. Not traction.",
+  "ranAtUnix": 1790623462,
+  "relayerBase": "http://127.0.0.1:3100",
+  "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
+  "payeeRef": "0x2121ca5aea34b3e767788a9f0c4db73e19fc8830c021d61e6024f000d28bcd81",
+  "payout": "0x69ddcBdEBE44EF1aa81b93c1D81f68275eE43Aaf",
+  "openSlotTx": "0x6bc63f7efb38dc9c8f237f4a9ea39aa373b69829ab54993c0625be557b9ddeab",
+  "bindTx": "0xa1bc0d5c4d483fb6cc432c52351886ca99865a576847bfbbc4bfdde8874dbf4b",
+  "checks": {
+    "forgedRefused": "BadSignature",
+    "bound": "BOUND/PROVEN",
+    "replayRefused": "NonceUsed"
+  },
+  "links": {
+    "openSlot": "https://explorer.testnet.arc.io/tx/0x6bc63f7efb38dc9c8f237f4a9ea39aa373b69829ab54993c0625be557b9ddeab",
+    "bind": "https://explorer.testnet.arc.io/tx/0xa1bc0d5c4d483fb6cc432c52351886ca99865a576847bfbbc4bfdde8874dbf4b",
+    "payout": "https://explorer.testnet.arc.io/address/0x69ddcBdEBE44EF1aa81b93c1D81f68275eE43Aaf"
+  }
+}

@@ -1,16 +1,24 @@
 {
   "name": "sendsure",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.22.0",
-  "engines": { "node": ">=20.18.2" },
+  "engines": {
+    "node": ">=20.18.2"
+  },
   "scripts": {
     "gen": "node scripts/gen-chain.mjs",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "typecheck": "pnpm -r typecheck && tsc -p scripts/tsconfig.json",
+    "test": "pnpm -r test",
+    "invite": "tsx scripts/invite.ts",
+    "e2e:bind": "tsx scripts/e2e-bind.ts"
   },
   "devDependencies": {
+    "@sendsure/chain": "workspace:*",
     "@types/node": "22.20.4",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
+    "viem": "2.56.9",
     "vitest": "3.2.7"
   }
 }
