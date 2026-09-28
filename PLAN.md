@@ -72,7 +72,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 ### App (web + worker)
 | ID | Task | Owner | Done when | Status |
 |---|---|---|---|---|
-| T8 | Monorepo scaffold: pnpm workspaces, TypeScript, `packages/chain` (viem, ABIs, addresses), `packages/core` (claim + EIP-712 helpers) | C | `pnpm build` green | ⬜ |
+| T8 | Monorepo scaffold: pnpm workspaces, TypeScript, `packages/chain` (viem, generated ABIs + addresses, EIP-712 types, claim helpers) | C | typecheck + 6 tests green, incl. live cross-checks against the deployed contracts | ✅ |
 | T9 | **Payout check** (in browser, nothing leaves the machine): load payout CSV + last-paid export → SAME AS LAST PAID / CHANGED / NEW / LOOKALIKE + registry status per row → checked list export | C | works on a sample file; unit tests | ⬜ |
 | T10 | Payee verify page: connect wallet, switch to Arc testnet, sign `Bind` (plain-language message), relayer submits `bindWithSig` | C | a real EOA binds on testnet | ⬜ |
 | T11 | Relayer service (gas paid by a funded relayer key; rate-limited) | C | relays bind + change | ⬜ |

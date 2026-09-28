@@ -15,3 +15,8 @@ __pycache__/
 .env.*
 !.env.example
 *.key
+# pnpm / Next
+.pnpm-store/
+*.tsbuildinfo
+next-env.d.ts
+.vercel

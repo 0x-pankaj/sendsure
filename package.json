@@ -1,0 +1,16 @@
+{
+  "name": "sendsure",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "engines": { "node": ">=20.18.2" },
+  "scripts": {
+    "gen": "node scripts/gen-chain.mjs",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
