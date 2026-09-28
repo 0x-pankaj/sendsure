@@ -6,7 +6,9 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
-- **Next task:** the first ⬜ in [Tasks](#tasks), in order.
+- **Next task:** the first ⬜ in [Tasks](#tasks), in order, skipping tasks blocked on Pankaj:
+  T13b and T14b wait for `MESH_API_KEY`, T14d for the Circle Console keys (P5). As of Sep 29 the
+  next unblocked ones are T17 (`/try`), T20 (MCP) and T21 (judgment inbox).
 - **Live:** https://sendsure.0xpankaj.workers.dev (Cloudflare Workers on Pankaj's account, OpenNext; D1 `sendsure`).
   Deploy: `pnpm --filter @sendsure/web cf:deploy`. Worker secrets (Cloudflare, never in git): `RELAYER_PRIVATE_KEY`,
   `AGENT_PRIVATE_KEY`, `SESSION_SECRET`, `ARC_RPC_URL` (the arc-canteen RPC with Pankaj's token: Arc's public RPC
