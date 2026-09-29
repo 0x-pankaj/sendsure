@@ -22,7 +22,7 @@ import {
 } from "@sendsure/chain";
 import { getDb, type Db } from "./db";
 import { appendDecision, head } from "./decisionLog";
-import { meshConfigured, meshModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
+import { lastModel, meshConfigured, meshModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
 import { agentWallet } from "./orgRelay";
 import { sendAndWait, serverClient } from "./relayer";
 
@@ -399,7 +399,7 @@ export async function runAgent(org: Address, opts: { execute: boolean; limit?: n
   } catch (err) {
     modelError = String(err).slice(0, 300);
   }
-  const planner = model ? `rules + ${meshModel()} via MeshAPI` : "rules";
+  const planner = model ? `rules + ${lastModel || meshModel()} via MeshAPI` : "rules";
   const executor = opts.execute ? agentWallet().account.address : null;
   await db.run(
     "INSERT INTO runs (run_id, org, planner, executor, started_at) VALUES (?, ?, ?, ?, ?)",

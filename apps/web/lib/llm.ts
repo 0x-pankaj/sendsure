@@ -3,7 +3,9 @@
 
 export const MESH_BASE = "https://api.meshapi.ai/v1";
 export const meshConfigured = (): boolean => Boolean(process.env.MESH_API_KEY);
-export const meshModel = (): string => process.env.MESH_MODEL || "anthropic/claude-sonnet-4.6";
+/** Opus 5.5: in our test run it gave the plainest reasons and caught the burn address. Sonnet 5 is the fallback. */
+export const meshModel = (): string => process.env.MESH_MODEL || "anthropic/claude-opus-5.5";
+export const meshFallbackModel = (): string => process.env.MESH_FALLBACK_MODEL || "anthropic/claude-sonnet-5";
 
 export interface ToolSpec {
   name: string;
@@ -30,16 +32,29 @@ export interface ToolStep {
   args: unknown;
 }
 
+/** Which model answered the last call (the fallback, if the primary failed). */
+export let lastModel = "";
+
 async function chat(messages: Message[], tools: ToolSpec[]): Promise<Message> {
+  try {
+    return await chatWith(meshModel(), messages, tools);
+  } catch (err) {
+    if (meshFallbackModel() === meshModel()) throw err;
+    return chatWith(meshFallbackModel(), messages, tools);
+  }
+}
+
+async function chatWith(model: string, messages: Message[], tools: ToolSpec[]): Promise<Message> {
+  lastModel = model;
   const res = await fetch(`${MESH_BASE}/chat/completions`, {
     method: "POST",
     headers: { authorization: `Bearer ${process.env.MESH_API_KEY}`, "content-type": "application/json" },
     body: JSON.stringify({
-      model: meshModel(),
+      model,
       messages,
       tools: tools.map((t) => ({ type: "function", function: t })),
       tool_choice: "auto",
-      temperature: 0,
+      // No temperature: current Claude models reject it. The rules and the contract are the deterministic part.
       max_tokens: 2000,
     }),
     signal: AbortSignal.timeout(90_000),

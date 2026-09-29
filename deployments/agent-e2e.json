@@ -1,42 +1,42 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790628942,
+  "ranAtUnix": 1790655332,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x2B0045E24a7Bb10d507b8461e6Da0B0b0Bc7cAc2",
-  "payee": "0x53CC78E9F5eE116Ef7A0e12Dd77AD2a2B8Da591a",
-  "planner": "rules",
+  "org": "0x9cF7DF651913a1532F244Ed59412ad4d8e64A68d",
+  "payee": "0x19DD03A05a35507e3F85229EE273BAcc2c71cA6d",
+  "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
   "runs": [
     {
       "invoice": "INV-A",
       "action": "escalate",
-      "reason": "First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it."
+      "reason": "This is the first payment to this payee's address, so a person has to co-sign before it can be paid. When you approve it, check that the address really belongs to them."
     },
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e",
-      "decisionHash": "0xf53976d4d44b3b5e88a84ed998b93d8db966e5750a2f8164eeaf3d9b297fc2d1"
+      "tx": "https://explorer.testnet.arc.io/tx/0x39289bb63e7adde0d298dfe80a606b60e91fd3dc74f2b0624ff4029a66853934",
+      "decisionHash": "0x4612f74ea295eb4c8271e642a8b9a720ab6cb67831cf874e8c7beccbf52df4d4"
     },
     {
       "invoice": "INV-B",
       "action": "escalate",
-      "reason": "Held for a person: same amount as another claim from this payee in the last 60 days; the work period overlaps another claim from this payee; the description asks to change payment details, or to hurry."
+      "reason": "The claim asks us to pay a new wallet urgently, a common fraud pattern, and its amount and dates match another claim from this payee. Please confirm with the payee through a contact you already trust before paying."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0x6f0a850a0d1c7bf8c8adfd2c32e83fad231d93cd7443bc3c303ed1344b47c99c",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x585354edd616b693a5730b086cca57aebfa5f66e7f35f55d3799a625004a10cc",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x1f02e1aba0c91a9e0c6f08279f9b2ffaabab21d3e296f80983e5e8eaaea97b48",
+  "anchor": "https://explorer.testnet.arc.io/tx/0xbba69b14ce2c5ce679c443304e53a0654928cd1ff2ea3cac070d0ca35bf866d9",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64498355,
+      "block": 64550055,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e",
+      "tx": "0x39289bb63e7adde0d298dfe80a606b60e91fd3dc74f2b0624ff4029a66853934",
       "event": "Settled",
       "carriesDecisionHash": true
     }

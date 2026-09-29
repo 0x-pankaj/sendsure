@@ -7,6 +7,7 @@ import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
 import { walletErrorText, type Signer } from "../lib/wallet";
 
 interface RunDecision {
+  model?: { action: string; reason: string; concerns?: string[] } | null;
   claimId: Hex;
   payeeRef: Hex;
   invoiceRef: string;
@@ -98,6 +99,9 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
                         <td>
                           <span className={`chip ${chip}`}>{label}</span>
                           <div className="hint">{d.reason}</div>
+                          {d.model?.concerns && d.model.concerns.length > 0 && (
+                            <div className="hint">AI also noticed: {d.model.concerns.join("; ")}</div>
+                          )}
                           {d.tx && (
                             <div className="hint">
                               <a href={explorerTx(d.tx.hash)}>{d.tx.outcome} on Arc</a>

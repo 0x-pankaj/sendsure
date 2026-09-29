@@ -1,29 +1,29 @@
 ; SendSure books: SendSure e2e sandbox org
-; Org 0x2B0045E24a7Bb10d507b8461e6Da0B0b0Bc7cAc2 on Arc testnet. Treasury 0x30e7D47a55e950eF2E7843dA4efAAb05846fDFA4.
+; Org 0x9cF7DF651913a1532F244Ed59412ad4d8e64A68d on Arc testnet. Treasury 0xAf03ec820C559dE8896b2392d8190ed02bceFAC2.
 ; Each payment carries its claim id, the agent's decision hash and its Arc transaction.
 ; Balances come from the chain; movements outside SendSure are computed from them, never guessed.
 option "title" "SendSure e2e sandbox org"
 option "operating_currency" "USDC"
 option "inferred_tolerance_default" "USDC:0.000001"
 
-2026-09-28 commodity USDC
+2026-09-29 commodity USDC
   name: "USDC on Arc testnet (6 decimals)"
 
-2026-09-28 open Assets:Arc:Treasury USDC
-2026-09-28 open Equity:Treasury-Other-Flows USDC
-2026-09-28 open Expenses:Contractors:Test-payee USDC
+2026-09-29 open Assets:Arc:Treasury USDC
+2026-09-29 open Equity:Treasury-Other-Flows USDC
+2026-09-29 open Expenses:Contractors:Test-payee USDC
 
-2026-09-28 * "Treasury" "Movements outside SendSure (deposits, gas, other transfers), from the chain balance"
-  Assets:Arc:Treasury  0.698109 USDC
+2026-09-29 * "Treasury" "Movements outside SendSure (deposits, gas, other transfers), from the chain balance"
+  Assets:Arc:Treasury  0.698182 USDC
   Equity:Treasury-Other-Flows
 
-2026-09-28 * "Test payee" "INV-A"
-  arc-tx: "0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e"
-  claim-id: "0xc268899d16f4bc5bb30c5746b98b7cf1ff6c4a6d07593109309c1b605bbcfc1f"
-  decision-hash: "0xf53976d4d44b3b5e88a84ed998b93d8db966e5750a2f8164eeaf3d9b297fc2d1"
-  payout: "0x53CC78E9F5eE116Ef7A0e12Dd77AD2a2B8Da591a"
+2026-09-29 * "Test payee" "INV-A"
+  arc-tx: "0x39289bb63e7adde0d298dfe80a606b60e91fd3dc74f2b0624ff4029a66853934"
+  claim-id: "0x086eda2aedf9ab9c2e4ff2b6d29f2c97a1644744589af5619ffa3fa5437b2b2f"
+  decision-hash: "0x4612f74ea295eb4c8271e642a8b9a720ab6cb67831cf874e8c7beccbf52df4d4"
+  payout: "0x19DD03A05a35507e3F85229EE273BAcc2c71cA6d"
   Expenses:Contractors:Test-payee  0.300000 USDC
   Assets:Arc:Treasury  -0.300000 USDC
 
-2026-09-29 balance Assets:Arc:Treasury  0.398109 ~ 0.000001 USDC
-  block: "64498419"
+2026-09-30 balance Assets:Arc:Treasury  0.398182 ~ 0.000001 USDC
+  block: "64550155"
