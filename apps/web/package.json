@@ -14,8 +14,11 @@
     "cf:deploy": "NEXT_PUBLIC_COMMIT_SHA=$(git rev-parse --short HEAD) opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@circle-fin/x402-batching": "3.5.0",
     "@sendsure/chain": "workspace:*",
     "@sendsure/core": "workspace:*",
+    "@x402/core": "2.27.0",
+    "@x402/evm": "2.27.0",
     "next": "16.3.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

@@ -14,6 +14,7 @@ const BUILT_IN = [
   "0x1B66e68D3F61D84B5498013b0981537DBef28b73", // relayer
   "0xfB7e93f580d95c86973ae428b470368c355848b4", // arc-canteen test wallet
   SENDSURE_AGENTS.circleAgentWallet,
+  "0x1222c4c16376961881cdcfffd6d737137f425dc3", // the Circle agent wallet's backing EOA (pays x402 calls)
   SENDSURE_AGENTS.serverAgent,
 ];
 
@@ -84,11 +85,33 @@ export async function stats() {
   const recent = await db.all<{ tx: string; block: number; org: string; payout: string; amount: string }>(
     "SELECT tx, block, org, payout, amount FROM chain_events WHERE name = 'Settled' ORDER BY block DESC LIMIT 20",
   );
+  // Paid agent calls (x402 over Circle Gateway): other agents paying SendSure per call.
+  const x402 = await db.all<{ payer: string; endpoint: string; n: number; total: string | null }>(
+    "SELECT payer, endpoint, count(*) AS n, CAST(sum(CAST(amount AS INTEGER)) AS TEXT) AS total FROM x402_payments GROUP BY payer, endpoint",
+  );
+  const paidCalls = { external: { calls: 0, usdc: 0n, payers: new Set<string>() }, "first-party": { calls: 0, usdc: 0n, payers: new Set<string>() } };
+  const byEndpoint: Record<string, number> = {};
+  for (const r of x402) {
+    const b = paidCalls[ours.has(r.payer.toLowerCase()) ? "first-party" : "external"];
+    b.calls += r.n;
+    b.usdc += BigInt(r.total ?? "0");
+    b.payers.add(r.payer.toLowerCase());
+    byEndpoint[r.endpoint] = (byEndpoint[r.endpoint] ?? 0) + r.n;
+  }
   const out = Object.fromEntries(
     Object.entries(buckets).map(([k, { paid, ...b }]) => [k, { ...b, paidUsdc: formatUsdc(paid) }]),
   ) as Record<Tier, Bucket>;
   return {
     tiers: out,
+    paidCalls: {
+      external: { calls: paidCalls.external.calls, usdc: formatUsdc(paidCalls.external.usdc), payers: paidCalls.external.payers.size },
+      firstParty: {
+        calls: paidCalls["first-party"].calls,
+        usdc: formatUsdc(paidCalls["first-party"].usdc),
+        payers: paidCalls["first-party"].payers.size,
+      },
+      byEndpoint,
+    },
     recentPayments: recent.map((r) => ({
       ...r,
       amountUsdc: formatUsdc(BigInt(r.amount)),

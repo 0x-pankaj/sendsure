@@ -6,6 +6,7 @@
 import { keccak256, toHex, type Hex } from "viem";
 import { checkPayout, parsePayoutCsv } from "@sendsure/core";
 import { runScene, savedScenes, type Scene } from "./demo";
+import { lookupPayee } from "./lookup";
 import { receiptFor } from "./receipt";
 import { RelayError, serverClient, toAddress } from "./relayer";
 import { stats } from "./stats";
@@ -93,24 +94,7 @@ const TOOLS: Tool[] = [
       required: ["org", "address"],
     },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
-    run: async (a) => {
-      const org = toAddress(a.org, "org");
-      const address = toAddress(a.address, "address");
-      await indexerTick({ maxWindows: 6, minIntervalSec: 10 }).catch(() => null);
-      const db = await getDb();
-      const rows = await db.all<{ payee_ref: Hex; block: number }>(
-        "SELECT payee_ref, block FROM chain_events WHERE name IN ('Bound','Changed') AND lower(org) = lower(?) AND lower(payout) = lower(?) ORDER BY block DESC LIMIT 10",
-        org,
-        address,
-      );
-      for (const r of rows) {
-        const p = await readPayee(serverClient, org, r.payee_ref);
-        if (p.payout.toLowerCase() === address.toLowerCase() && (p.state === "BOUND" || p.state === "FROZEN")) {
-          return { verified: p.state === "BOUND", state: p.state, provenAtBlock: r.block };
-        }
-      }
-      return { verified: false, state: "NOT_A_PROVEN_PAYEE" };
-    },
+    run: async (a) => (await lookupPayee(toAddress(a.org, "org"), toAddress(a.address, "address"))) as unknown as Json,
   },
   {
     name: "get_payment_receipt",

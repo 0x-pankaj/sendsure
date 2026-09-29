@@ -18,6 +18,11 @@ interface Stats {
   tiers: Record<Tier, Bucket>;
   recentPayments: { tx: string; block: number; org: string; payout: string; amountUsdc: string; tier: Tier }[];
   indexer: { block?: number; updatedAt?: number; error?: string };
+  paidCalls?: {
+    external: { calls: number; usdc: string; payers: number };
+    firstParty: { calls: number; usdc: string; payers: number };
+    byEndpoint: Record<string, number>;
+  };
 }
 
 const TIERS: { key: Tier; title: string; note: string }[] = [
@@ -89,6 +94,43 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+          {data.paidCalls && (
+            <>
+              <h2>Agents paying SendSure per call</h2>
+              <p className="hint" style={{ maxWidth: 900 }}>
+                Other agents buy payee checks with USDC nanopayments (x402 over Circle Gateway): $0.001 to verify a payee, $0.005 to
+                check a payout file. <a href="/api/x402">Catalog</a>.
+              </p>
+              <div className="table-wrap" style={{ maxWidth: 900 }}>
+                <table style={{ minWidth: 480 }}>
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>External</th>
+                      <th>First-party</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Paid calls</td>
+                      <td>{data.paidCalls.external.calls}</td>
+                      <td className="hint">{data.paidCalls.firstParty.calls}</td>
+                    </tr>
+                    <tr>
+                      <td>USDC earned</td>
+                      <td>{data.paidCalls.external.usdc}</td>
+                      <td className="hint">{data.paidCalls.firstParty.usdc}</td>
+                    </tr>
+                    <tr>
+                      <td>Paying agents</td>
+                      <td>{data.paidCalls.external.payers}</td>
+                      <td className="hint">{data.paidCalls.firstParty.payers}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
           <h2>Latest payments</h2>
           {data.recentPayments.length === 0 ? (
             <p className="hint">None yet.</p>
