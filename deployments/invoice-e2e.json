@@ -1,25 +1,24 @@
 {
   "note": "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790657234,
+  "ranAtUnix": 1790684328,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x426a9ABeE6807639288c85f281b549ED3F5Ef2cF",
+  "org": "0x6E86cae0b0D358B6c948dEF36390c746F2390BD2",
   "text": {
     "invoice": "INV-2026-044",
     "amount": "250000",
     "warnings": [
-      "The invoice asks for payment to a new address because of a bank change. SendSure will pay only the payee's proven address and will ignore this request.",
-      "The new address, 0x000000000000000000000000000000000000dEaD, is a known burn address. Money sent there is lost for good. This could be fraud or a mistake, so check with Maria Lopez Design through a channel you already trust.",
-      "The amount due is only 0.25 USD, which is very low for logo design and a brand guide. Check that this is the correct total."
+      "The invoice requests payment to a new address (0x000000000000000000000000000000000000dEaD) due to a claimed bank change; SendSure only pays the payee's proven address, so this change must be verified before paying.",
+      "The invoice amount is unusually small ($0.25); please confirm this is correct and not a typo."
     ],
-    "model": "anthropic/claude-opus-5.5"
+    "model": "anthropic/claude-sonnet-5"
   },
   "photo": {
     "invoice": "NS-2026-031",
     "amount": "200000",
-    "model": "anthropic/claude-opus-5.5"
+    "model": "anthropic/claude-sonnet-5"
   },
   "claim": {
-    "claimId": "0x7f0b87cde4cf6ba520d2f1011a54f54f9df7467e9c5e0c76277e85d1f005c75a",
+    "claimId": "0x993157310adc750aa2e6c4313d086f372f8b52e4fd826f5d7ca6ba87d5bc4171",
     "outcome": "ESCALATED",
     "reason": "NEEDS_COSIGN_NEW_PAYOUT",
     "reasonText": "First payment to a new or changed address needs a human co-sign.",

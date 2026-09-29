@@ -1,41 +1,41 @@
 {
   "note": "First-party end-to-end test: Odoo 19 Community (Docker) with the sendsure_payables add-on, against the live SendSure, SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790665756,
+  "ranAtUnix": 1790684686,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "odoo": "19.0-20260908",
-  "org": "0xb11dCe7A0b233A7F50bA8373649fd530EA8758B6",
-  "payee": "0x1aBF9A0327977352f6Bc70621D06e6a894698E73",
+  "org": "0x9Ee053a6791B8fAC383Cbe63dae323e645b1493c",
+  "payee": "0x20bbcf858C5719E88C1D06a9E093e26e3972C516",
   "bill": {
-    "name": "BILL/2026/09/0002",
-    "invoiceRef": "INV-ODOO-MUMC2OTP",
+    "name": "BILL/2026/09/0003",
+    "invoiceRef": "INV-ODOO-MUMNCD0I",
     "amountUsd": "0.25",
     "state": "paid",
     "sendsure": "paid"
   },
   "refused": {
-    "trustSlippedInWallet": "0x6F1f7c01269a64189CbF7062e335b86E134cdc5E is not the address Maria Lopez Design mumc2otp proved in SendSure (0x1aBF9A0327977352f6Bc70621D06e6a894698E73). Someone may have added this wallet to the vendor; do not trust it.",
+    "trustSlippedInWallet": "0xC2840A6d8F4c88AcaCfdb4BF3b04EE6d2093890E is not the address Maria Lopez Design mumncd0i proved in SendSure (0x20bbcf858C5719E88C1D06a9E093e26e3972C516). Someone may have added this wallet to the vendor; do not trust it.",
     "agentUserTrust": "You do not have the rights to trust or un-trust accounts.",
-    "sendBeforeTrust": "Trust Maria Lopez Design mumc2otp's proven wallet 0x1aBF9A0327977352f6Bc70621D06e6a894698E73 first (Contacts > the vendor > Invoicing > bank accounts; needs the right to validate bank accounts).",
+    "sendBeforeTrust": "Trust Maria Lopez Design mumncd0i's proven wallet 0x20bbcf858C5719E88C1D06a9E093e26e3972C516 first (Invoicing > Vendors > the vendor > Invoicing tab > bank accounts; needs the right to validate bank accounts).",
     "wrongAmountClaim": "PROPOSAL_MISMATCH",
     "manualUsdcPayment": "Payments with USDC on Arc (SendSure) are recorded by SendSure from the chain, with their transaction. To pay this vendor, use \"Pay with SendSure\" on the bill."
   },
-  "cosign": "https://explorer.testnet.arc.io/tx/0xad2a32fc30cca085397385aee0181c76cbc597237f2def9569617869152c0f01",
-  "settle": "https://explorer.testnet.arc.io/tx/0x04f9d6b4b68c29ae83d3ec33e763111ba67a39295f45bb5167b8aabc739cf38d",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x315a56f82d539fff004aa602de89da94b551019e9b19be6dc4e13e472377a376",
+  "settle": "https://explorer.testnet.arc.io/tx/0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050",
   "odooPayment": {
-    "name": "PSSU/2026/00002",
+    "name": "PSSU/2026/00003",
     "amount": 0.25,
     "currency": "USC",
     "journal": "USDC on Arc (SendSure) (USC)",
-    "memo": "SendSure 0x04f9d6b4b68c29ae83d3ec33e763111ba67a39295f45bb5167b8aabc739cf38d"
+    "memo": "SendSure 0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050"
   },
   "settlement": {
-    "tx": "0x04f9d6b4b68c29ae83d3ec33e763111ba67a39295f45bb5167b8aabc739cf38d",
-    "block": 64570582,
-    "paidAt": "2026-09-29T07:09:02.000Z",
+    "tx": "0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050",
+    "block": 64607716,
+    "paidAt": "2026-09-29T12:24:31.000Z",
     "amount": "250000",
     "amountUsdc": "0.25",
-    "payout": "0x1aBF9A0327977352f6Bc70621D06e6a894698E73",
+    "payout": "0x20bbcf858C5719E88C1D06a9E093e26e3972C516",
     "token": "0x3600000000000000000000000000000000000000",
-    "decisionHash": "0x13206cb85c93b68402bd8f46d6bfe929b9542fc1ea7c7b8caed4a0101f471f17"
+    "decisionHash": "0xe2b4fdd855e5c90d8fefd835e0db38daa56d62cb83935141ed90087abdef1e69"
   }
 }

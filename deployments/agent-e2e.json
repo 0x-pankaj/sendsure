@@ -1,42 +1,42 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790656851,
+  "ranAtUnix": 1790683531,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0xD3bE0941299373dFd12232112Be965cDC9c47e35",
-  "payee": "0x076e412c0CC81A65634B2b0d7bE320f05810A7F8",
+  "org": "0x2b612798C41131b44636D749ED99891e0ae11dbB",
+  "payee": "0x20e7f3b2Ec19674da4f1e6A002192d5f3c244A69",
   "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
   "runs": [
     {
       "invoice": "INV-A",
       "action": "escalate",
-      "reason": "This is the first payment to this payee's payout address, so a person has to co-sign before it can be paid. Also, the description says 'first half of September' but the dates on the claim are Sept 15–29, so please check which work this covers."
+      "reason": "This is the first payment to this payee's address, so a person must co-sign before it can be paid. The description says \"first half of September\" but the dates cover the second half (Sep 15–29), so please check which work this invoice is for."
     },
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0x129d9949397a4b46cd626ad9b872b95e0d9f268a226d849fb3e24f340ffd7b93",
-      "decisionHash": "0xc8efdc9bdf493872b1ed8977ebbae87c497bf7371f3ba6445d8cea716cbedd4f"
+      "tx": "https://explorer.testnet.arc.io/tx/0xe5d98f5b91c2c40633176318d44c37cb7b69154bcfadb06044956b699a17f77d",
+      "decisionHash": "0x0a4e318579565e02cd93959cea8a665ae42359422da3db72d5c874a79609b0c5"
     },
     {
       "invoice": "INV-B",
       "action": "escalate",
-      "reason": "The note asks to pay a new wallet and says it's urgent, which is a common sign of fraud. The payee also billed the same amount for overlapping dates before, so a person should check with them by phone or another known contact."
+      "reason": "The invoice asks for payment to a new wallet and says it's urgent, which is a common fraud sign. It's also for the same amount and overlapping dates as another recent bill from this payee, so please confirm with them directly before approving."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0x67c7af323a756f74c195b9d7712add8a7d89a47b7b01eab9aaa11df4a9130595",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x837704648c94490a43d3456396abbc0212767ccb3d43148ce09e364e24fd59ad",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x387bed8da292f6a5f885938b55329399a2bf4132009578e6eba14af8a04ef08c",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x7e59f706f13ff26a88b9ca725a90c574eef162bc9d1fbca6fd338071ae04f665",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64553032,
+      "block": 64605338,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0x129d9949397a4b46cd626ad9b872b95e0d9f268a226d849fb3e24f340ffd7b93",
+      "tx": "0xe5d98f5b91c2c40633176318d44c37cb7b69154bcfadb06044956b699a17f77d",
       "event": "Settled",
       "carriesDecisionHash": true
     }

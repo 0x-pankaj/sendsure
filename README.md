@@ -9,6 +9,14 @@ budget an Arc contract enforces. Then it writes each payment into the books the 
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
 Arc testnet (chain 5042002). Testnet only; not audited.
 
+## For judges: a 3-minute tour
+
+1. [`/try`](https://sendsure.0xpankaj.workers.dev/try): the whole story with no wallet. A payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
+2. Open any payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim, and the agent's anchored decision.
+3. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
+4. Books: [the Odoo add-on](integrations/odoo) (screenshots and a one-command Docker setup) and the [beancount ledger](deployments/books-e2e.beancount) reconciled to the chain.
+5. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
+
 ## Try it
 
 | How | What you see |

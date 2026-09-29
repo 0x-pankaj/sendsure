@@ -6,6 +6,13 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
+- **Before outreach (Sep 29):** done by Claude: gas keys topped up (relayer and server agent ~9.5 USDC; `/status`
+  shows LOW under 2), contact link on every page (`NEXT_PUBLIC_CONTACT_URL`, GitHub Issues until Pankaj picks an
+  email/Telegram), `/data` (what is stored where), Pankaj's MetaMask `0xF84a…a194` in `FIRST_PARTY_ADDRESSES`
+  (Worker secret + `.env.local`), judges' tour in the README, private outreach kit in `the-pick/03-OUTREACH-KIT.md`.
+  **Waiting on Pankaj's laptop:** finish the MetaMask run on `/org` (connect worked; next popups: create org,
+  budget, invites/sign-in) and `/verify` with a second MetaMask account (the owner can't be their own payee).
+  Test on the live site or on `localhost:3100` (not `127.0.0.1`: `next dev` blocks its scripts there).
 - **Next task:** the first ⬜ in [Tasks](#tasks), in order, skipping tasks blocked on Pankaj:
   T14d waits for the Circle Console keys (P5). `MESH_API_KEY` arrived Sep 29 (in `.env.local` and the
   Worker's secrets).
