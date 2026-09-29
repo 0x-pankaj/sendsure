@@ -13,7 +13,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 
 | How | What you see |
 |---|---|
-| [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet | In two minutes: a payee proves their address, a look-alike address is caught, an attacker's claim is refused on-chain, a "pay my new wallet" change is refused, a real payment is escalated, co-signed and paid, with a receipt and books. |
+| [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet | In two minutes: a payee proves their address, a look-alike address is caught, an attacker's claim is refused on-chain, a "pay my new wallet" change is refused, a real payment is escalated, co-signed and paid, then an inbox of tricky claims (a duplicate under a new number, an undescribed claim, a hidden instruction to the AI) that Claude holds with reasons. Receipt and books included. |
 | [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. |
 | [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent, co-sign, download books. You only sign; SendSure pays the gas. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
@@ -23,11 +23,13 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 
 1. **The payee proves their address, once.** The payer sends an invite link. The payee signs an
    EIP-712 `Bind` with the wallet they want to be paid to; SendSure's relayer submits it.
-2. **The payee signs a claim for each invoice.** The server salts the invoice number
-   (`refHash`), runs the contract's own `check()` and stores the signed claim.
+2. **The payee signs a claim for each invoice.** Or the payer uploads the invoice (text or a photo)
+   and Claude reads it, quoting where each value came from; the payee checks it and signs. The
+   server salts the invoice number (`refHash`), runs the contract's own `check()` and stores the
+   signed claim.
 3. **The agent runs.** Rules first (the `check()` result plus red flags from the payee's history),
-   then Claude via MeshAPI reviews with read-only tools. The model can only make a decision more
-   careful. Every decision is hash-chained; its hash goes into the payment; the log head is
+   then Claude (Opus 5.5 via MeshAPI, Sonnet 5 as fallback) reviews with read-only tools. The model
+   can only make a decision more careful. Every decision is hash-chained; its hash goes into the payment; the log head is
    anchored on-chain.
 4. **A person co-signs** first payments to a new address, payer-vouched addresses and amounts
    above the threshold, on-chain, for that exact claim.
@@ -47,6 +49,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | Relayer | Checks each signature offline, simulates, then submits; per-address limits count only verified requests. | [`apps/web/lib/relayer.ts`](apps/web/lib/relayer.ts), [`orgRelay.ts`](apps/web/lib/orgRelay.ts) |
 | Claims | Salted invoice refs, the contract's dry run before storing, one open claim per invoice. | [`apps/web/lib/claims.ts`](apps/web/lib/claims.ts) |
 | Agent | Rules, red flags, the MeshAPI tool loop, settle and anchor. | [`apps/web/lib/agent.ts`](apps/web/lib/agent.ts), [`llm.ts`](apps/web/lib/llm.ts) |
+| Invoice reading | Two passes: every field with a verbatim quote (checked in code), then a validated claim proposal; payment instructions in an invoice are flagged, never used. | [`apps/web/lib/invoices.ts`](apps/web/lib/invoices.ts) |
 | Decision log | Hash chain, anchors, and replay without the model. | [`decisionLog.ts`](apps/web/lib/decisionLog.ts), [`replay.ts`](apps/web/lib/replay.ts) |
 | Circle agent wallet runner | Signs in as the Circle agent wallet (ERC-1271), sends `settle()` and `anchor()` with `circle wallet execute`. | [`scripts/agent-circle.ts`](scripts/agent-circle.ts) |
 | Books | Beancount with each payment's claim, decision hash and Arc tx; daily balances from the chain. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
@@ -115,8 +118,9 @@ first-payment co-sign is the backstop); rate limits live in each Worker isolate.
 - Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction):
   [bind](deployments/relay-e2e.json) 4/4, [change](deployments/relay-e2e-change.json) 7/7,
   [org](deployments/org-e2e.json) 9/9, [claim](deployments/claim-e2e.json) 11/11,
-  [agent](deployments/agent-e2e.json) 10/10, [circle](deployments/circle-e2e.json) 10/10,
-  [try](deployments/try-e2e.json) 9/9; [books](deployments/books-e2e.beancount) pass `bean-check`.
+  [agent](deployments/agent-e2e.json) 11/11 (with the model's reasons), [circle](deployments/circle-e2e.json) 10/10,
+  [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12;
+  [books](deployments/books-e2e.beancount) pass `bean-check`.
 
 ## Run it
 
