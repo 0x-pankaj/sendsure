@@ -87,6 +87,10 @@ export default function Home() {
           For agents: <span className="mono">claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp</span>
         </li>
         <li>
+          Agents can pay per check in USDC, with x402 over Circle Gateway: $0.001 to verify a payee, $0.005 to check a payout file.{" "}
+          <a href="/api/x402">Catalog</a>.
+        </li>
+        <li>
           <a href="https://github.com/0x-pankaj/sendsure">Source and test runs</a> (MIT). <a href="/status">System status</a>.
         </li>
       </ul>

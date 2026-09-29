@@ -102,6 +102,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T19 | Books: beancount writer (6 decimals, explicit tolerance, balance assertion from chain) + `bean-check` | C | sample ledger passes: `packages/core/src/beancount.ts`; `/org` → "Download books"; live ledger from `e2e:agent` passes `bean-check` ([file](deployments/books-e2e.beancount): the co-sign's gas shows up as an outside movement, the closing balance is read from the chain) | ✅ |
 | T20 | MCP server on the sandbox org only: `dry_run` by default, idempotency signal on every tool, rate limits | C | a judge's Claude can call it: `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`. Tools: `check_payout_list`, `verify_payee_address`, `get_payment_receipt`, `get_sendsure_stats` (read-only), `run_demo_scene` (sandbox only, dry run by default, idempotent). Checked with the official MCP Inspector CLI (tools/list, tools/call) and a real scene + replay | ✅ |
 | T21 | Agent judgment inbox: duplicate invoice under a new number, claim missing evidence, look-alike "new wallet" email with a hidden instruction → reasons shown, `settle()` refuses | C | demo scene recorded: `/try` step 5 and MCP `run_demo_scene inbox`; live `e2e:try` 10/10 ([run](deployments/try-e2e.json)): Claude holds the duplicate ("would pay twice"), escalates the undescribed claim and the hidden-instruction "new wallet" request; none paid; the page states that even a fooled agent could only pay the proven address | ✅ |
+| T22 | Paid checks for other agents: x402 over **Circle Gateway Nanopayments** (`@circle-fin/x402-batching`'s facilitator, Web-standard handler in `lib/x402.ts`): `POST /api/x402/verify-payee` $0.001, `POST /api/x402/check-payout` $0.005, catalog `GET /api/x402`; the check runs before the charge; payments in D1 `x402_payments` and on the dashboard (first-party vs external payers) | C | `pnpm e2e:x402` live 11/11 ([run](deployments/x402-e2e.json)): unpaid 402 accepts Arc testnet via Gateway, `circle services inspect` payable, estimate, the Circle agent wallet (1 USDC deposited to Gateway on Arc testnet) pays both, Gateway settles, dashboard counts them. Marketplace listing: submission via agents.circle.com "Talk to us" (P8) | ✅ |
 
 ### Traction (every day, 2 hours)
 | ID | Task | Owner | Done when | Status |
@@ -112,6 +113,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
 | P5 | Keys: **MeshAPI key** (`MESH_API_KEY=rsk_…`, for all AI) and a Circle Console TEST API key + entity secret (sandbox treasury), written into `apps/web/.env.local` yourself (never in chat) | P | in `.env.local` | ⬜ |
 | P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
+| P8 | Circle marketplace: submit SendSure's paid checks through agents.circle.com/services → "Talk to us" (metadata in `deployments/x402-listing.md`) | P | submitted | ⬜ |
 | P7 | Hosting account: Cloudflare, Pankaj's own (he chose Workers on Sep 29: "if not work then split backend with hono") | P | confirmed | ✅ |
 
 ### Submission
@@ -124,7 +126,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | S5 | Final submission + final `arc-canteen update product` and `update traction`; re-login the Circle CLI on Oct 10 | P | submitted by Oct 10 evening | ⬜ |
 
 ## Deferred: only if ahead after Mon Oct 5
-Onramp "Add funds" · Earn/USYC · cross-chain payouts via CCTP · paid x402 payee lookup for other agents ·
+Onramp "Add funds" · Earn/USYC · cross-chain payouts via CCTP ·
 hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV formats · passkey payee UI
 (the contract already supports `bind()` from a smart account).
 

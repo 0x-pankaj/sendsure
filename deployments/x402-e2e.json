@@ -1,0 +1,137 @@
+{
+  "note": "First-party end-to-end test: our own Circle agent wallet buys SendSure's paid checks with x402 over Circle Gateway on Arc testnet. Not traction.",
+  "ranAtUnix": 1790662797,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "buyer": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
+  "buyerGatewaySigner": "0x1222c4c16376961881cdcfffd6d737137f425dc3",
+  "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73",
+  "unpaid": {
+    "status": 402,
+    "accepts": 12,
+    "arc": {
+      "scheme": "exact",
+      "network": "eip155:5042002",
+      "asset": "0x3600000000000000000000000000000000000000",
+      "amount": "1000",
+      "payTo": "0x1B66e68D3F61D84B5498013b0981537DBef28b73",
+      "maxTimeoutSeconds": 604900,
+      "extra": {
+        "name": "GatewayWalletBatched",
+        "version": "1",
+        "verifyingContract": "0x0077777d7eba4688bdef3e311b846f25870a19b9"
+      }
+    }
+  },
+  "inspect": {
+    "status": "payable",
+    "httpStatus": 402,
+    "url": "https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee",
+    "price": {
+      "amount": "1000",
+      "formatted": "$0.001 USDC"
+    },
+    "chains": [
+      "eip155:11155111",
+      "eip155:84532",
+      "eip155:43113",
+      "eip155:421614",
+      "eip155:14601",
+      "eip155:4801",
+      "eip155:1328",
+      "eip155:998",
+      "eip155:5042002",
+      "eip155:11155420",
+      "eip155:80002",
+      "eip155:1301"
+    ],
+    "scheme": "GatewayWalletBatched",
+    "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73"
+  },
+  "estimate": {
+    "message": "Payment required: $0.001 USDC",
+    "price": "$0.001 USDC",
+    "chain": "eip155:5042002",
+    "scheme": "GatewayWalletBatched",
+    "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73"
+  },
+  "verifyPayee": {
+    "request": {
+      "org": "0x1354572737303e651742dca34b16846323ba4629",
+      "address": "0x72D4705FC6e03b39f9842a0424645f0456610ed8"
+    },
+    "response": {
+      "org": "0x1354572737303e651742dCa34b16846323ba4629",
+      "address": "0x72D4705FC6e03b39f9842a0424645f0456610ed8",
+      "verified": true,
+      "state": "BOUND",
+      "proof": "PROVEN",
+      "since": {
+        "tx": "0x2328858ef8bef543f6e811bb58e203aeb12c4f03044776bc370a90449da6faee",
+        "block": 64553603
+      },
+      "orgTier": "sandbox"
+    },
+    "payment": {
+      "amount": "$0.001 USDC",
+      "chain": "eip155:5042002",
+      "scheme": "GatewayWalletBatched",
+      "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73",
+      "receipt": {
+        "success": true,
+        "transaction": "2f4833bd-9793-4571-a619-3e532d4cc6c2",
+        "network": "eip155:5042002",
+        "payer": "0x1222c4c16376961881cdcfffd6d737137f425dc3"
+      }
+    }
+  },
+  "checkPayout": {
+    "summary": {
+      "rows": 2,
+      "byAction": {
+        "PAY": 0,
+        "REVIEW": 1,
+        "STOP": 1
+      },
+      "byStatus": {
+        "SAME_AS_LAST_PAID": 0,
+        "CHANGED": 1,
+        "NEW": 0,
+        "LOOKALIKE": 1,
+        "INVALID_ADDRESS": 0
+      },
+      "amountByAction": {
+        "PAY": 0,
+        "REVIEW": 120,
+        "STOP": 80
+      }
+    },
+    "rows": [
+      {
+        "line": 2,
+        "payee": "Alice",
+        "address": "0xAA219Ed4D59A64F65443B8db9BAc93f78dA00BaB",
+        "amount": 120,
+        "action": "REVIEW",
+        "status": "CHANGED",
+        "flags": [],
+        "explanation": "Different from the address you paid last time (0x72D4705FC6e03b39f9842a0424645f0456610ed8). Confirm it with the payee through a channel you already trust, or ask them to prove it on SendSure."
+      },
+      {
+        "line": 3,
+        "payee": "Bob",
+        "address": "0x72D49Ed4d59a64F65443B8DB9BaC93f78da00Ed8",
+        "amount": 80,
+        "action": "STOP",
+        "status": "LOOKALIKE",
+        "flags": [],
+        "explanation": "Looks like 0x72D4705FC6e03b39f9842a0424645f0456610ed8 (same start and end, different middle). This is how address poisoning works. Do not pay until the payee confirms."
+      }
+    ],
+    "payment": "$0.005 USDC"
+  },
+  "dashboardFirstPartyPaidCalls": {
+    "calls": 6,
+    "usdc": "0.018",
+    "payers": 1
+  }
+}

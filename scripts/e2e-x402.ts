@@ -7,6 +7,8 @@
 //   Needs the Circle CLI signed in, with a Gateway balance on ARC-TESTNET (circle gateway deposit ... --method direct).
 //   pnpm tsx scripts/e2e-x402.ts [--base https://sendsure.0xpankaj.workers.dev]
 import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { getAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { CIRCLE_AGENT } from "./agent-circle";
@@ -86,5 +88,26 @@ check(
 const after = await stats();
 check(after.paidCalls?.firstParty.calls === callsBefore + 2, `dashboard counts ${after.paidCalls?.firstParty.calls} first-party paid calls (+2)`);
 
-if (failed()) process.exit(1);
-console.log("\nx402 e2e passed");
+writeFileSync(
+  resolve(import.meta.dirname, "../deployments/x402-e2e.json"),
+  `${JSON.stringify(
+    {
+      note: "First-party end-to-end test: our own Circle agent wallet buys SendSure's paid checks with x402 over Circle Gateway on Arc testnet. Not traction.",
+      ranAtUnix: Math.floor(Date.now() / 1000),
+      base,
+      buyer: CIRCLE_AGENT,
+      buyerGatewaySigner: settlement?.payer,
+      seller: arc?.payTo,
+      unpaid: { status: unpaid.status, accepts: reqs?.accepts?.length, arc },
+      inspect: inspected,
+      estimate,
+      verifyPayee: { request: JSON.parse(body), response: v.response, payment: { ...v.payment, receipt: settlement } },
+      checkPayout: { summary: p.response?.summary, rows, payment: p.payment?.amount },
+      dashboardFirstPartyPaidCalls: after.paidCalls?.firstParty,
+    },
+    null,
+    2,
+  )}\n`,
+);
+console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/x402-e2e.json");
+process.exitCode = failed() ? 1 : 0;

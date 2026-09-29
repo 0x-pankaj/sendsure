@@ -17,6 +17,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. |
 | [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent, co-sign, download books. You only sign; SendSure pays the gas. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
+| Pay per call, for agents | [`/api/x402`](https://sendsure.0xpankaj.workers.dev/api/x402): verify a payee ($0.001) or check a payout file ($0.005), paid in USDC with x402 over Circle Gateway. `circle services pay https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee -X POST -d '{"org":"0x…","address":"0x…"}' --address <your agent wallet> --chain ARC-TESTNET --max-amount 0.001` |
 | [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard) | Every number counted from chain events, in three tiers. Sandbox activity is never counted as traction. |
 
 ## How it works
@@ -54,6 +55,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | Circle agent wallet runner | Signs in as the Circle agent wallet (ERC-1271), sends `settle()` and `anchor()` with `circle wallet execute`. | [`scripts/agent-circle.ts`](scripts/agent-circle.ts) |
 | Books | Beancount with each payment's claim, decision hash and Arc tx; daily balances from the chain. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
 | Indexer and dashboard | Chain events into D1 (≤ 9,999-block windows); three tiers; public receipts. | [`indexer.ts`](apps/web/lib/indexer.ts), [`stats.ts`](apps/web/lib/stats.ts), [`receipt.ts`](apps/web/lib/receipt.ts) |
+| Paid checks (x402) | Other agents pay per call through Circle Gateway: a 402 with the price, then verify and settle with Circle's facilitator; the check runs before the charge, so bad input is never billed. Each payment is recorded and counted on the dashboard. | [`apps/web/lib/x402.ts`](apps/web/lib/x402.ts), [`app/api/x402/`](apps/web/app/api/x402/) |
 | MCP server | Payout check, address lookup, receipts, stats, and a sandbox-only, dry-run-by-default demo tool. | [`apps/web/lib/mcp.ts`](apps/web/lib/mcp.ts) |
 | Schema | Cloudflare D1 (the same SQL runs on local SQLite for tests). No payee names are stored. | [`apps/web/migrations/`](apps/web/migrations/) |
 
@@ -62,6 +64,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | Surface | How SendSure uses it | Proof |
 |---|---|---|
 | Circle CLI agent wallet (Agent Stack) | The Circle agent wallet is an agent of every org: it sends `settle()` and `anchor()` itself, and signs in to SendSure with an ERC-1271 signature. | [circle run](deployments/circle-e2e.json) (settle, anchor, replay), [smoke test](deployments/smoke-test.md) |
+| Circle Gateway Nanopayments (x402) | SendSure sells its checks to other agents: $0.001 per payee verification, $0.005 per payout-file check, paid in USDC through Gateway (gasless for the buyer, batched settlement; Arc testnet and 11 other testnets accepted). | [x402 run](deployments/x402-e2e.json): unpaid 402, `circle services inspect`, estimate, two paid calls settled by Gateway, dashboard count |
 | USDC on Arc | Payouts are USDC; gas is USDC; budgets are EIP-2612 `permit`s, so payers never need gas to onboard. | [org run](deployments/org-e2e.json) (budget by permit), permit domain checked against the token in [`org.test.ts`](packages/chain/test/org.test.ts) |
 | USDC blocklist | Blocklisted addresses cannot bind or be paid; a blocklisted treasury cannot pay. | `isBlacklisted` in the contracts; `test_BlocklistedAddressCannotBind` |
 | Arc testnet | Contracts deployed and source-verified; archive state lets replay re-run `check()` at the recorded block. | [`deployments/arc-testnet.json`](deployments/arc-testnet.json) |
@@ -119,7 +122,8 @@ first-payment co-sign is the backstop); rate limits live in each Worker isolate.
   [bind](deployments/relay-e2e.json) 4/4, [change](deployments/relay-e2e-change.json) 7/7,
   [org](deployments/org-e2e.json) 9/9, [claim](deployments/claim-e2e.json) 11/11,
   [agent](deployments/agent-e2e.json) 11/11 (with the model's reasons), [circle](deployments/circle-e2e.json) 10/10,
-  [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12;
+  [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12,
+  [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway);
   [books](deployments/books-e2e.beancount) pass `bean-check`.
 
 ## Run it
