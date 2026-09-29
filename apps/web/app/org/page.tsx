@@ -175,6 +175,18 @@ export default function OrgPage() {
 
 // ------------------------------------------------------------------ create
 
+/** After a lost response: the newest org the factory created for this owner that this browser doesn't know yet. */
+async function newOrgFor(owner: Address, known: Set<string>): Promise<Address | null> {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const res = await fetch(`/api/org/mine?owner=${owner}`).catch(() => null);
+    const out = res?.ok ? ((await res.json()) as { orgs: { org: Address }[] }) : null;
+    const fresh = out?.orgs.find((o) => !known.has(o.org.toLowerCase()));
+    if (fresh) return fresh.org;
+  }
+  return null;
+}
+
 function CreateOrg(props: { signer: Signer; onCreated: (org: SavedOrg) => void; onCancel?: () => void }) {
   const { signer, onCreated, onCancel } = props;
   const [name, setName] = useState("");
@@ -210,12 +222,18 @@ function CreateOrg(props: { signer: Signer; onCreated: (org: SavedOrg) => void; 
       };
       const validUntil = BigInt(nowSec() + 30 * 60);
       const signature = await signText(signer, createOrgMessage(rules, validUntil));
-      const out = await post<{ org?: Address; txHash: Hex; status: string }>("/api/org/create", {
-        ...rules,
-        validUntil,
-        signature,
-      });
-      setTx(out.txHash);
+      const known = new Set(loadOrgs().map((o) => o.org.toLowerCase()));
+      let out: { org?: Address; txHash?: Hex; status: string };
+      try {
+        out = await post<{ org?: Address; txHash: Hex; status: string }>("/api/org/create", { ...rules, validUntil, signature });
+      } catch (err) {
+        // A network failure can hide a success: look for a new org created for this wallet.
+        if (!(err instanceof TypeError)) throw err;
+        const found = await newOrgFor(signer.address, known);
+        if (!found) throw err;
+        out = { org: found, status: "success" };
+      }
+      if (out.txHash) setTx(out.txHash);
       if (!out.org) throw new Error(`The org was not created (${out.status}).`);
       onCreated({
         org: out.org,
@@ -498,25 +516,45 @@ function Invites(props: { org: SavedOrg; signer: Signer; onInvited: (org: SavedO
   const [error, setError] = useState("");
   const [tx, setTx] = useState<Hex | null>(null);
 
+  /** After a lost response, the chain is the truth: are all these invites open now? */
+  async function openedOnChain(refs: Hex[]): Promise<boolean> {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const states = await Promise.all(refs.map((ref) => readPayee(publicClient, org.org, ref).catch(() => null)));
+      if (states.every((p) => p && p.state !== "NONE")) return true;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    return false;
+  }
+
   async function invite() {
     setError("");
     setBusy(true);
+    const fresh = parseVendorLines(text, org);
+    const save = () => {
+      setText("");
+      onInvited({ ...org, vendors: [...org.vendors, ...fresh.map((v) => ({ ...v, invitedAt: Date.now() }))] });
+    };
     try {
-      const fresh = parseVendorLines(text, org);
       if (!fresh.length) throw new Error("Add at least one new payee, one per line.");
       const refs = fresh.map((v) => v.payeeRef);
       const validUntil = BigInt(nowSec() + 10 * 60);
       const signature = await signText(signer, openInvitesMessage(org.org, inviteBatchHash(refs), refs.length, validUntil));
-      const out = await post<{ txHash: Hex; status: string }>("/api/org/invites", {
-        org: org.org,
-        payeeRefs: refs,
-        validUntil,
-        signature,
-      });
+      let out: { txHash?: Hex; status: string } | null = null;
+      try {
+        out = await post<{ txHash?: Hex; status: string }>("/api/org/invites", {
+          org: org.org,
+          payeeRefs: refs,
+          validUntil,
+          signature,
+        });
+      } catch (err) {
+        // A network failure can hide a success: check the chain before calling it an error.
+        if (!(err instanceof TypeError) || !(await openedOnChain(refs))) throw err;
+        out = { status: "success" };
+      }
       if (out.status !== "success") throw new Error(`The invites were not opened (${out.status}).`);
-      setTx(out.txHash);
-      setText("");
-      onInvited({ ...org, vendors: [...org.vendors, ...fresh.map((v) => ({ ...v, invitedAt: Date.now() }))] });
+      if (out.txHash) setTx(out.txHash);
+      save();
     } catch (err) {
       setError(walletErrorText(err));
     } finally {

@@ -27,6 +27,7 @@ import {
   openInvitesMessage,
   payeeRegistryAbi,
   permitTypedData,
+  readPayee,
   usdcPermitAbi,
   type CapsInput,
   type OrgRules,
@@ -44,6 +45,7 @@ import {
   toRelayError,
   toUint,
   toValidUntil,
+  type NothingToSend,
   type RelayKind,
   type RelayResult,
 } from "./relayer";
@@ -270,18 +272,26 @@ export async function verifyInvites(req: InvitesRequest): Promise<void> {
   if (!ok) throw new RelayError(400, "Only the org owner can open invites.", "BadSignature");
 }
 
-export async function submitInvites(req: InvitesRequest): Promise<RelayResult> {
+/**
+ * Opens the invites that are not open yet. Idempotent: an invite already open, confirmed or frozen is
+ * left alone, so a retry after a lost response succeeds instead of failing.
+ */
+export async function submitInvites(req: InvitesRequest): Promise<RelayResult | NothingToSend> {
   const wallet = agent();
   try {
+    const states = await Promise.all(req.payeeRefs.map((ref) => readPayee(serverClient, req.org, ref)));
+    const toOpen = req.payeeRefs.filter((_, i) => states[i]!.state === "NONE" || states[i]!.state === "REVOKED");
+    usedInviteSignatures.add(req.signature.toLowerCase());
+    if (!toOpen.length) return { status: "success", opened: 0, alreadyOpen: req.payeeRefs.length };
     const { request } = await serverClient.simulateContract({
       account: wallet.account,
       address: req.org,
       abi: mandateAbiWithErrors,
       functionName: "openSlots",
-      args: [req.payeeRefs],
+      args: [toOpen],
     });
-    usedInviteSignatures.add(req.signature.toLowerCase());
-    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    const sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    return { ...sent, opened: toOpen.length, alreadyOpen: req.payeeRefs.length - toOpen.length };
   } catch (err) {
     throw toRelayError(err);
   }

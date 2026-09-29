@@ -185,7 +185,9 @@ export function toRelayError(err: unknown): RelayError {
     if (revert instanceof ContractFunctionRevertedError) {
       const name = revert.data?.errorName ?? "";
       let text =
-        REGISTRY_ERROR_TEXT[name] ?? MANDATE_ERROR_TEXT[name] ?? `The chain refused it (${name || revert.reason || "unknown reason"}).`;
+        REGISTRY_ERROR_TEXT[name] ??
+        MANDATE_ERROR_TEXT[name] ??
+        `The chain refused it (${name || revert.reason || "unknown reason"}).`;
       if (name === "BadState") {
         const state = PAYEE_STATES[Number(revert.data?.args?.[0] ?? 0)] ?? "unknown";
         text = state === "BOUND" ? "This invite was already used." : `This invite is not open (it is ${state}).`;
@@ -193,7 +195,11 @@ export function toRelayError(err: unknown): RelayError {
       return new RelayError(409, text, name || "REVERTED");
     }
   }
-  console.error("relayer: RPC error", err instanceof BaseError ? err.shortMessage : err, err instanceof BaseError ? err.details : "");
+  console.error(
+    "relayer: RPC error",
+    err instanceof BaseError ? err.shortMessage : err,
+    err instanceof BaseError ? err.details : "",
+  );
   return new RelayError(502, "Could not reach Arc testnet. Please try again in a minute.", "RPC_ERROR");
 }
 
@@ -212,6 +218,9 @@ export interface RelayResult {
   status: "success" | "reverted" | "pending";
   /** Set when the transaction created an org. */
   org?: Address;
+  /** Invites: how many were opened now, and how many were already open. */
+  opened?: number;
+  alreadyOpen?: number;
 }
 
 const isNonceError = (err: unknown) =>
@@ -316,6 +325,13 @@ export async function relayChange(req: ChangeRequest): Promise<RelayResult> {
   return submitChange(req);
 }
 
+/** A relay call that had nothing to send (e.g. every invite in the batch was already open). */
+export interface NothingToSend {
+  status: "success";
+  opened: 0;
+  alreadyOpen: number;
+}
+
 export interface RelayKind<T> {
   /** Names the per-endpoint daily cap, which bounds what the relayer can spend on gas. */
   name: string;
@@ -324,7 +340,7 @@ export interface RelayKind<T> {
   /** Offline signature check. Runs before the per-address limit, so nobody can use up another address's quota. */
   verify: (parsed: T) => Promise<void>;
   payoutOf: (parsed: T) => string;
-  submit: (parsed: T) => Promise<RelayResult>;
+  submit: (parsed: T) => Promise<RelayResult | NothingToSend>;
   /** Limit per signer / org key; defaults to LIMITS.perPayout. */
   perKey?: { max: number; windowMs: number };
 }

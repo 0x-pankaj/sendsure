@@ -119,6 +119,8 @@ export function AddInvoice(props: { org: Address; signer: Signer; vendors: { nam
   const [result, setResult] = useState<InvoiceProposal | null>(null);
   const [list, setList] = useState<InvoiceProposal[] | null>(null);
   const nameOf = (ref: Hex) => vendors.find((v) => v.payeeRef.toLowerCase() === ref.toLowerCase())?.name ?? ref.slice(0, 10);
+  // The list can grow after this card first rendered: fall back to the first payee, never to nothing.
+  const selected: Hex | "" = vendors.some((v) => v.payeeRef === payeeRef) ? payeeRef : (vendors[0]?.payeeRef ?? "");
 
   const load = useCallback(async () => {
     try {
@@ -140,7 +142,7 @@ export function AddInvoice(props: { org: Address; signer: Signer; vendors: { nam
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           org,
-          payeeRef,
+          payeeRef: selected,
           text: text.trim() || undefined,
           image: text.trim() ? undefined : image || undefined,
         }),
@@ -165,7 +167,7 @@ export function AddInvoice(props: { org: Address; signer: Signer; vendors: { nam
         then checks it and signs the claim themselves; nothing is paid on the AI&apos;s word.
       </p>
       <label htmlFor="inv-payee">From</label>
-      <select id="inv-payee" value={payeeRef} onChange={(e) => setPayeeRef(e.target.value as Hex)}>
+      <select id="inv-payee" value={selected} onChange={(e) => setPayeeRef(e.target.value as Hex)}>
         {vendors.map((v) => (
           <option key={v.payeeRef} value={v.payeeRef}>
             {v.name}
@@ -184,7 +186,7 @@ export function AddInvoice(props: { org: Address; signer: Signer; vendors: { nam
           onChange={async (e) => e.target.files?.[0] && setImage(await readAsDataUrl(e.target.files[0]))}
         />
       </p>
-      <button className="btn" disabled={busy || !payeeRef || (!text.trim() && !image)} onClick={read}>
+      <button className="btn" disabled={busy || !selected || (!text.trim() && !image)} onClick={read}>
         {busy ? "Reading…" : "Read with AI"}
       </button>
       {error && <p className="notice">{error}</p>}
