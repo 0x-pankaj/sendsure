@@ -3,7 +3,7 @@
 //   - A key can: read the org, read payees by invite ref, check an address, send a posted bill (it becomes
 //     a proposal the payee must sign), read each bill's status down to the settle tx, and ask the agent
 //     to run. It can never approve, co-sign, open invites, change rules or move money itself.
-import { getAddress, parseEventLogs, type Address, type Hex } from "viem";
+import { getAddress, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import {
   REASON_TEXT,
   arcTestnet,
@@ -399,8 +399,16 @@ async function billStatus(org: Address, p: ProposalRow, origin: string) {
   if (c.status === "refused") return { ...base, status: "refused", reason: c.agent_reason || reasonText };
   if (c.status === "withdrawn") return { ...base, status: "withdrawn", reason: "The claim was withdrawn." };
   if (!c.agent_action) return { ...base, status: "signed", reason: "The vendor signed the bill. Waiting for the agent to run." };
-  if (c.last_outcome === "ESCALATED" || (c.agent_action === "escalate" && c.last_outcome !== "PAYABLE"))
+  if (c.last_outcome === "ESCALATED" || (c.agent_action === "escalate" && c.last_outcome !== "PAYABLE")) {
+    // Once a person has co-signed on-chain, the next agent run pays it: say so, so the books system
+    // asks for a run only then (not every few minutes while nobody has co-signed).
+    const cosigner = await serverClient
+      .readContract({ address: org, abi: mandateAbi, functionName: "cosignedBy", args: [c.claim_id] })
+      .catch(() => zeroAddress);
+    if (cosigner !== zeroAddress)
+      return { ...base, status: "signed", reason: "Co-signed by a person. The agent pays it on its next run." };
     return { ...base, status: "needs_cosign", reason: c.agent_reason || reasonText };
+  }
   return { ...base, status: "held", reason: c.agent_reason || reasonText };
 }
 
@@ -426,7 +434,8 @@ export async function listBills(org: Address, idsParam: string | null, origin: s
 
 /** Ask the agent to run now. It pays only claims that pass the contract; people still co-sign. */
 export async function runAgentForKey(org: Address) {
-  if (!allow(`agent-run:${org}`, 12, 60 * 60_000))
+  // Its own budget, so a books system's runs never block a person's "Run the agent" in /org.
+  if (!allow(`agent-run-key:${org}`, 20, 60 * 60_000))
     throw new RelayError(429, "The agent ran many times this hour. Please wait a bit.", "RATE_LIMITED");
   const out = await runAgent(org, { execute: true });
   return {
