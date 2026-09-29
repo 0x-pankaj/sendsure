@@ -20,7 +20,8 @@
     "e2e:circle": "tsx scripts/e2e-circle.ts",
     "e2e:try": "tsx scripts/e2e-try.ts",
     "e2e:invoice": "tsx scripts/e2e-invoice.ts",
-    "e2e:x402": "tsx scripts/e2e-x402.ts"
+    "e2e:x402": "tsx scripts/e2e-x402.ts",
+    "e2e:odoo": "tsx scripts/e2e-odoo.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

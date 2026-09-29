@@ -54,6 +54,14 @@ export default function Home() {
         </li>
       </ol>
 
+      <h2>Works with the books you already keep</h2>
+      <p className="hint" style={{ maxWidth: 760 }}>
+        The <a href="https://github.com/0x-pankaj/sendsure/tree/main/integrations/odoo">SendSure add-on for Odoo 19</a> puts
+        &ldquo;Pay with SendSure&rdquo; on your vendor bills. Odoo will only trust a vendor wallet that the vendor proved, and each
+        payment on Arc is recorded back through Odoo&apos;s own Register Payment with the exact amount and the transaction.
+        Half a cent is never rounded away. Every payment also exports to beancount.
+      </p>
+
       <h2>Three rules the AI cannot skip</h2>
       <div className="grid">
         <div className="card">

@@ -78,7 +78,7 @@ class AccountMove(models.Model):
                               state=dict(vendor._fields['sendsure_state'].selection).get(vendor.sendsure_state, '-')))
         if not self._sendsure_trusted_wallet(vendor):
             raise UserError(_(
-                "Trust %(vendor)s's proven wallet %(address)s first (Contacts > the vendor > Invoicing > bank accounts; "
+                "Trust %(vendor)s's proven wallet %(address)s first (Invoicing > Vendors > the vendor > Invoicing tab > bank accounts; "
                 "needs the right to validate bank accounts).", vendor=vendor.display_name, address=vendor.sendsure_address))
         lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product').mapped('name')
         return {
@@ -214,9 +214,18 @@ class AccountMove(models.Model):
         bills = self.search([('sendsure_state', 'in', IN_FLIGHT)])
         try:
             bills._sendsure_sync()
-            params = self.env['ir.config_parameter'].sudo()
-            if not params.get_param('sendsure.manual_only') and bills.filtered(lambda b: b.sendsure_state == 'signed'):
-                client.run_agent()
-                bills._sendsure_sync()
         except SendSureError as err:
             _logger.warning("SendSure: bill sync failed: %s", err)
+            return
+        params = self.env['ir.config_parameter'].sudo()
+        if params.get_param('sendsure.manual_only') or not bills.filtered(lambda b: b.sendsure_state == 'signed'):
+            return
+        try:
+            client.run_agent()
+        except SendSureError as err:
+            # A slow answer does not mean the run failed: the chain has the truth, so read it either way.
+            _logger.warning("SendSure: agent run: %s", err)
+        try:
+            bills._sendsure_sync()
+        except SendSureError as err:
+            _logger.warning("SendSure: bill sync after the agent run failed: %s", err)

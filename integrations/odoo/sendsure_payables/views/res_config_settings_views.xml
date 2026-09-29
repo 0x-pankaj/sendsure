@@ -10,24 +10,25 @@
                     <setting id="sendsure_connection" string="Connection"
                              help="The key is created by your SendSure org's owner: SendSure > Set up your team > Connect your books.">
                         <div class="content-group">
-                            <div class="row mt8">
-                                <label for="sendsure_url" class="col-lg-3 o_light_label"/>
-                                <field name="sendsure_url"/>
+                            <div class="mt16">
+                                <label for="sendsure_url" class="o_light_label d-block"/>
+                                <field name="sendsure_url" class="w-100"/>
                             </div>
-                            <div class="row">
-                                <label for="sendsure_api_key" class="col-lg-3 o_light_label"/>
-                                <field name="sendsure_api_key" password="True" placeholder="ssk_…"/>
+                            <div class="mt8">
+                                <label for="sendsure_api_key" class="o_light_label d-block"/>
+                                <field name="sendsure_api_key" password="True" placeholder="ssk_…" class="w-100"/>
                             </div>
-                            <div class="row" invisible="not sendsure_org">
-                                <label for="sendsure_org" class="col-lg-3 o_light_label"/>
-                                <span><field name="sendsure_org" class="oe_inline"/> (<field name="sendsure_org_tier" class="oe_inline"/>)</span>
+                            <div class="mt8" invisible="not sendsure_org">
+                                <span class="o_light_label">Connected to org </span>
+                                <field name="sendsure_org" class="oe_inline font-monospace"/>
+                                (<field name="sendsure_org_tier" class="oe_inline"/>)
                             </div>
                             <button name="action_sendsure_test" type="object" string="Test connection and set up the USDC journal"
-                                    class="btn-link" icon="oi-arrow-right"/>
+                                    class="btn-link ps-0 mt8" icon="oi-arrow-right"/>
                         </div>
                     </setting>
-                    <setting id="sendsure_manual_only" string="Who starts payments"
-                             help="By default Odoo asks SendSure's agent to pay bills the vendor signed. It pays only what passes your Arc contract's rules; first payments and large amounts still wait for a person's co-sign in SendSure.">
+                    <setting id="sendsure_manual_only" string="Pay only when a person runs the agent"
+                             help="Off: every few minutes Odoo asks SendSure's agent to pay bills the vendor signed. It pays only what passes your Arc contract's rules; first payments and large amounts still wait for a person's co-sign in SendSure.">
                         <field name="sendsure_manual_only"/>
                     </setting>
                 </block>

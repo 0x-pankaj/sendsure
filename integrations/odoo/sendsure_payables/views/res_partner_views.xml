@@ -14,14 +14,14 @@
                         <field name="sendsure_checked_at" invisible="not sendsure_checked_at"/>
                     </group>
                     <group>
-                        <div colspan="2" class="text-muted">
-                            The vendor proves their payout address by signing with it. Odoo lets a wallet be trusted
-                            only if it is that proven address, and SendSure pays only there.
-                        </div>
                         <button name="action_sendsure_refresh" type="object" string="Check with SendSure"
                                 class="btn-secondary" invisible="not sendsure_payee_ref" colspan="2"/>
                     </group>
                 </group>
+                <p class="text-muted" name="sendsure_help">
+                    The vendor proves their payout address by signing with it. Odoo lets a wallet be trusted only if it
+                    is that proven address, and SendSure pays only there.
+                </p>
             </xpath>
         </field>
     </record>

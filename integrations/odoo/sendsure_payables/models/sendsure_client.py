@@ -16,6 +16,8 @@ _logger = logging.getLogger(__name__)
 
 DEFAULT_URL = 'https://sendsure.0xpankaj.workers.dev'
 TIMEOUT = 25
+# An agent run reviews each claim with Claude, then sends settle() and anchors its log on Arc.
+AGENT_RUN_TIMEOUT = 150
 EVM_ADDRESS = re.compile(r'^0x[0-9a-fA-F]{40}$')
 PAYEE_REF = re.compile(r'0x[0-9a-fA-F]{64}')
 LOCAL_URL = re.compile(r'^http://(127\.0\.0\.1|localhost|host\.docker\.internal)(:\d+)?$')
@@ -53,7 +55,7 @@ class SendSureClient(models.AbstractModel):
         return bool(self._config()[1])
 
     @api.model
-    def _call(self, method, path, params=None, payload=None):
+    def _call(self, method, path, params=None, payload=None, timeout=TIMEOUT):
         url, key = self._config()
         if not key:
             raise SendSureError(_("SendSure is not connected. Add your key in Invoicing > Configuration > Settings."),
@@ -62,7 +64,7 @@ class SendSureClient(models.AbstractModel):
             raise SendSureError(_("The SendSure server address must start with https://."), code='BAD_URL')
         try:
             res = requests.request(
-                method, url + path, params=params, json=payload, timeout=TIMEOUT,
+                method, url + path, params=params, json=payload, timeout=timeout,
                 headers={'Authorization': 'Bearer %s' % key, 'User-Agent': 'sendsure-odoo/19.0.1.0.0'},
             )
         except requests.RequestException as err:
@@ -109,7 +111,7 @@ class SendSureClient(models.AbstractModel):
 
     @api.model
     def run_agent(self):
-        return self._call('POST', '/api/v1/agent/run')
+        return self._call('POST', '/api/v1/agent/run', timeout=AGENT_RUN_TIMEOUT)
 
     @api.model
     def base_url(self):

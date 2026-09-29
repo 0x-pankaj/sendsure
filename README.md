@@ -17,6 +17,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. |
 | [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent, co-sign, download books. You only sign; SendSure pays the gas. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
+| [Odoo add-on](integrations/odoo), for your books | Odoo 19: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved, and each Arc payment is recorded back through Register Payment, exactly, with the tx in the memo. `./run.sh up` in `integrations/odoo`. |
 | Pay per call, for agents | [`/api/x402`](https://sendsure.0xpankaj.workers.dev/api/x402): verify a payee ($0.001) or check a payout file ($0.005), paid in USDC with x402 over Circle Gateway. `circle services pay https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee -X POST -d '{"org":"0x…","address":"0x…"}' --address <your agent wallet> --chain ARC-TESTNET --max-amount 0.001` |
 | [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard) | Every number counted from chain events, in three tiers. Sandbox activity is never counted as traction. |
 
@@ -55,6 +56,8 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | Circle agent wallet runner | Signs in as the Circle agent wallet (ERC-1271), sends `settle()` and `anchor()` with `circle wallet execute`. | [`scripts/agent-circle.ts`](scripts/agent-circle.ts) |
 | Books | Beancount with each payment's claim, decision hash and Arc tx; daily balances from the chain. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
 | Indexer and dashboard | Chain events into D1 (≤ 9,999-block windows); three tiers; public receipts. | [`indexer.ts`](apps/web/lib/indexer.ts), [`stats.ts`](apps/web/lib/stats.ts), [`receipt.ts`](apps/web/lib/receipt.ts) |
+| Odoo add-on | Odoo only lets a person trust a vendor wallet that is the address the vendor proved. Bills go to SendSure. Settlements are recorded exactly (half a cent is never rounded away), and a USDC payment without an Arc tx is refused. | [`integrations/odoo/`](integrations/odoo/) |
+| Integration keys | Owner-created, hashed and revocable. A key can send bills and read their status, never approve or co-sign. | [`apps/web/lib/integrations.ts`](apps/web/lib/integrations.ts) |
 | Paid checks (x402) | Other agents pay per call through Circle Gateway: a 402 with the price, then verify and settle with Circle's facilitator; the check runs before the charge, so bad input is never billed. Each payment is recorded and counted on the dashboard. | [`apps/web/lib/x402.ts`](apps/web/lib/x402.ts), [`app/api/x402/`](apps/web/app/api/x402/) |
 | MCP server | Payout check, address lookup, receipts, stats, and a sandbox-only, dry-run-by-default demo tool. | [`apps/web/lib/mcp.ts`](apps/web/lib/mcp.ts) |
 | Schema | Cloudflare D1 (the same SQL runs on local SQLite for tests). No payee names are stored. | [`apps/web/migrations/`](apps/web/migrations/) |
@@ -91,6 +94,8 @@ to addresses payees proved, for claims they signed, with first payments waiting 
 |---|---|---|
 | Address poisoning (a look-alike in the payout list) | The payout check flags it; the contract only pays the address the payee proved. | `/try` step 2; [`payoutCheck.test.ts`](packages/core/test/payoutCheck.test.ts) |
 | "Please pay my new wallet" (business email compromise) | A change needs the old key and the new key, then a cooldown the payer can cancel; the agent holds claims that ask for it. | [change run](deployments/relay-e2e-change.json), [agent run](deployments/agent-e2e.json) #3 |
+| A wallet slipped onto a vendor in the books (Odoo) | Odoo refuses to trust any wallet except the address the vendor proved, even for the admin; the SendSure journal pays only trusted wallets, and only through SendSure. | [odoo run](deployments/odoo-e2e.json) (refused: slipped-in wallet, agent user trusting, send before trust) |
+| Books silently absorb a rounding difference | A settlement is recorded in Odoo only if it equals the open amount to 6 decimals; otherwise it stays open for a person. A claim must match its bill's amount. | `test_half_a_cent_is_not_rounded_away`, [odoo run](deployments/odoo-e2e.json) (`PROPOSAL_MISMATCH`) |
 | Forged invoice | A claim must be signed by the payee's proven key (EIP-712, bound to the org and the chain); the contract refuses others on-chain. | [claim run](deployments/claim-e2e.json), `/try` step 2 (Refused `BAD_SIGNATURE`) |
 | Duplicate invoice | The salted invoice ref makes one obligation, paid once; one open claim per invoice; the agent flags repeated amounts and overlapping periods. | `DUPLICATE_REF` tests; [`agent.test.ts`](apps/web/test/agent.test.ts) |
 | Prompt injection in claim text | Claim text is data; the model can only be more careful; rules flag "ignore previous rules", "urgent", "new wallet". | [`agent.test.ts`](apps/web/test/agent.test.ts) |
@@ -116,14 +121,16 @@ first-payment co-sign is the backstop); rate limits live in each Worker isolate.
 ## Tests and live runs
 
 - Contracts: 47 tests (`forge test` in [`contracts/`](contracts/)): 30 Mandate, 14 registry, 3 invariants.
-- TypeScript: 58 tests (`pnpm test`): payout check and books (17), chain helpers with live
-  cross-checks against the deployed contracts (16), web server (25).
+- TypeScript: 63 tests (`pnpm test`): payout check and books (17), chain helpers with live
+  cross-checks against the deployed contracts (16), web server (30).
+- Odoo add-on: 14 tests (`integrations/odoo/run.sh test`), run inside Odoo 19.
 - Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction):
   [bind](deployments/relay-e2e.json) 4/4, [change](deployments/relay-e2e-change.json) 7/7,
   [org](deployments/org-e2e.json) 9/9, [claim](deployments/claim-e2e.json) 11/11,
   [agent](deployments/agent-e2e.json) 11/11 (with the model's reasons), [circle](deployments/circle-e2e.json) 10/10,
   [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12,
-  [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway);
+  [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway),
+  [odoo](deployments/odoo-e2e.json) 25/25 (a real Odoo 19 bill paid on Arc and recorded back exactly);
   [books](deployments/books-e2e.beancount) pass `bean-check`.
 
 ## Run it
@@ -148,4 +155,4 @@ https://github.com/0x-pankaj/sendsure/compare/tameion-baseline...main
 
 MIT (see [`LICENSE`](LICENSE)), except:
 - `prior-work/horos-spike/` keeps the AGPL-3.0-only headers it was written with.
-- `prior-work/odoo-usdc-repro/addons/usdc_arc_gate/` is LGPL-3, as its manifest says.
+- `prior-work/odoo-usdc-repro/addons/usdc_arc_gate/` and `integrations/odoo/sendsure_payables/` are LGPL-3, as their manifests say (Odoo add-ons).
