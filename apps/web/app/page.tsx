@@ -32,14 +32,17 @@ export default function Home() {
         </li>
         <li>
           <h3>2. Payees sign a claim for every invoice</h3>
-          <p className="hint">A forged invoice cannot carry their signature, and the same invoice is never paid twice.</p>
+          <p className="hint">
+            Or you upload the invoice and Claude reads it, showing the exact words each value came from; the payee checks it and signs. A
+            forged invoice cannot carry their signature, and the same invoice is never paid twice.
+          </p>
         </li>
         <li>
           <h3>3. The agent checks every claim against your rules</h3>
           <p className="hint">
-            It runs the contract&apos;s own dry run, holds anything unusual (a repeated amount, a &ldquo;please pay my new
-            wallet&rdquo; note) with reasons, and asks a person to co-sign first payments. Every decision is hash-chained and anchored
-            on Arc.
+            It runs the contract&apos;s own dry run, then Claude reviews every run: anything unusual (the same work billed twice, a
+            &ldquo;please pay my new wallet&rdquo; note, hidden instructions) is held with a plain reason, and a person co-signs first
+            payments. Every decision is hash-chained and anchored on Arc.
           </p>
         </li>
         <li>

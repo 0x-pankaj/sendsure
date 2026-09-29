@@ -1,42 +1,42 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790655332,
+  "ranAtUnix": 1790656851,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x9cF7DF651913a1532F244Ed59412ad4d8e64A68d",
-  "payee": "0x19DD03A05a35507e3F85229EE273BAcc2c71cA6d",
+  "org": "0xD3bE0941299373dFd12232112Be965cDC9c47e35",
+  "payee": "0x076e412c0CC81A65634B2b0d7bE320f05810A7F8",
   "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
   "runs": [
     {
       "invoice": "INV-A",
       "action": "escalate",
-      "reason": "This is the first payment to this payee's address, so a person has to co-sign before it can be paid. When you approve it, check that the address really belongs to them."
+      "reason": "This is the first payment to this payee's payout address, so a person has to co-sign before it can be paid. Also, the description says 'first half of September' but the dates on the claim are Sept 15–29, so please check which work this covers."
     },
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0x39289bb63e7adde0d298dfe80a606b60e91fd3dc74f2b0624ff4029a66853934",
-      "decisionHash": "0x4612f74ea295eb4c8271e642a8b9a720ab6cb67831cf874e8c7beccbf52df4d4"
+      "tx": "https://explorer.testnet.arc.io/tx/0x129d9949397a4b46cd626ad9b872b95e0d9f268a226d849fb3e24f340ffd7b93",
+      "decisionHash": "0xc8efdc9bdf493872b1ed8977ebbae87c497bf7371f3ba6445d8cea716cbedd4f"
     },
     {
       "invoice": "INV-B",
       "action": "escalate",
-      "reason": "The claim asks us to pay a new wallet urgently, a common fraud pattern, and its amount and dates match another claim from this payee. Please confirm with the payee through a contact you already trust before paying."
+      "reason": "The note asks to pay a new wallet and says it's urgent, which is a common sign of fraud. The payee also billed the same amount for overlapping dates before, so a person should check with them by phone or another known contact."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0x1f02e1aba0c91a9e0c6f08279f9b2ffaabab21d3e296f80983e5e8eaaea97b48",
-  "anchor": "https://explorer.testnet.arc.io/tx/0xbba69b14ce2c5ce679c443304e53a0654928cd1ff2ea3cac070d0ca35bf866d9",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x67c7af323a756f74c195b9d7712add8a7d89a47b7b01eab9aaa11df4a9130595",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x837704648c94490a43d3456396abbc0212767ccb3d43148ce09e364e24fd59ad",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64550055,
+      "block": 64553032,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0x39289bb63e7adde0d298dfe80a606b60e91fd3dc74f2b0624ff4029a66853934",
+      "tx": "0x129d9949397a4b46cd626ad9b872b95e0d9f268a226d849fb3e24f340ffd7b93",
       "event": "Settled",
       "carriesDecisionHash": true
     }
