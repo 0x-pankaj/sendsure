@@ -107,3 +107,56 @@ export async function toolLoop<T>(opts: {
   }
   return { result: null, steps };
 }
+
+/** One content part: text, or an image as a data: URL (for photos and scans of invoices). */
+export type Part = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
+
+/**
+ * One call that must answer through `tool`; its arguments are the result. Current Claude models on
+ * MeshAPI reject a forced tool_choice, so this asks with "auto" and an explicit instruction, nudges
+ * once if the model answers in text, then tries the fallback model.
+ */
+export async function callTool<T>(opts: {
+  system: string;
+  content: string | Part[];
+  tool: ToolSpec;
+  maxTokens?: number;
+}): Promise<T> {
+  const attempt = async (model: string) => {
+    lastModel = model;
+    const messages: unknown[] = [
+      { role: "system", content: `${opts.system}\nAnswer only by calling the ${opts.tool.name} tool.` },
+      { role: "user", content: opts.content },
+    ];
+    for (let turn = 0; turn < 2; turn++) {
+      const res = await fetch(`${MESH_BASE}/chat/completions`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${process.env.MESH_API_KEY}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages,
+          tools: [{ type: "function", function: opts.tool }],
+          tool_choice: "auto",
+          max_tokens: opts.maxTokens ?? 2000,
+        }),
+        signal: AbortSignal.timeout(120_000),
+      });
+      if (!res.ok) throw new Error(`MeshAPI ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const out = (await res.json()) as { choices?: { message?: { content?: string | null; tool_calls?: ToolCall[] } }[] };
+      const message = out.choices?.[0]?.message;
+      const call = message?.tool_calls?.find((c) => c.function.name === opts.tool.name);
+      if (call) return JSON.parse(call.function.arguments) as T;
+      messages.push(
+        { role: "assistant", content: message?.content ?? "" },
+        { role: "user", content: `Call ${opts.tool.name} now.` },
+      );
+    }
+    throw new Error("the model did not answer with the tool");
+  };
+  try {
+    return await attempt(meshModel());
+  } catch (err) {
+    if (meshFallbackModel() === meshModel()) throw err;
+    return attempt(meshFallbackModel());
+  }
+}

@@ -5,6 +5,7 @@ import type { Address, Hex } from "viem";
 import { explorerTx, formatUsdc, usdc, type Claim } from "@sendsure/chain";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
 import { sendCosign, signClaim, walletErrorText, type Signer } from "../lib/wallet";
+import { PayeeInvoices, type InvoiceProposal } from "./Invoices";
 
 export interface ClaimView {
   claim_id: Hex;
@@ -104,6 +105,19 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ outcome: string; reasonText: string; invoice: string } | null>(null);
+  const [proposalId, setProposalId] = useState<string | null>(null);
+  const [invoicesVersion, setInvoicesVersion] = useState(0);
+
+  /** Fill the form from an invoice the payer uploaded (the payee still checks it and signs). */
+  function fillFromInvoice(p: InvoiceProposal) {
+    setInvoiceRef(p.invoice_ref);
+    setAmount(formatUsdc(BigInt(p.amount)));
+    setFrom(day(p.period_start));
+    setTo(day(p.period_end));
+    setDescription(p.description);
+    setProposalId(p.id);
+    setResult(null);
+  }
 
   const load = useCallback(async () => {
     try {
@@ -150,12 +164,15 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
       const res = await fetch("/api/claims", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ org, claim, invoiceRef: prep.invoiceRef, description, signature }, (_k, v) =>
-          typeof v === "bigint" ? v.toString() : v,
+        body: JSON.stringify(
+          { org, claim, invoiceRef: prep.invoiceRef, description, signature, proposalId: proposalId ?? undefined },
+          (_k, v) => (typeof v === "bigint" ? v.toString() : v),
         ),
       });
       const out = await jsonOrThrow<{ outcome: string; reasonText: string }>(res);
       setResult({ ...out, invoice: prep.invoiceRef });
+      setProposalId(null);
+      setInvoicesVersion((n) => n + 1);
       setInvoiceRef("");
       setAmount("");
       setDescription("");
@@ -170,6 +187,10 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
   return (
     <div className="card" style={{ maxWidth: 760, marginTop: 16 }}>
       <h3 style={{ marginTop: 0 }}>Send {payer} a claim</h3>
+      <PayeeInvoices org={org} payeeRef={payeeRef} signer={signer} payer={payer} onUse={fillFromInvoice} version={invoicesVersion} />
+      {proposalId && (
+        <p className="hint">Filled from {payer}&apos;s invoice. Check every field; you are signing it as your claim.</p>
+      )}
       <p className="hint">
         One claim per invoice. You sign it with this wallet, so nobody else can change the amount or where it is paid.
       </p>

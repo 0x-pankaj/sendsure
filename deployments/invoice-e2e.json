@@ -1,0 +1,29 @@
+{
+  "note": "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.",
+  "ranAtUnix": 1790656612,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0xA53d4Fa82607b67312EB6eBd34C205fA568EDD92",
+  "text": {
+    "invoice": "INV-2026-044",
+    "amount": "250000",
+    "warnings": [
+      "The invoice asks for payment to a new address (0x000000000000000000000000000000000000dEaD) because of a bank change. SendSure will not use it and pays only the payee's proven address.",
+      "The requested address 0x...dEaD is a well-known burn address. Any funds sent there are lost for good, so this may be fraud or a mistake.",
+      "Before paying, check the bank change with Maria Lopez Design using contact details you already have, not the ones in this invoice.",
+      "The total of 0.25 USD is very low for logo design and a brand guide. Check that the amount is correct."
+    ],
+    "model": "anthropic/claude-opus-5.5"
+  },
+  "photo": {
+    "invoice": "NS-2026-031",
+    "amount": "200000",
+    "model": "anthropic/claude-opus-5.5"
+  },
+  "claim": {
+    "claimId": "0x917d3749b6fbf8125e861fea3d81c309fd687b7fdef276492c229a53c496922a",
+    "outcome": "ESCALATED",
+    "reason": "NEEDS_COSIGN_NEW_PAYOUT",
+    "reasonText": "First payment to a new or changed address needs a human co-sign.",
+    "stored": true
+  }
+}

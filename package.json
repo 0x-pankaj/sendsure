@@ -18,7 +18,8 @@
     "e2e:agent": "tsx scripts/e2e-agent.ts",
     "agent:circle": "tsx scripts/agent-circle.ts",
     "e2e:circle": "tsx scripts/e2e-circle.ts",
-    "e2e:try": "tsx scripts/e2e-try.ts"
+    "e2e:try": "tsx scripts/e2e-try.ts",
+    "e2e:invoice": "tsx scripts/e2e-invoice.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

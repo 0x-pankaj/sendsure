@@ -21,6 +21,7 @@ import {
   type Reason,
 } from "@sendsure/chain";
 import { getDb } from "./db";
+import { markProposalClaimed } from "./invoices";
 import { RelayError, isBytes32, isSignature, serverClient, toAddress, toObject, toUint } from "./relayer";
 
 const USDC = deployment.usdc as Address;
@@ -149,6 +150,20 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
   }
 
   const payee = await boundPayee(org, claim.payeeRef);
+  // A claim confirming an AI-read invoice must match that proposal (same payee and invoice number).
+  let proposal: { id: string } | null = null;
+  if (typeof b.proposalId === "string" && b.proposalId) {
+    const db0 = await getDb();
+    proposal = await db0.first<{ id: string }>(
+      "SELECT id FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
+      b.proposalId,
+      org,
+      claim.payeeRef,
+      invoiceRef,
+    );
+    if (!proposal)
+      throw new RelayError(409, "That invoice is no longer waiting for you, or its number was changed.", "PROPOSAL_MISMATCH");
+  }
   const claimId = claimIdOf(org, claim);
   const signer = await recoverAddress({ hash: claimId, signature: b.signature }).catch(() => null);
   if (signer !== payee.payout) throw new RelayError(400, REASON_TEXT.BAD_SIGNATURE, "BAD_SIGNATURE");
@@ -171,7 +186,7 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     await db.run(
       `INSERT INTO claims (claim_id, org, payee_ref, payout, token, amount, ref_hash, invoice_ref, period_start, period_end,
         nonce, valid_until, payee_sig, description, source, status, last_outcome, last_reason, checked_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'payee', 'open', ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?)`,
       claimId,
       org,
       claim.payeeRef,
@@ -186,6 +201,7 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
       Number(claim.validUntil),
       b.signature,
       description,
+      proposal ? "invoice" : "payee",
       outcome,
       reason,
       ts,
@@ -197,6 +213,7 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
       throw new RelayError(409, `Invoice ${invoiceRef} was already sent.`, "DUPLICATE_REF");
     throw err;
   }
+  if (proposal) await markProposalClaimed(org, proposal.id, claimId);
   return { claimId, outcome, reason, reasonText: REASON_TEXT[reason], stored: true };
 }
 
