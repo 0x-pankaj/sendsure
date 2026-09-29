@@ -110,12 +110,18 @@ export default function OrgPage() {
           <h3 style={{ marginTop: 0 }}>Connect the wallet that holds your team&apos;s USDC</h3>
           <div className="row">
             <button className="btn" disabled={busy} onClick={() => connect("browser")}>
-              Connect wallet
+              {busy ? "Waiting for your wallet…" : "Connect wallet"}
             </button>
             <button className="btn secondary" disabled={busy} onClick={() => connect("test")}>
               Try it with a test wallet
             </button>
           </div>
+          {busy && (
+            <p className="notice">
+              Your wallet opened a window asking to connect to SendSure. If you don&apos;t see it, click the MetaMask (or Rabby)
+              icon in your browser&apos;s toolbar.
+            </p>
+          )}
           <p className="hint">
             This wallet becomes the owner and the treasury: payments come from it, only inside the rules you set. Arc testnet
             only.
