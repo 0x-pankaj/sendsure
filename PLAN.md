@@ -61,7 +61,7 @@ action is needed. The same run is then rehearsed on Arc testnet under the contra
 | M2 | Contracts live on Arc testnet, first real settle | Tue Sep 29 | explorer links ✅ ([smoke test](deployments/smoke-test.md)) |
 | M3 | Payout check + payee verify page live on a URL | Wed Sep 30 | live URL ✅ https://sendsure.0xpankaj.workers.dev (Sep 29) |
 | M4 | **Must-work demo, hosted:** payee binds → signs claim → agent proposes run with dry run + reasons → approver co-signs → agent wallet settles → receipt + beancount entry → dashboard counts it; a wallet-change attempt is refused | Thu Oct 1 | live URL + tx ✅ Sep 29 ([agent](deployments/agent-e2e.json), [circle](deployments/circle-e2e.json), [change](deployments/relay-e2e-change.json), [books](deployments/books-e2e.beancount)). Model reasons join when `MESH_API_KEY` lands (T14b) |
-| M5 | Agent judgment on messy input + MCP + judge path `/try` + first Loom + first form submission | Sat Oct 3 | Loom, form |
+| M5 | Agent judgment on messy input + MCP + judge path `/try` + first Loom + first form submission | Sat Oct 3 | Loom, form. Code part ✅ Sep 29: Claude live in the agent (T14b), invoice reading (T13b, also checked in a real browser: payer reads, payee signs), judgment inbox (T21), MCP (T20), `/try` (T17); all 8 e2e suites pass live (74 checks). Left: Loom + form (S1) |
 | M6 | Final: README in house style, video under 3 minutes, evidence folder, numbers frozen at Oct 10 23:59 ET | Sat Oct 10 | submitted |
 
 Deadline: **Sat Oct 10, 11:59 PM ET = Sun Oct 11, 09:44 Kathmandu.** Submit by Sat Oct 10 evening.
