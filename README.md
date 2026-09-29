@@ -60,7 +60,7 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 | Integration keys | Owner-created, hashed and revocable. A key can send bills and read their status, never approve or co-sign. | [`apps/web/lib/integrations.ts`](apps/web/lib/integrations.ts) |
 | Paid checks (x402) | Other agents pay per call through Circle Gateway: a 402 with the price, then verify and settle with Circle's facilitator; the check runs before the charge, so bad input is never billed. Each payment is recorded and counted on the dashboard. | [`apps/web/lib/x402.ts`](apps/web/lib/x402.ts), [`app/api/x402/`](apps/web/app/api/x402/) |
 | MCP server | Payout check, address lookup, receipts, stats, and a sandbox-only, dry-run-by-default demo tool. | [`apps/web/lib/mcp.ts`](apps/web/lib/mcp.ts) |
-| Schema | Cloudflare D1 (the same SQL runs on local SQLite for tests). No payee names are stored. | [`apps/web/migrations/`](apps/web/migrations/) |
+| Schema | Cloudflare D1 (the same SQL runs on local SQLite for tests). The payee list with names stays in the payer's browser; the one exception is an invoice the payer asks SendSure to read, whose fields (which can include the issuer's name) are kept with it. Details: [/data](https://sendsure.0xpankaj.workers.dev/data). | [`apps/web/migrations/`](apps/web/migrations/) |
 
 ## Circle and Arc, with proof
 

@@ -27,6 +27,12 @@ export default function StatusPage() {
       .catch(() => setError("Could not reach the server."));
   }, []);
   const ok = (good: boolean) => <span className={`chip ${good ? "PAY" : "STOP"}`}>{good ? "OK" : "PROBLEM"}</span>;
+  // Gas on Arc is paid in USDC. Below 2 USDC a key has roughly a few dozen transactions left: top it up.
+  const gas = (usdc: string | null) => {
+    const n = Number(usdc ?? 0);
+    const [chip, label] = n < 0.2 ? ["STOP", "EMPTY"] : n < 2 ? ["REVIEW", "LOW"] : ["PAY", "OK"];
+    return <span className={`chip ${chip}`}>{label}</span>;
+  };
 
   return (
     <>
@@ -46,14 +52,14 @@ export default function StatusPage() {
             <dd>
               {ok(Boolean(s.indexer) && (s.indexer?.behindBlocks ?? 0) < 20_000)}{" "}
               {s.indexer
-                ? `block ${s.indexer.block}, ${s.indexer.behindBlocks ?? "?"} behind (indexes when the dashboard is opened)`
+                ? `block ${s.indexer.block}, ${s.indexer.behindBlocks ?? "?"} behind (a job indexes every minute)`
                 : "not run yet"}
             </dd>
             {Object.entries(s.keys).map(([k, v]) => (
               <div key={k} style={{ display: "contents" }}>
                 <dt>{LABEL[k] ?? k}</dt>
                 <dd>
-                  {ok(Number(v.usdc ?? 0) > 0.05)}{" "}
+                  {gas(v.usdc)}{" "}
                   <a className="mono" href={explorerAddress(v.address)}>
                     {v.address}
                   </a>

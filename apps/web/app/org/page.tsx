@@ -36,6 +36,7 @@ import {
   walletErrorText,
   type Signer,
 } from "../../lib/wallet";
+import { Help } from "../../components/Help";
 
 const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -170,6 +171,7 @@ export default function OrgPage() {
           {error}
         </p>
       )}
+      <Help topic="setting up" />
     </>
   );
 }

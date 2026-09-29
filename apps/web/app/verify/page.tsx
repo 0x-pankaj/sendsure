@@ -35,6 +35,7 @@ import {
   walletErrorText,
   type Signer,
 } from "../../lib/wallet";
+import { Help } from "../../components/Help";
 
 interface Invite {
   org: Address;
@@ -355,6 +356,7 @@ export default function VerifyPage() {
           )}
         </>
       )}
+      <Help topic="confirming your address" />
     </>
   );
 }

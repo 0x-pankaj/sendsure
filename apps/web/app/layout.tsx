@@ -1,3 +1,4 @@
+import { CONTACT_URL } from "../lib/contact";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -27,7 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="wrap">{children}</main>
         <footer className="site">
           <div className="wrap">
-            Arc testnet · open source (MIT) · built during the Tameion Agents Hackathon · <a href="/status">status</a>
+            Arc testnet · open source (MIT) · built during the Tameion Agents Hackathon · <a href="/status">status</a> ·{" "}
+            <a href="/data">what we store</a> · <a href={CONTACT_URL}>contact</a>
           </div>
         </footer>
       </body>

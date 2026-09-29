@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { checkPayout, checkedRowsToRecords, parsePayoutCsv, toCsv, type CheckedRow } from "@sendsure/core";
 import { EXAMPLE_CURRENT, EXAMPLE_LAST } from "../../lib/examples";
+import { Help } from "../../components/Help";
 
 const ORDER = { STOP: 0, REVIEW: 1, PAY: 2 } as const;
 const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -110,6 +111,7 @@ export default function CheckPage() {
           </div>
         </>
       )}
+      <Help topic="the payout check" />
     </>
   );
 }
