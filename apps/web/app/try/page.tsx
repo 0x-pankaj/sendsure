@@ -5,8 +5,9 @@ import { getAddress } from "viem";
 import { explorerAddress } from "@sendsure/chain";
 import { checkPayout, parsePayoutCsv, toBeancount, type CheckedRow } from "@sendsure/core";
 
-type Scene = "bind" | "attack" | "change" | "pay";
-type Result = Record<string, string | boolean | null | undefined>;
+type Scene = "bind" | "attack" | "change" | "pay" | "inbox";
+type InboxClaim = { what: string; invoice: string; amountUsdc: string; contract: string; agent: string; paid: boolean };
+type Result = Record<string, string | boolean | null | undefined | InboxClaim[]>;
 
 const KEY = "sendsure.try.session";
 function session(): string {
@@ -212,8 +213,31 @@ export default function TryPage() {
           )}
         </li>
 
+        <li className={results.inbox ? "done" : !results.pay ? "off" : ""}>
+          <h3>5. An inbox full of tricks</h3>
+          <p className="hint">
+            The payee now sends three messy claims: the same work billed again under a new invoice number, a large claim with no
+            description, and a &ldquo;new wallet&rdquo; request with a hidden instruction to the AI. The agent reviews them with
+            Claude.
+          </p>
+          {step("inbox", "Send the inbox and run the agent", "pay")}
+          {results.inbox && (
+            <div className="notice ok">
+              <p className="hint">{String(results.inbox.planner)}</p>
+              {(results.inbox.claims as InboxClaim[]).map((c) => (
+                <p key={c.invoice}>
+                  <b>{c.what}</b> ({c.amountUsdc} USDC): {c.paid ? "PAID" : "not paid"}. Agent: {c.agent}
+                </p>
+              ))}
+              <p>
+                <b>{String(results.inbox.guarantee)}</b>
+              </p>
+            </div>
+          )}
+        </li>
+
         <li className={!results.pay ? "off" : ""}>
-          <h3>5. The books</h3>
+          <h3>6. The books</h3>
           <p className="hint">
             A beancount file with every demo payment (claim, decision hash, Arc tx), reconciled to the treasury&apos;s balance
             on-chain.

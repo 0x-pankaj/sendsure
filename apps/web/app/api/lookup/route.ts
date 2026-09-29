@@ -17,7 +17,7 @@ export function GET(req: Request) {
     const q = new URL(req.url).searchParams;
     const org: Address = toAddress(q.get("org"), "org");
     const address: Address = toAddress(q.get("address"), "address");
-    await indexerTick({ maxWindows: 2, minIntervalSec: 20 }).catch(() => null);
+    await indexerTick({ maxWindows: 6, minIntervalSec: 10 }).catch(() => null);
     const db = await getDb();
     const candidates = await db.all<{ payee_ref: `0x${string}`; tx: string; block: number }>(
       `SELECT payee_ref, tx, block FROM chain_events WHERE name IN ('Bound', 'Changed') AND lower(org) = lower(?) AND lower(payout) = lower(?)

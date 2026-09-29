@@ -21,6 +21,13 @@ const change = await scene("change");
 check(/did not sign/.test(change.relayerSays) && change.contractSays === "BadSignature", `3. wallet change refused (${change.relayerSays} / ${change.contractSays})`);
 const pay = await scene("pay");
 check(/^escalate/.test(pay.firstRun) && /^pay/.test(pay.secondRun) && Boolean(pay.settleTx), `4. escalated, co-signed, paid ${pay.settleTx}`);
+const inbox = await scene("inbox");
+const inboxClaims = (inbox.claims ?? []) as { what: string; agent: string; paid: boolean }[];
+check(
+  inboxClaims.length === 3 && inboxClaims.every((c) => !c.paid && !/^pay:/.test(c.agent)),
+  `5. inbox: none of the 3 tricky claims paid (${inbox.planner})`,
+);
+for (const c of inboxClaims) console.log(`      ${c.what}: ${c.agent}`);
 const again = await scene("pay");
 check(again.replayed === true && again.settleTx === pay.settleTx, `a refresh does not pay twice`);
 const receipt = pay.receipt ? (await api(base, `/api/receipt?tx=${String(pay.receipt).split("tx=")[1]}`)).body : {};
@@ -32,7 +39,7 @@ check(lookalike.verified === false, `lookup: the attacker's address is not`);
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/try-e2e.json"),
-  `${JSON.stringify({ note: "Live /try walkthrough on the SANDBOX demo org. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, bind, attack, change, pay }, null, 2)}\n`,
+  `${JSON.stringify({ note: "Live /try walkthrough on the SANDBOX demo org. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, bind, attack, change, pay, inbox }, null, 2)}\n`,
 );
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/try-e2e.json");
 process.exitCode = failed() ? 1 : 0;

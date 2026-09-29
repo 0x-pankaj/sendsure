@@ -2,13 +2,16 @@
   // SendSure on Cloudflare Workers (OpenNext) with its D1 database.
   //   build + deploy:  pnpm --filter @sendsure/web cf:deploy
   //   migrations:      npx wrangler d1 migrations apply sendsure --remote
-  //   secrets (never in this file): RELAYER_PRIVATE_KEY, AGENT_PRIVATE_KEY, SESSION_SECRET, MESH_API_KEY
+  //   secrets (never in this file): RELAYER_PRIVATE_KEY, AGENT_PRIVATE_KEY, SESSION_SECRET, MESH_API_KEY,
+  //     ARC_RPC_URL, DEMO_ORG, DEMO_APPROVER_PRIVATE_KEY, DEMO_SECRET, CRON_SECRET
   "name": "sendsure",
-  "main": ".open-next/worker.js",
+  "main": "worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "observability": { "enabled": true },
+  // Keeps the chain index fresh (worker.ts -> POST /api/indexer/tick).
+  "triggers": { "crons": ["* * * * *"] },
   "d1_databases": [
     {
       "binding": "DB",

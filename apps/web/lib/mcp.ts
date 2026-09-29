@@ -31,6 +31,8 @@ const SCENE_PLANS: Record<Scene, string> = {
     "Have an attacker sign a claim for the demo payee's work and submit it; the contract refuses it on-chain (BAD_SIGNATURE).",
   change: "Have the attacker try to move the demo payee's payouts to their own wallet; SendSure and the contract refuse it.",
   pay: "The demo payee signs a 0.05 USDC claim; the agent escalates it, the demo approver co-signs, the agent pays; returns a receipt.",
+  inbox:
+    "The demo payee sends three tricky claims (a duplicate under a new number, a large claim with no description, a 'new wallet' request with a hidden instruction to the AI); the agent reviews them with Claude and pays none.",
 };
 
 /** An MCP session-free idempotency key -> the demo session id (a UUID shape the demo expects). */
@@ -94,7 +96,7 @@ const TOOLS: Tool[] = [
     run: async (a) => {
       const org = toAddress(a.org, "org");
       const address = toAddress(a.address, "address");
-      await indexerTick({ maxWindows: 2, minIntervalSec: 20 }).catch(() => null);
+      await indexerTick({ maxWindows: 6, minIntervalSec: 10 }).catch(() => null);
       const db = await getDb();
       const rows = await db.all<{ payee_ref: Hex; block: number }>(
         "SELECT payee_ref, block FROM chain_events WHERE name IN ('Bound','Changed') AND lower(org) = lower(?) AND lower(payout) = lower(?) ORDER BY block DESC LIMIT 10",
@@ -131,7 +133,7 @@ const TOOLS: Tool[] = [
     inputSchema: { type: "object", properties: {} },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
     run: async () => {
-      await indexerTick({ maxWindows: 2, minIntervalSec: 20 }).catch(() => null);
+      await indexerTick({ maxWindows: 6, minIntervalSec: 10 }).catch(() => null);
       return (await stats()) as unknown as Json;
     },
   },
@@ -139,11 +141,11 @@ const TOOLS: Tool[] = [
     name: "run_demo_scene",
     title: "Run a /try scene on the sandbox org",
     description:
-      "Walk through SendSure on its SANDBOX demo org (testnet, never counted as traction). Scenes, in order: bind, attack, change, pay. DRY RUN by default: set dry_run to false to send real Arc testnet transactions. Idempotent: the same idempotency_key always refers to the same demo session, and a scene already run returns its saved result with replayed: true.",
+      "Walk through SendSure on its SANDBOX demo org (testnet, never counted as traction). Scenes, in order: bind, attack, change, pay, inbox. DRY RUN by default: set dry_run to false to send real Arc testnet transactions. Idempotent: the same idempotency_key always refers to the same demo session, and a scene already run returns its saved result with replayed: true.",
     inputSchema: {
       type: "object",
       properties: {
-        scene: { type: "string", enum: ["bind", "attack", "change", "pay"] },
+        scene: { type: "string", enum: ["bind", "attack", "change", "pay", "inbox"] },
         idempotency_key: { type: "string", description: "Any string; reuse it for all scenes of one walkthrough." },
         dry_run: { type: "boolean", default: true },
       },
@@ -152,7 +154,7 @@ const TOOLS: Tool[] = [
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     run: async (a) => {
       const scene = String(a.scene) as Scene;
-      if (!(scene in SCENE_PLANS)) throw new RelayError(400, "scene must be bind, attack, change or pay.", "BAD_INPUT");
+      if (!(scene in SCENE_PLANS)) throw new RelayError(400, "scene must be bind, attack, change, pay or inbox.", "BAD_INPUT");
       const key = String(a.idempotency_key ?? "").slice(0, 200);
       if (!key) throw new RelayError(400, "idempotency_key is required.", "BAD_INPUT");
       const session = sessionFor(key);

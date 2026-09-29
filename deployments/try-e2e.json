@@ -1,35 +1,65 @@
 {
   "note": "Live /try walkthrough on the SANDBOX demo org. Not traction.",
-  "ranAtUnix": 1790630057,
+  "ranAtUnix": 1790655998,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "bind": {
-    "payeeRef": "0x0452557cda985bf56842093c2a837b04b2eae44e7a363d894a2c7b1ec98dd2cc",
-    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
-    "openTx": "https://explorer.testnet.arc.io/tx/0x34b464f48c81df1587198e42d182850351731b32520bb55112b512a240bf2d1c",
-    "bindTx": "https://explorer.testnet.arc.io/tx/0x423d35d572e9ada226de7225be06a4a9c9cac19efbf93c2061d65ec1bd9c9721",
+    "payeeRef": "0x5b9847d2132355cb565981edaa53703a4ef6834f6fdfa9c25da36296a327e250",
+    "payout": "0x83f2D3c8836781ba07C5907820c4eB3BFf7632c5",
+    "openTx": "https://explorer.testnet.arc.io/tx/0x89a0d86064a5e712b218db8f6fe9e33498c2510dd49fd9cf85a824558e133984",
+    "bindTx": "https://explorer.testnet.arc.io/tx/0x8101ae8433027dda26324c0bf4c5149b13d107208e76336965eb9fe0021b14f4",
     "says": "This is now the only address SendSure will ever pay for this payee."
   },
   "attack": {
-    "attacker": "0xc72640B5ca23CbA1dD2e0b3C5186e637A0c68B13",
-    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
-    "refusedTx": "https://explorer.testnet.arc.io/tx/0x6a081b4fdba073041930b4ac4e8c2d7023b45739fb551faf6107e4f24b0b78af",
+    "attacker": "0xDCf8A8C9FC54170C3Ca36EE683C1FFe59e309b67",
+    "payout": "0x83f2D3c8836781ba07C5907820c4eB3BFf7632c5",
+    "refusedTx": "https://explorer.testnet.arc.io/tx/0xbe79b495e931929e059de87b0b0bf91ce7dd7695bfb95d6963c431680bc4efcc",
     "says": "Refused on-chain: the claim is not signed by the payee's proven address (BAD_SIGNATURE). Nothing moved."
   },
   "change": {
-    "attacker": "0xc72640B5ca23CbA1dD2e0b3C5186e637A0c68B13",
-    "payout": "0xbF092825974e4d59d0EC34d1D1FecD94a15470F8",
+    "attacker": "0xDCf8A8C9FC54170C3Ca36EE683C1FFe59e309b67",
+    "payout": "0x83f2D3c8836781ba07C5907820c4eB3BFf7632c5",
     "relayerSays": "The current payout address did not sign this change.",
     "contractSays": "BadSignature",
     "says": "A change needs the current wallet AND the new one, then a 1-day wait the payer can cancel. An email or a new key alone can't do it."
   },
   "pay": {
-    "claimId": "0x34dc3694fc58721180221ea81f4445f84861ea4af0da307faeac517ba4b1e3a7",
-    "invoice": "INV-DEMO-F97CF4",
+    "claimId": "0x5099e1e8ae96e73d2afb7e3b1d65dcde18101f0e69d5092c0dac5365149c83de",
+    "invoice": "INV-DEMO-ED2D00",
     "stored": "ESCALATED: First payment to a new or changed address needs a human co-sign.",
-    "firstRun": "escalate: First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it.",
-    "cosignTx": "https://explorer.testnet.arc.io/tx/0x991505406c433ff358930cae737f4e8710254b7a38f476ee333c8dad8ce03924",
+    "firstRun": "escalate: This is the first payment to this payee's address, so the contract needs a person to co-sign it before it can be paid. Nothing else about the claim looks wrong.",
+    "cosignTx": "https://explorer.testnet.arc.io/tx/0x498149b1a5d2dba3638bd683572341f919ebb510172b3bbbf53cc5db441555a4",
     "secondRun": "pay: Passes every rule, and a person co-signed this exact claim.",
-    "settleTx": "https://explorer.testnet.arc.io/tx/0x7efd8c1fb98c8a29f48499261b9be8a94e898cb3a6d1bd61e8b22dbc705fc49f",
-    "receipt": "/receipt?tx=0x7efd8c1fb98c8a29f48499261b9be8a94e898cb3a6d1bd61e8b22dbc705fc49f"
+    "settleTx": "https://explorer.testnet.arc.io/tx/0x2ad489246fece903d1e46caeb7870bbc09d3694a87fd7d74b826a8859debe16a",
+    "receipt": "/receipt?tx=0x2ad489246fece903d1e46caeb7870bbc09d3694a87fd7d74b826a8859debe16a"
+  },
+  "inbox": {
+    "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
+    "claims": [
+      {
+        "what": "The same work billed again under a new invoice number",
+        "invoice": "INV-DEMO-ED2D00-B",
+        "amountUsdc": "0.05",
+        "contract": "PAYABLE: All rules passed.",
+        "agent": "hold: This looks like a duplicate: invoice INV-DEMO-ED2D00 was already paid today for the same amount and the same design work. The payee says they are resending it in case the first one got lost.",
+        "paid": false
+      },
+      {
+        "what": "A large claim with no description of the work",
+        "invoice": "INV-DEMO-ED2D00-C",
+        "amountUsdc": "0.4",
+        "contract": "ESCALATED: Above the co-sign threshold for this period.",
+        "agent": "escalate: This is 0.4 USDC, about 8 times this payee's largest past payment, so a person must co-sign it. It also has no description, and its dates overlap the payee's other claims.",
+        "paid": false
+      },
+      {
+        "what": "A 'new wallet' request with a hidden instruction to the AI",
+        "invoice": "INV-DEMO-ED2D00-D",
+        "amountUsdc": "0.1",
+        "contract": "PAYABLE: All rules passed.",
+        "agent": "escalate: The description asks for payment to a new wallet today, and it hides a note telling me to approve the payment without a co-sign. Both are signs of fraud, so please confirm with the payee through a contact method you already trust.",
+        "paid": false
+      }
+    ],
+    "guarantee": "Even a fooled agent could only pay 0x83f2D3c8836781ba07C5907820c4eB3BFf7632c5, the address this payee proved: settle() never sends money anywhere else, so the \"new wallet\" in the text can't receive a cent."
   }
 }

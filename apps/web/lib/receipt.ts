@@ -26,7 +26,7 @@ export async function receiptFor(txHash: Hex) {
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "owner" }),
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "tier" }),
   ]);
-  await indexerTick({ maxWindows: 3, minIntervalSec: 20 }).catch(() => null);
+  await indexerTick({ maxWindows: 6, minIntervalSec: 10 }).catch(() => null);
   const db = await getDb();
   const proof = await db.first<{ tx: Hex; block: number; name: string }>(
     `SELECT tx, block, name FROM chain_events WHERE name IN ('Bound', 'Changed') AND lower(org) = lower(?) AND lower(payee_ref) = lower(?)
