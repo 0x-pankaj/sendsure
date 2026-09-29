@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_property_form_sendsure" model="ir.ui.view">
+        <field name="name">res.partner.form.sendsure</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.view_partner_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='accounting']/group" position="after">
+                <group string="SendSure (USDC on Arc)" name="sendsure">
+                    <group>
+                        <field name="sendsure_payee_ref" placeholder="Paste the vendor's SendSure invite link"/>
+                        <field name="sendsure_state" invisible="not sendsure_payee_ref"/>
+                        <field name="sendsure_address" invisible="not sendsure_address"/>
+                        <field name="sendsure_checked_at" invisible="not sendsure_checked_at"/>
+                    </group>
+                    <group>
+                        <div colspan="2" class="text-muted">
+                            The vendor proves their payout address by signing with it. Odoo lets a wallet be trusted
+                            only if it is that proven address, and SendSure pays only there.
+                        </div>
+                        <button name="action_sendsure_refresh" type="object" string="Check with SendSure"
+                                class="btn-secondary" invisible="not sendsure_payee_ref" colspan="2"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

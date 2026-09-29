@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_sendsure" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.sendsure</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='print_vendor_checks_setting_container']" position="after">
+                <block title="SendSure: pay vendors in USDC on Arc" id="sendsure_setting_container">
+                    <setting id="sendsure_connection" string="Connection"
+                             help="The key is created by your SendSure org's owner: SendSure > Set up your team > Connect your books.">
+                        <div class="content-group">
+                            <div class="row mt8">
+                                <label for="sendsure_url" class="col-lg-3 o_light_label"/>
+                                <field name="sendsure_url"/>
+                            </div>
+                            <div class="row">
+                                <label for="sendsure_api_key" class="col-lg-3 o_light_label"/>
+                                <field name="sendsure_api_key" password="True" placeholder="ssk_…"/>
+                            </div>
+                            <div class="row" invisible="not sendsure_org">
+                                <label for="sendsure_org" class="col-lg-3 o_light_label"/>
+                                <span><field name="sendsure_org" class="oe_inline"/> (<field name="sendsure_org_tier" class="oe_inline"/>)</span>
+                            </div>
+                            <button name="action_sendsure_test" type="object" string="Test connection and set up the USDC journal"
+                                    class="btn-link" icon="oi-arrow-right"/>
+                        </div>
+                    </setting>
+                    <setting id="sendsure_manual_only" string="Who starts payments"
+                             help="By default Odoo asks SendSure's agent to pay bills the vendor signed. It pays only what passes your Arc contract's rules; first payments and large amounts still wait for a person's co-sign in SendSure.">
+                        <field name="sendsure_manual_only"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
