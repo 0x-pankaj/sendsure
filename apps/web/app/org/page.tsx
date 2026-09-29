@@ -22,6 +22,7 @@ import {
 import { AgentPanel } from "../../components/Agent";
 import { Books } from "../../components/Books";
 import { AddInvoice } from "../../components/Invoices";
+import { Integrations } from "../../components/Integrations";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
@@ -441,6 +442,7 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
       <OrgClaims org={org.org} signer={signer} payeeName={payeeName} version={runs} />
       <Books org={org.org} orgName={org.name} signer={signer} payeeName={payeeName} />
       <AddInvoice org={org.org} signer={signer} vendors={org.vendors} />
+      <Integrations org={org.org} signer={signer} />
     </>
   );
 }

@@ -150,19 +150,27 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
   }
 
   const payee = await boundPayee(org, claim.payeeRef);
-  // A claim confirming an AI-read invoice must match that proposal (same payee and invoice number).
+  // A claim confirming an invoice the payer sent (read by AI, or a bill from their books) must match
+  // that invoice: same payee, invoice number and amount. The payer's books then close to the cent.
   let proposal: { id: string } | null = null;
   if (typeof b.proposalId === "string" && b.proposalId) {
     const db0 = await getDb();
-    proposal = await db0.first<{ id: string }>(
-      "SELECT id FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
+    const p = await db0.first<{ id: string; amount: string }>(
+      "SELECT id, amount FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
       b.proposalId,
       org,
       claim.payeeRef,
       invoiceRef,
     );
-    if (!proposal)
+    if (!p)
       throw new RelayError(409, "That invoice is no longer waiting for you, or its number was changed.", "PROPOSAL_MISMATCH");
+    if (p.amount !== claim.amount.toString())
+      throw new RelayError(
+        409,
+        "The amount differs from the invoice the payer sent. If it is wrong, reject the invoice and ask them to fix it.",
+        "PROPOSAL_MISMATCH",
+      );
+    proposal = { id: p.id };
   }
   const claimId = claimIdOf(org, claim);
   const signer = await recoverAddress({ hash: claimId, signature: b.signature }).catch(() => null);

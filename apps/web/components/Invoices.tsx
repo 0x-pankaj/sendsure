@@ -22,6 +22,8 @@ export interface InvoiceProposal {
   status: string;
   created_at: number;
   extraction: {
+    source?: string;
+    fields?: Record<string, string>;
     model?: string;
     evidence?: Record<string, Evidenced | string[]>;
     quoteFoundInInvoice?: Record<string, boolean>;
@@ -50,6 +52,7 @@ function readAsDataUrl(file: File): Promise<string> {
 
 /** What the AI read, with the quote each value came from and whether the quote is really in the invoice. */
 export function Evidence({ p }: { p: InvoiceProposal }) {
+  if (p.source === "odoo") return <FromBooks p={p} />;
   const ev = p.extraction.evidence ?? {};
   const ok = p.extraction.quoteFoundInInvoice ?? {};
   const instructions = (ev.paymentInstructions as string[] | undefined) ?? [];
@@ -104,6 +107,42 @@ export function Evidence({ p }: { p: InvoiceProposal }) {
       <p className="hint">
         Read by {p.extraction.model ?? "Claude"} via MeshAPI from {p.source === "image" ? "a photo" : "the pasted text"}.
       </p>
+    </div>
+  );
+}
+
+/** A bill the payer's own books (Odoo) sent: no AI involved, the numbers are the bill's. */
+function FromBooks({ p }: { p: InvoiceProposal }) {
+  const f = p.extraction.fields ?? {};
+  return (
+    <div>
+      <div className="table-wrap">
+        <table style={{ minWidth: 420 }}>
+          <tbody>
+            <tr>
+              <td>Invoice number</td>
+              <td>{f.invoiceRef ?? p.invoice_ref}</td>
+            </tr>
+            <tr>
+              <td>Amount</td>
+              <td>
+                {f.amount} {f.currency}
+              </td>
+            </tr>
+            <tr>
+              <td>Dated</td>
+              <td>{f.periodStart === f.periodEnd ? f.periodStart : `${f.periodStart} to ${f.periodEnd}`}</td>
+            </tr>
+            {f.document && (
+              <tr>
+                <td>Payer&apos;s bill</td>
+                <td className="mono">{f.document}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="hint">Sent from the payer&apos;s Odoo. Sign it only if this is your invoice and the amount is right.</p>
     </div>
   );
 }
