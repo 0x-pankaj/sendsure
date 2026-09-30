@@ -68,3 +68,8 @@ export function parsePayoutCsv(text: string): ParsedFile {
 export function toCsv(records: Record<string, string | number | null | undefined>[]): string {
   return Papa.unparse(records.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v ?? ""]))));
 }
+
+/** Any CSV with a header row, as one record per line. */
+export function parseCsvRecords(text: string): Record<string, string>[] {
+  return Papa.parse<Record<string, string>>(text.trim(), { header: true, skipEmptyLines: true }).data;
+}

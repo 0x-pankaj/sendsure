@@ -1,73 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import type { Address, Hex } from "viem";
-import { toBeancount } from "@sendsure/core";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
-import { walletErrorText, type Signer } from "../lib/wallet";
+import { type Signer } from "../lib/wallet";
+import { LedgerDownload, ledgerInput, type BooksData } from "./LedgerDownload";
 
-interface BooksData {
-  treasury: Address;
-  payments: {
-    date: string;
-    payeeRef: Hex;
-    invoice: string;
-    amount: string;
-    txHash: Hex;
-    claimId: Hex;
-    decisionHash: Hex;
-    payout: Address;
-  }[];
-  balances: { day: string; amount: string; block: string }[];
-}
-
-/** 5. Books: a beancount file reconciled to the chain; payee names are filled in here, in the browser. */
+/** 5. Books: every payment reconciled to the chain; payee names are filled in here, in the browser. */
 export function Books(props: { org: Address; orgName: string; signer: Signer; payeeName: (ref: Hex) => string }) {
   const { org, orgName, signer, payeeName } = props;
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
-  const [error, setError] = useState("");
-
-  async function download() {
-    setError("");
-    setNote("");
-    setBusy(true);
-    try {
-      const data = await jsonOrThrow<BooksData>(await authedFetch(signer, `/api/org/books?org=${org}`));
-      const text = toBeancount({
-        title: orgName,
-        org,
-        treasury: data.treasury,
-        payments: data.payments.map((p) => ({ ...p, payee: payeeName(p.payeeRef), amount: BigInt(p.amount) })),
-        balances: data.balances.map((b) => ({ ...b, amount: BigInt(b.amount) })),
-      });
-      const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `sendsure-${org.slice(0, 8)}.beancount`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setNote(`${data.payments.length} payment(s), ${data.balances.length} balance check(s) from the chain.`);
-    } catch (err) {
-      setError(walletErrorText(err));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const load = async () =>
+    ledgerInput(await jsonOrThrow<BooksData>(await authedFetch(signer, `/api/org/books?org=${org}`)), orgName, (ref) =>
+      payeeName(ref as Hex),
+    );
 
   return (
     <div className="card" style={{ maxWidth: 900, marginTop: 14 }}>
       <h3 style={{ marginTop: 0 }}>5. Your books</h3>
       <p className="hint">
-        A beancount file with every SendSure payment (its claim, the agent&apos;s decision and the Arc transaction), checked
-        against your treasury&apos;s balance on the chain for each payment day. It passes <span className="mono">bean-check</span>
-        .
+        Every SendSure payment (its claim, the agent&apos;s decision and the Arc transaction), checked against your
+        treasury&apos;s balance on the chain for each payment day. Pick the format your books use; the beancount file passes{" "}
+        <span className="mono">bean-check</span> and the hledger journal passes <span className="mono">hledger check</span>.
+        Using Odoo? <a href="/books">Payments are recorded there directly</a>.
       </p>
-      <button className="btn secondary" disabled={busy} onClick={download}>
-        {busy ? "Reading the chain…" : "Download books (.beancount)"}
-      </button>
-      {note && <p className="hint">{note}</p>}
-      {error && <p className="notice">{error}</p>}
+      <LedgerDownload load={load} fileBase={`sendsure-${org.slice(0, 8)}`} />
     </div>
   );
 }

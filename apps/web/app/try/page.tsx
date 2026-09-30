@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
 import { explorerAddress } from "@sendsure/chain";
-import { checkPayout, parsePayoutCsv, toBeancount, type CheckedRow } from "@sendsure/core";
+import { checkPayout, parsePayoutCsv, type CheckedRow } from "@sendsure/core";
+import { DemoBooks } from "../../components/DemoBooks";
 
 type Scene = "bind" | "attack" | "change" | "pay" | "inbox";
 type InboxClaim = { what: string; invoice: string; amountUsdc: string; contract: string; agent: string; paid: boolean };
@@ -74,44 +75,6 @@ export default function TryPage() {
     setCheck(checkPayout(current, last).rows);
   }
 
-  async function books() {
-    setError("");
-    try {
-      const res = await fetch("/api/try/books");
-      const data = (await res.json()) as {
-        org: string;
-        treasury: string;
-        payments: {
-          date: string;
-          payeeRef: string;
-          invoice: string;
-          amount: string;
-          txHash: string;
-          claimId: string;
-          decisionHash: string;
-          payout: string;
-        }[];
-        balances: { day: string; amount: string; block: string }[];
-        error?: string;
-      };
-      if (!res.ok) throw new Error(data.error ?? `The server answered ${res.status}.`);
-      const text = toBeancount({
-        title: "SendSure demo org (sandbox)",
-        org: data.org,
-        treasury: data.treasury,
-        payments: data.payments.map((p) => ({ ...p, payee: `Demo payee ${p.payeeRef.slice(2, 8)}`, amount: BigInt(p.amount) })),
-        balances: data.balances.map((b) => ({ ...b, amount: BigInt(b.amount) })),
-      });
-      const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "sendsure-demo.beancount";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
 
   const step = (scene: Scene, label: string, needs?: Scene) => (
     <button className="btn" disabled={busy !== "" || !sid || (needs ? !results[needs] : false)} onClick={() => run(scene)}>
@@ -239,12 +202,10 @@ export default function TryPage() {
         <li className={!results.pay ? "off" : ""}>
           <h3>6. The books</h3>
           <p className="hint">
-            A beancount file with every demo payment (claim, decision hash, Arc tx), reconciled to the treasury&apos;s balance
-            on-chain.
+            Every demo payment (claim, decision hash, Arc tx), reconciled to the treasury&apos;s balance on-chain, in the
+            format your books use. With <a href="/books">Odoo</a>, payments are recorded there directly.
           </p>
-          <button className="btn secondary" disabled={!results.pay} onClick={books}>
-            Download the demo books
-          </button>
+          {results.pay ? <DemoBooks /> : <p className="hint">Finish step 4 to download the books.</p>}
         </li>
       </ol>
 

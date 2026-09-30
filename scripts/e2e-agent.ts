@@ -33,7 +33,7 @@ import {
   type Claim,
   type OrgRules,
 } from "@sendsure/chain";
-import { toBeancount } from "@sendsure/core";
+import { parseCsvRecords, toBeancount, toHledger, toJournalCsv, toStatementCsv } from "@sendsure/core";
 import { arg, loadEnv, need } from "./lib/env";
 import { api, bindMessage, check, failed, postRelay, signInAs, withChecks } from "./lib/relay";
 
@@ -146,19 +146,41 @@ check(anchorHead === runs.body.anchor?.head, `log head anchored on-chain (anchor
 
 // 7. Books: the payment from its Settled event, the day's closing balance from the chain; bean-check.
 const books = (await api(base, `/api/org/books?org=${org}`, { token: ownerToken })).body as Record<string, any>;
-const ledger = toBeancount({
+const ledgerInput = {
   title: "SendSure e2e sandbox org",
   org,
   treasury: books.treasury,
   payments: (books.payments as any[]).map((p) => ({ ...p, payee: "Test payee", amount: BigInt(p.amount) })),
   balances: (books.balances as any[]).map((b) => ({ ...b, amount: BigInt(b.amount) })),
-});
+};
 const ledgerPath = resolve(import.meta.dirname, "../deployments/books-e2e.beancount");
-writeFileSync(ledgerPath, ledger);
+writeFileSync(ledgerPath, toBeancount(ledgerInput));
 const bean = spawnSync(process.env.BEAN_CHECK ?? "bean-check", [ledgerPath], { encoding: "utf8" });
 check(
   books.payments?.length === 1 && (bean.error ? true : bean.status === 0),
   `books: ${books.payments?.length} payment, ${books.balances?.length} chain balance check; bean-check ${bean.error ? "not installed (skipped)" : bean.status === 0 ? "passes" : `FAILS: ${bean.stdout}${bean.stderr}`}`,
+);
+
+// The same books as an hledger journal (checked by hledger itself), a journal CSV and a statement CSV.
+const hledgerPath = resolve(import.meta.dirname, "../deployments/books-e2e.journal");
+writeFileSync(hledgerPath, toHledger(ledgerInput));
+const hl = spawnSync(process.env.HLEDGER ?? "hledger", ["-f", hledgerPath, "check", "--strict"], { encoding: "utf8" });
+check(
+  hl.error ? true : hl.status === 0,
+  `books: hledger check --strict ${hl.error ? "not installed (skipped)" : hl.status === 0 ? "passes (balance asserted from the chain)" : `FAILS: ${hl.stdout}${hl.stderr}`}`,
+);
+const journalCsv = toJournalCsv(ledgerInput);
+const statement = toStatementCsv(ledgerInput);
+writeFileSync(resolve(import.meta.dirname, "../deployments/books-e2e.journal.csv"), journalCsv);
+writeFileSync(resolve(import.meta.dirname, "../deployments/books-e2e.statement.csv"), statement.csv);
+const csvUnits = (t: string) => (t ? BigInt(t.replace(".", "")) : 0n);
+const journalRows = parseCsvRecords(journalCsv);
+const statementRows = parseCsvRecords(statement.csv);
+const closing = ledgerInput.balances.at(-1)?.amount;
+check(
+  journalRows.reduce((sum, r) => sum + csvUnits(r.debit ?? "") - csvUnits(r.credit ?? ""), 0n) === 0n &&
+    statementRows.reduce((sum, r) => sum + BigInt((r.Amount ?? "0").replace(".", "")), 0n) === closing,
+  `books: journal CSV balances (${journalRows.length} lines); statement CSV nets to the treasury's chain balance`,
 );
 
 const out = {
