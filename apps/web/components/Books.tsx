@@ -20,7 +20,7 @@ export function Books(props: { org: Address; orgName: string; signer: Signer; pa
         Every SendSure payment (its claim, the agent&apos;s decision and the Arc transaction), checked against your
         treasury&apos;s balance on the chain for each payment day. Pick the format your books use; the beancount file passes{" "}
         <span className="mono">bean-check</span> and the hledger journal passes <span className="mono">hledger check</span>.
-        Using Odoo? <a href="/books">Payments are recorded there directly</a>.
+        Using Odoo or ERPNext? <a href="/books">Payments are recorded there directly</a>.
       </p>
       <LedgerDownload load={load} fileBase={`sendsure-${org.slice(0, 8)}`} />
     </div>

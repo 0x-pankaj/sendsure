@@ -167,7 +167,8 @@ export async function verifyAddress(org: Address, addressParam: string | null) {
 
 // ------------------------------------------------------------------ bills
 
-const SYSTEMS = new Set(["odoo"]);
+/** The books systems with a SendSure app: integrations/odoo and integrations/erpnext. */
+const SYSTEMS = new Set(["odoo", "erpnext"]);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const dayStart = (s: string) => Math.floor(Date.parse(`${s}T00:00:00Z`) / 1000);
 
@@ -188,7 +189,7 @@ interface BillInput {
 export function parseBill(body: unknown): BillInput {
   const b = toObject(body);
   const system = typeof b.system === "string" ? b.system : "odoo";
-  if (!SYSTEMS.has(system)) throw new RelayError(400, "system must be odoo.", "BAD_INPUT");
+  if (!SYSTEMS.has(system)) throw new RelayError(400, "system must be odoo or erpnext.", "BAD_INPUT");
   const externalId = typeof b.external_id === "string" ? b.external_id.trim() : "";
   if (!/^[\w.:/-]{1,80}$/.test(externalId))
     throw new RelayError(400, "external_id is required: the bill's id in your books (letters, digits, . : / - _).", "BAD_INPUT");

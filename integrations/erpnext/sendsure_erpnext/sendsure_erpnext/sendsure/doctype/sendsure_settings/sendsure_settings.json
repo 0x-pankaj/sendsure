@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "creation": "2026-09-30 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "connection_section",
+  "url",
+  "api_key",
+  "test_connection",
+  "column_break_org",
+  "org",
+  "org_tier",
+  "site_id",
+  "agent_section",
+  "manual_only",
+  "sync_now"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection_section",
+   "fieldtype": "Section Break",
+   "label": "Connection"
+  },
+  {
+   "default": "https://sendsure.0xpankaj.workers.dev",
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "SendSure server"
+  },
+  {
+   "description": "Created by the org's owner in SendSure: /org, then \"Connect your books\". It can send bills and read their status. It can never approve, co-sign, add payees or change the org's rules.",
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "SendSure key"
+  },
+  {
+   "fieldname": "test_connection",
+   "fieldtype": "Button",
+   "label": "Test connection and set up the USDC account"
+  },
+  {
+   "fieldname": "column_break_org",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "org",
+   "fieldtype": "Data",
+   "label": "Connected to org",
+   "read_only": 1
+  },
+  {
+   "fieldname": "org_tier",
+   "fieldtype": "Data",
+   "label": "Org type",
+   "read_only": 1
+  },
+  {
+   "description": "Part of each bill's id in SendSure, so two ERPNext sites never collide.",
+   "fieldname": "site_id",
+   "fieldtype": "Data",
+   "label": "This site's id in SendSure",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agent_section",
+   "fieldtype": "Section Break",
+   "label": "The agent"
+  },
+  {
+   "default": "0",
+   "description": "Off (the default): every 5 minutes, ERPNext asks SendSure's agent to pay the invoices the supplier signed. It pays only what passes your Arc contract's rules; first payments and large amounts still wait for a person's co-sign in SendSure.",
+   "fieldname": "manual_only",
+   "fieldtype": "Check",
+   "label": "Pay only when a person runs the agent in SendSure"
+  },
+  {
+   "fieldname": "sync_now",
+   "fieldtype": "Button",
+   "label": "Sync with SendSure now"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SendSure",
+ "name": "SendSure Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -35,7 +35,7 @@ export default function BooksPage() {
           <div className="card">
             <span className="tag stop">Never without proof</span>
             <h3>No transaction, no payment</h3>
-            <p>In Odoo, a USDC payment entered by hand, without an Arc transaction to the proven address, is refused.</p>
+            <p>In Odoo and ERPNext, a USDC payment entered by hand, without an Arc transaction to the proven address, is refused.</p>
           </div>
         </div>
       </section>
@@ -102,6 +102,67 @@ export default function BooksPage() {
           One command with Docker: <span className="mono">./run.sh up</span> in{" "}
           <a href={`${REPO}/integrations/odoo`}>integrations/odoo</a>. The key Odoo uses can send bills and read their status.
           It can never approve, co-sign or change your rules.
+        </p>
+      </section>
+
+      <section className="section">
+        <h2>ERPNext 15</h2>
+        <p className="sub">
+          A Frappe app. It was tested inside ERPNext (25 tests) and end to end: a real ERPNext purchase invoice paid on Arc
+          testnet and recorded back, 29 of 29 checks.
+        </p>
+        <div className="split">
+          <div>
+            <img
+              className="shot"
+              src="/books/erpnext-invoice-paid-on-arc.jpg"
+              alt="An ERPNext purchase invoice paid with SendSure: 0.250000 USDC with the Arc transaction and a link to the receipt"
+              width={1425}
+              height={1100}
+              loading="lazy"
+            />
+            <p className="hint">A purchase invoice paid on Arc, recorded as a Payment Entry with the transaction as its reference.</p>
+          </div>
+          <div>
+            <img
+              className="shot"
+              src="/books/erpnext-supplier-proven-address.jpg"
+              alt="An ERPNext supplier: the proven payout address is read from SendSure and cannot be typed in"
+              width={1425}
+              height={1100}
+              loading="lazy"
+            />
+            <p className="hint">The proven address is read from SendSure. Typing another one is refused, for the administrator too.</p>
+          </div>
+        </div>
+        <div className="table-wrap" style={{ marginTop: 16 }}>
+          <table>
+            <thead>
+              <tr>
+                <th>ERPNext alone (we reproduced each on ERPNext 15.121.6)</th>
+                <th>With the SendSure app</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A 250.00 invoice paid with 249.995 is marked Paid: both ledger rows say 250.00, no Round Off row, no write-off.</td>
+                <td>A settlement is recorded only if it equals the open amount exactly, to the last of 6 decimals; the ledger rows are read back after posting.</td>
+              </tr>
+              <tr>
+                <td>A supplier&apos;s bank account number takes 30 characters; a wallet address has 42.</td>
+                <td>The proven address is a read-only field read from SendSure. Only an Accounts Manager can approve it for payments.</td>
+              </tr>
+              <tr>
+                <td>A Payment Entry takes any text as its reference; nothing ties it to a transfer.</td>
+                <td>A payment on the SendSure mode, or out of the USDC account, is refused unless SendSure read the settlement from Arc.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="hint">
+          One command with Docker: <span className="mono">./run.sh up</span> in{" "}
+          <a href={`${REPO}/integrations/erpnext`}>integrations/erpnext</a>. The same key rules as Odoo: it can send invoices
+          and read their status, never approve, co-sign or change your rules.
         </p>
       </section>
 

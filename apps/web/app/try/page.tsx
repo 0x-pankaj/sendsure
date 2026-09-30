@@ -203,7 +203,7 @@ export default function TryPage() {
           <h3>6. The books</h3>
           <p className="hint">
             Every demo payment (claim, decision hash, Arc tx), reconciled to the treasury&apos;s balance on-chain, in the
-            format your books use. With <a href="/books">Odoo</a>, payments are recorded there directly.
+            format your books use. With <a href="/books">Odoo or ERPNext</a>, payments are recorded there directly.
           </p>
           {results.pay ? <DemoBooks /> : <p className="hint">Finish step 4 to download the books.</p>}
         </li>

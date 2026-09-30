@@ -194,6 +194,14 @@ export default function Home() {
               </p>
             </div>
             <div className="card">
+              <span className="tag">App · live run 29/29</span>
+              <h3>ERPNext 15</h3>
+              <p>
+                &ldquo;Pay with SendSure&rdquo; on a purchase invoice. The supplier&apos;s proven address is read from Arc and cannot
+                be typed in, and each payment is recorded as a Payment Entry with the transaction as its reference.
+              </p>
+            </div>
+            <div className="card">
               <span className="tag">Checked by the tools themselves</span>
               <h3>beancount and hledger</h3>
               <p>
@@ -245,7 +253,7 @@ export default function Home() {
           </div>
           <div className="card">
             <h3>Whoever keeps the books</h3>
-            <p>Every payment arrives with its invoice, its transaction and its receipt, in Odoo or in the ledger format you use.</p>
+            <p>Every payment arrives with its invoice, its transaction and its receipt, in Odoo, in ERPNext or in the ledger format you use.</p>
             <a className="more" href="/books">
               Books →
             </a>

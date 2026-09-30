@@ -19,7 +19,7 @@ keeps the three apart, from chain events alone.
 1. [`/try`](https://sendsure.0xpankaj.workers.dev/try): the whole story with no wallet. A payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
 2. Open a payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim, and the agent's anchored decision (a sandbox payment from our tests).
 3. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
-4. Books: [`/books`](https://sendsure.0xpankaj.workers.dev/books) shows every format and lets you download the demo org's ledger. In the repo: [the Odoo add-on](integrations/odoo) (screenshots and a one-command Docker setup), and the same payments as [beancount](deployments/books-e2e.beancount) and [hledger](deployments/books-e2e.journal), each reconciled to the chain.
+4. Books: [`/books`](https://sendsure.0xpankaj.workers.dev/books) shows every format and lets you download the demo org's ledger. In the repo: [the Odoo add-on](integrations/odoo) and [the ERPNext app](integrations/erpnext) (screenshots and a one-command Docker setup each), and the same payments as [beancount](deployments/books-e2e.beancount) and [hledger](deployments/books-e2e.journal), each reconciled to the chain.
 5. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
 
 ## Traction so far
@@ -44,6 +44,7 @@ Paid agent calls over Circle Gateway (x402): 8, all first-party.
 | [`/books`](https://sendsure.0xpankaj.workers.dev/books) | The books, exact to the last decimal: Odoo, beancount, hledger, journal CSV and statement CSV. Download the demo org's ledger in each format. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
 | [Odoo add-on](integrations/odoo), for your books | Odoo 19: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved, and each Arc payment is recorded back through Register Payment, exactly, with the tx in the memo. `./run.sh up` in `integrations/odoo`. |
+| [ERPNext app](integrations/erpnext), for your books | ERPNext 15: "Pay with SendSure" on a purchase invoice. The supplier's proven address is read from SendSure and cannot be typed in; only an Accounts Manager approves it; each Arc payment is recorded as a Payment Entry with the transaction as its reference, exactly, once. `./run.sh up` in `integrations/erpnext`. |
 | Pay per call, for agents | [`/api/x402`](https://sendsure.0xpankaj.workers.dev/api/x402): verify a payee ($0.001) or check a payout file ($0.005), paid in USDC with x402 over Circle Gateway. `circle services pay https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee -X POST -d '{"org":"0x…","address":"0x…"}' --address <your agent wallet> --chain ARC-TESTNET --max-amount 0.001` |
 | [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard) | Every number counted from chain events, in three tiers. Sandbox activity is never counted as traction. |
 
@@ -106,6 +107,7 @@ flowchart LR
 | Books | Beancount, hledger, journal CSV and statement CSV from one list of movements: each payment with its claim, decision hash and Arc tx; daily balances from the chain; six decimals, never rounded. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`ledgers.ts`](packages/core/src/ledgers.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
 | Indexer and dashboard | Chain events into D1 (≤ 9,999-block windows); three tiers; public receipts. | [`indexer.ts`](apps/web/lib/indexer.ts), [`stats.ts`](apps/web/lib/stats.ts), [`receipt.ts`](apps/web/lib/receipt.ts) |
 | Odoo add-on | Odoo only lets a person trust a vendor wallet that is the address the vendor proved. Bills go to SendSure. Settlements are recorded exactly (half a cent is never rounded away), and a USDC payment without an Arc tx is refused. | [`integrations/odoo/`](integrations/odoo/) |
+| ERPNext app | The same guarantees for ERPNext 15: a read-only proven address (typing another is refused for everyone), four-eyes approval, a Payment Entry on the SendSure mode only for a settlement SendSure read from Arc, exact recording with the ledger rows read back. Reproduces what stock ERPNext does with half a cent. | [`integrations/erpnext/`](integrations/erpnext/) |
 | Integration keys | Owner-created, hashed and revocable. A key can send bills and read their status, never approve or co-sign. | [`apps/web/lib/integrations.ts`](apps/web/lib/integrations.ts) |
 | Paid checks (x402) | Other agents pay per call through Circle Gateway: a 402 with the price, then verify and settle with Circle's facilitator; the check runs before the charge, so bad input is never billed. Each payment is recorded and counted on the dashboard. | [`apps/web/lib/x402.ts`](apps/web/lib/x402.ts), [`app/api/x402/`](apps/web/app/api/x402/) |
 | MCP server | Payout check, address lookup, receipts, stats, and a sandbox-only, dry-run-by-default demo tool. | [`apps/web/lib/mcp.ts`](apps/web/lib/mcp.ts) |
@@ -144,8 +146,8 @@ to addresses payees proved, for claims they signed, with first payments waiting 
 |---|---|---|
 | Address poisoning (a look-alike in the payout list) | The payout check flags it; the contract only pays the address the payee proved. | `/try` step 2; [`payoutCheck.test.ts`](packages/core/test/payoutCheck.test.ts) |
 | "Please pay my new wallet" (business email compromise) | A change needs the old key and the new key, then a cooldown the payer can cancel; the agent holds claims that ask for it. | [change run](deployments/relay-e2e-change.json), [agent run](deployments/agent-e2e.json) #3 |
-| A wallet slipped onto a vendor in the books (Odoo) | Odoo refuses to trust any wallet except the address the vendor proved, even for the admin; the SendSure journal pays only trusted wallets, and only through SendSure. | [odoo run](deployments/odoo-e2e.json) (refused: slipped-in wallet, agent user trusting, send before trust) |
-| Books silently absorb a rounding difference | A settlement is recorded in Odoo only if it equals the open amount to 6 decimals; otherwise it stays open for a person. A claim must match its bill's amount. | `test_half_a_cent_is_not_rounded_away`, [odoo run](deployments/odoo-e2e.json) (`PROPOSAL_MISMATCH`) |
+| A wallet slipped onto a vendor in the books (Odoo, ERPNext) | Odoo refuses to trust any wallet except the address the vendor proved, even for the admin; the SendSure journal pays only trusted wallets, and only through SendSure. ERPNext refuses a typed address for every user and lets only an Accounts Manager approve the proven one. | [odoo run](deployments/odoo-e2e.json) (refused: slipped-in wallet, agent user trusting, send before trust), [erpnext run](deployments/erpnext-e2e.json) |
+| Books silently absorb a rounding difference | A settlement is recorded in Odoo or ERPNext only if it equals the open amount to 6 decimals; otherwise it stays open for a person. A claim must match its bill's amount. | `test_half_a_cent_is_not_rounded_away` (both apps), `test_stock_erpnext_marks_a_half_cent_short_payment_paid`, [odoo run](deployments/odoo-e2e.json) (`PROPOSAL_MISMATCH`) |
 | Forged invoice | A claim must be signed by the payee's proven key (EIP-712, bound to the org and the chain); the contract refuses others on-chain. | [claim run](deployments/claim-e2e.json), `/try` step 2 (Refused `BAD_SIGNATURE`) |
 | Duplicate invoice | The salted invoice ref makes one obligation, paid once; one open claim per invoice; the agent flags repeated amounts and overlapping periods. | `DUPLICATE_REF` tests; [`agent.test.ts`](apps/web/test/agent.test.ts) |
 | Prompt injection in claim text | Claim text is data; the model can only be more careful; rules flag "ignore previous rules", "urgent", "new wallet". | [`agent.test.ts`](apps/web/test/agent.test.ts) |
@@ -178,6 +180,7 @@ What comes next, with dates: [ROADMAP.md](ROADMAP.md).
 - TypeScript: 74 tests (`pnpm test`): payout check and books (23), chain helpers with live
   cross-checks against the deployed contracts (16), web server (35).
 - Odoo add-on: 14 tests (`integrations/odoo/run.sh test`), run inside Odoo 19.
+- ERPNext app: 25 tests (`integrations/erpnext/run.sh test`), run inside ERPNext 15, including three that record what stock ERPNext does on its own.
 - Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction):
   [bind](deployments/relay-e2e.json) 4/4, [change](deployments/relay-e2e-change.json) 7/7,
   [org](deployments/org-e2e.json) 9/9, [claim](deployments/claim-e2e.json) 11/11,
@@ -187,7 +190,8 @@ What comes next, with dates: [ROADMAP.md](ROADMAP.md).
   and held the rest), [circle](deployments/circle-e2e.json) 10/10,
   [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12,
   [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway),
-  [odoo](deployments/odoo-e2e.json) 25/25 (a real Odoo 19 bill paid on Arc and recorded back exactly);
+  [odoo](deployments/odoo-e2e.json) 25/25 (a real Odoo 19 bill paid on Arc and recorded back exactly),
+  [erpnext](deployments/erpnext-e2e.json) 29/29 (a real ERPNext 15 purchase invoice paid on Arc and recorded back exactly);
   the books of the agent run pass `bean-check` ([beancount](deployments/books-e2e.beancount)) and `hledger check --strict`
   ([journal](deployments/books-e2e.journal)), with the same payments as [journal CSV](deployments/books-e2e.journal.csv)
   and [statement CSV](deployments/books-e2e.statement.csv). Each run record lists every check it

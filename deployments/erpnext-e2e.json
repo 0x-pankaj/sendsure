@@ -1,0 +1,183 @@
+{
+  "note": "First-party end-to-end test: ERPNext 15 (Docker) with the sendsure_erpnext app, against the live SendSure, SANDBOX org with throwaway keys. Not traction.",
+  "ranAtUnix": 1790791478,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "erpnext": "15.121.6 (Frappe 15.121.2, sendsure_erpnext 15.0.1)",
+  "org": "0xacdD0ab712f84914080C02E2ea46013fAB4F4aF5",
+  "payee": "0xc4E07d4840A586dDf750097514E5aaCFf272bd74",
+  "invoice": {
+    "name": "ACC-PINV-2026-00003",
+    "invoiceRef": "INV-ERPNEXT-MUOEXW3Q",
+    "amountUsd": "0.25",
+    "status": "Paid",
+    "sendsure": "Paid on Arc",
+    "externalId": "erpnext:8b9371249a66:ACC-PINV-2026-00003"
+  },
+  "refused": {
+    "typedAddressClerk": "0x1886397719fD5F7EaC515C1fF70672c19cBB230d is not an address Maria Lopez Design muoexw3q proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
+    "typedAddressAdministrator": "0x1886397719fD5F7EaC515C1fF70672c19cBB230d is not an address Maria Lopez Design muoexw3q proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
+    "clerkApprove": "Only an Accounts Manager can approve a supplier's payout address.",
+    "sendBeforeApproval": "Approve Maria Lopez Design muoexw3q's proven payout address 0xc4E07d4840A586dDf750097514E5aaCFf272bd74 first (the supplier's SendSure tab, \"Approve this payout address\"; needs an Accounts Manager).",
+    "wrongAmountClaim": "PROPOSAL_MISMATCH",
+    "manualUsdcPayment": "Payments with USDC on Arc (SendSure) are recorded by SendSure from the chain, with their transaction. To pay this supplier, use \"Pay with SendSure\" on the purchase invoice."
+  },
+  "cosign": "https://explorer.testnet.arc.io/tx/0xc2aec0e04984d0596d6b4ac50563c8f94c1628cda882edb0de0526aadaa119ae",
+  "settle": "https://explorer.testnet.arc.io/tx/0xe0535e9dc885be383de6d9baf3933c4fcd02e506f2f03cba8f8b40a5ba49159e",
+  "erpnextPayment": {
+    "name": "ACC-PAY-2026-00002",
+    "amount": "0.250000",
+    "currency": "USDC",
+    "account": "USDC on Arc (SendSure) - SSD",
+    "modeOfPayment": "USDC on Arc (SendSure)",
+    "reference": "0xe0535e9dc885be383de6d9baf3933c4fcd02e506f2f03cba8f8b40a5ba49159e",
+    "postingDate": "2026-09-30"
+  },
+  "ledger": [
+    {
+      "account": "USDC on Arc (SendSure) - SSD",
+      "debit": 0,
+      "credit": 0.25,
+      "credit_in_account_currency": 0.25,
+      "account_currency": "USDC"
+    },
+    {
+      "account": "Creditors - SSD",
+      "debit": 0.25,
+      "credit": 0,
+      "credit_in_account_currency": 0,
+      "account_currency": "USD"
+    }
+  ],
+  "settlement": {
+    "tx": "0xe0535e9dc885be383de6d9baf3933c4fcd02e506f2f03cba8f8b40a5ba49159e",
+    "block": 64816211,
+    "paidAt": "2026-09-30T18:04:14.000Z",
+    "amount": "250000",
+    "amountUsdc": "0.25",
+    "payout": "0xc4E07d4840A586dDf750097514E5aaCFf272bd74",
+    "token": "0x3600000000000000000000000000000000000000",
+    "decisionHash": "0x2409b645a9520ad9ff8a2771c1d278b0d1c0932c1174d5a8a7f5ba1809fc3439"
+  },
+  "checks": {
+    "passed": 29,
+    "total": 29,
+    "list": [
+      {
+        "ok": true,
+        "what": "ERPNext 15.121.6 (Frappe 15.121.2, sendsure_erpnext 15.0.1) at http://127.0.0.1:18080"
+      },
+      {
+        "ok": true,
+        "what": "sandbox org 0xacdD0ab712f84914080C02E2ea46013fAB4F4aF5 with a payee who proved 0xc4E07d4840A586dDf750097514E5aaCFf272bd74"
+      },
+      {
+        "ok": true,
+        "what": "owner created an integration key (shown once, stored as a hash)"
+      },
+      {
+        "ok": true,
+        "what": "a payee cannot create a key for the org (403)"
+      },
+      {
+        "ok": true,
+        "what": "ERPNext connected to org 0xacdD0ab712f84914080C02E2ea46013fAB4F4aF5 (sandbox)"
+      },
+      {
+        "ok": true,
+        "what": "the key is stored as a Password field: reading the settings back shows \"***********************************************\""
+      },
+      {
+        "ok": true,
+        "what": "USDC (1 USDC = 1,000,000 units) and the account \"USDC on Arc (SendSure) - SSD\" (Bank, in USDC) set up"
+      },
+      {
+        "ok": true,
+        "what": "supplier linked by invite link: \"Proved their address\", proven 0xc4E07d4840A586dDf750097514E5aaCFf272bd74"
+      },
+      {
+        "ok": true,
+        "what": "the proven address is on the supplier, not yet approved for payments"
+      },
+      {
+        "ok": true,
+        "what": "nobody can type another address onto the supplier, not even the administrator: \"0x1886397719fD5F7EaC515C1fF70672c19cBB230d is not an address Maria Lopez Design muoexw3q p…\""
+      },
+      {
+        "ok": true,
+        "what": "the AP clerk cannot approve a payout address: \"Only an Accounts Manager can approve a supplier's payout address.\""
+      },
+      {
+        "ok": true,
+        "what": "after those attempts the supplier still has only the proven address, unapproved"
+      },
+      {
+        "ok": true,
+        "what": "\"Pay with SendSure\" waits until an Accounts Manager approves the proven address"
+      },
+      {
+        "ok": true,
+        "what": "invoice ACC-PINV-2026-00003 sent by the AP clerk: \"Waiting for the supplier to sign\""
+      },
+      {
+        "ok": true,
+        "what": "the supplier sees it once in SendSure: INV-ERPNEXT-MUOEXW3Q, 0.25 USDC"
+      },
+      {
+        "ok": true,
+        "what": "a claim for a different amount than the invoice is refused (PROPOSAL_MISMATCH)"
+      },
+      {
+        "ok": true,
+        "what": "the supplier signed the invoice: ESCALATED (first payment needs a co-sign)"
+      },
+      {
+        "ok": true,
+        "what": "ERPNext's scheduler runs sendsure_erpnext.sync.run on \"*/5 * * * *\""
+      },
+      {
+        "ok": true,
+        "what": "ERPNext's scheduled job asked the agent to run: \"Needs a co-sign in SendSure\" (This is the first payment to a new payout address, so a person must co-sign before it can be paid. Nothing else looks wrong.)"
+      },
+      {
+        "ok": true,
+        "what": "the owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0xc2aec0e04984d0596d6b4ac50563c8f94c1628cda882edb0de0526aadaa119ae"
+      },
+      {
+        "ok": true,
+        "what": "the next run of the job: the agent paid it on Arc, https://explorer.testnet.arc.io/tx/0xe0535e9dc885be383de6d9baf3933c4fcd02e506f2f03cba8f8b40a5ba49159e"
+      },
+      {
+        "ok": true,
+        "what": "the supplier's proven address received 0.25 USDC"
+      },
+      {
+        "ok": true,
+        "what": "recorded as Payment Entry ACC-PAY-2026-00002: 0.250000 USDC, reference \"0xe0535e9dc885be383d…\""
+      },
+      {
+        "ok": true,
+        "what": "to the proven address, from \"USDC on Arc (SendSure) - SSD\", with a link to the SendSure receipt"
+      },
+      {
+        "ok": true,
+        "what": "the ledger has two rows and nothing else: 0.25 USDC (0.25 USD) out of the USDC account, 0.25 USD off \"Creditors - SSD\""
+      },
+      {
+        "ok": true,
+        "what": "invoice Paid, 0.00 left open, paid exactly 0.250000 USDC"
+      },
+      {
+        "ok": true,
+        "what": "syncing again records nothing twice"
+      },
+      {
+        "ok": true,
+        "what": "a hand-made payment on the SendSure mode is refused, even with a transaction typed in: nothing is recorded without SendSure reading it from Arc"
+      },
+      {
+        "ok": true,
+        "what": "SendSure's view matches: Settled event carries 250000 (0.25 USDC) to 0xc4E07d4840A586dDf750097514E5aaCFf272bd74"
+      }
+    ]
+  }
+}

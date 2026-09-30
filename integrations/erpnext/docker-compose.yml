@@ -1,0 +1,32 @@
+# ERPNext 15 + MariaDB + Redis with the SendSure app, for trying it and for the tests.
+#   docker compose up -d        ERPNext on http://127.0.0.1:18080 (login Administrator / admin), site "sendsure.localhost"
+#   docker compose down -v      remove everything
+name: sendsure-erpnext
+services:
+  db:
+    image: mariadb:10.6
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MARIADB_ROOT_PASSWORD: admin
+    volumes: [db:/var/lib/mysql]
+  redis:
+    image: redis:7-alpine
+  app:
+    image: frappe/erpnext:v15.121.6
+    depends_on: [db, redis]
+    ports: ["127.0.0.1:18080:8000"]
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - ./sendsure_erpnext:/home/frappe/frappe-bench/apps/sendsure_erpnext:ro
+      - ./docker:/opt/sendsure:ro
+    command: ["bash", "/opt/sendsure/boot.sh", "serve"]
+volumes:
+  db:
+  sites:

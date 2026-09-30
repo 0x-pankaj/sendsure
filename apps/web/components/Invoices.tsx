@@ -52,7 +52,7 @@ function readAsDataUrl(file: File): Promise<string> {
 
 /** What the AI read, with the quote each value came from and whether the quote is really in the invoice. */
 export function Evidence({ p }: { p: InvoiceProposal }) {
-  if (p.source === "odoo") return <FromBooks p={p} />;
+  if (p.source === "odoo" || p.source === "erpnext") return <FromBooks p={p} />;
   const ev = p.extraction.evidence ?? {};
   const ok = p.extraction.quoteFoundInInvoice ?? {};
   const instructions = (ev.paymentInstructions as string[] | undefined) ?? [];
@@ -111,7 +111,7 @@ export function Evidence({ p }: { p: InvoiceProposal }) {
   );
 }
 
-/** A bill the payer's own books (Odoo) sent: no AI involved, the numbers are the bill's. */
+/** A bill the payer's own books (Odoo or ERPNext) sent: no AI involved, the numbers are the bill's. */
 function FromBooks({ p }: { p: InvoiceProposal }) {
   const f = p.extraction.fields ?? {};
   return (
@@ -142,7 +142,10 @@ function FromBooks({ p }: { p: InvoiceProposal }) {
           </tbody>
         </table>
       </div>
-      <p className="hint">Sent from the payer&apos;s Odoo. Sign it only if this is your invoice and the amount is right.</p>
+      <p className="hint">
+        Sent from the payer&apos;s {p.source === "erpnext" ? "ERPNext" : "Odoo"}. Sign it only if this is your invoice and the
+        amount is right.
+      </p>
     </div>
   );
 }

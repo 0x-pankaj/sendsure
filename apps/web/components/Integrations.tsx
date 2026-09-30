@@ -15,7 +15,7 @@ interface KeyRow {
 
 const when = (unix: number | null) => (unix ? new Date(unix * 1000).toISOString().slice(0, 16).replace("T", " ") : "never");
 
-/** Connect the books: an integration key for the SendSure Odoo add-on (shown once, stored as a hash). */
+/** Connect the books: an integration key for the SendSure Odoo add-on or ERPNext app (shown once, stored as a hash). */
 export function Integrations(props: { org: Address; signer: Signer }) {
   const { org, signer } = props;
   const [keys, setKeys] = useState<KeyRow[] | null>(null);
@@ -40,7 +40,7 @@ export function Integrations(props: { org: Address; signer: Signer }) {
         await authedFetch(signer, "/api/org/keys", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ org, label: "Odoo" }),
+          body: JSON.stringify({ org, label: "Books" }),
         }),
       );
       setCreated(out);
@@ -74,16 +74,16 @@ export function Integrations(props: { org: Address; signer: Signer }) {
 
   return (
     <div className="card" style={{ maxWidth: 900, marginTop: 14 }}>
-      <h3>Connect your books (Odoo)</h3>
+      <h3>Connect your books (Odoo or ERPNext)</h3>
       <p className="hint">
-        The SendSure add-on for Odoo 19 sends your posted vendor bills here and records each payment back in Odoo, exactly, with
-        the Arc transaction in the memo. Odoo will only trust a vendor wallet that the vendor proved in SendSure. The key can send
-        bills and read their status; it can never approve, co-sign or change your rules.
+        The SendSure add-on for Odoo 19, or the app for ERPNext 15, sends your posted vendor bills here and records each payment
+        back in your books, exactly, with the Arc transaction as the reference. Your books will only pay a vendor wallet that the
+        vendor proved in SendSure. The key can send bills and read their status; it can never approve, co-sign or change your rules.
       </p>
       {created && (
         <div className="notice">
           <p>
-            <b>Your Odoo key</b> (copy it now; SendSure keeps only a hash and cannot show it again):
+            <b>Your books key</b> (copy it now; SendSure keeps only a hash and cannot show it again):
           </p>
           <p className="mono" style={{ wordBreak: "break-all" }}>
             {created.key}
@@ -95,14 +95,15 @@ export function Integrations(props: { org: Address; signer: Signer }) {
             {copied ? "Copied" : "Copy key"}
           </button>
           <p className="hint">
-            In Odoo: Invoicing → Configuration → Settings → SendSure. Server <span className="mono">{origin}</span>, org{" "}
-            <span className="mono">{org}</span>, and this key. Then on each vendor, paste their SendSure invite link.
+            In Odoo: Invoicing → Configuration → Settings → SendSure. In ERPNext: SendSure Settings. Server{" "}
+            <span className="mono">{origin}</span>, org <span className="mono">{org}</span>, and this key. Then on each vendor,
+            paste their SendSure invite link.
           </p>
         </div>
       )}
       <div className="row">
         <button className="btn" disabled={busy} onClick={() => void create()}>
-          {busy ? "Creating…" : "Create an Odoo key"}
+          {busy ? "Creating…" : "Create a books key"}
         </button>
         {keys === null && (
           <button className="linkish" onClick={() => void load()}>
@@ -144,8 +145,9 @@ export function Integrations(props: { org: Address; signer: Signer }) {
         </div>
       )}
       <p className="hint">
-        Add-on and setup guide:{" "}
-        <a href="https://github.com/0x-pankaj/sendsure/tree/main/integrations/odoo">integrations/odoo</a>.
+        Setup guides:{" "}
+        <a href="https://github.com/0x-pankaj/sendsure/tree/main/integrations/odoo">integrations/odoo</a> and{" "}
+        <a href="https://github.com/0x-pankaj/sendsure/tree/main/integrations/erpnext">integrations/erpnext</a>.
       </p>
     </div>
   );
