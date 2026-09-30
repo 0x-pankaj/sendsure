@@ -1,25 +1,55 @@
 {
   "note": "First-party end-to-end test with throwaway keys; org tier SANDBOX. Not traction.",
-  "ranAtUnix": 1790683178,
+  "ranAtUnix": 1790754090,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x9e5B0BAfD6D40219431942f0122fEbd00110A551",
-  "owner": "0x5850B4d8Ba80FC137A7d6856AA805f375Fbb969A",
+  "org": "0x7e397cA171830661cd6F0aD49816C51e09eD09d9",
+  "owner": "0x9ED7a8473944fA2E39C945a845c22E8De6Ca2E90",
   "checks": {
-    "strangerCreate": "400 BadSignature",
-    "created": "200 tier 2",
-    "allowanceUsdc": "10",
-    "strangerInvites": "400 BadSignature",
-    "invitesOpened": [
-      "OPEN",
-      "OPEN"
-    ],
-    "invitesReplay": "409 NonceUsed",
-    "payeeBound": "BOUND"
+    "passed": 9,
+    "total": 9,
+    "list": [
+      {
+        "ok": true,
+        "what": "org in someone else's name refused (400 The owner did not sign these settings.)"
+      },
+      {
+        "ok": true,
+        "what": "org created (200 0x7e397cA171830661cd6F0aD49816C51e09eD09d9)"
+      },
+      {
+        "ok": true,
+        "what": "owner = treasury = the key; tier SANDBOX"
+      },
+      {
+        "ok": true,
+        "what": "caps as signed; Circle agent wallet allowed"
+      },
+      {
+        "ok": true,
+        "what": "budget set by permit: allowance 10 USDC (200)"
+      },
+      {
+        "ok": true,
+        "what": "stranger's invites refused (400 Only the org owner can open invites.)"
+      },
+      {
+        "ok": true,
+        "what": "owner's 2 invites opened by the SendSure agent (200)"
+      },
+      {
+        "ok": true,
+        "what": "invites replay refused (409 NonceUsed)"
+      },
+      {
+        "ok": true,
+        "what": "payee bound to the new org (BOUND)"
+      }
+    ]
   },
   "links": {
-    "createOrg": "https://explorer.testnet.arc.io/tx/0x59f26824748d6e0f09d0d1226edef3b8ea65fd68fc3e916918fcd2cb94632c72",
-    "budget": "https://explorer.testnet.arc.io/tx/0x18239cae58f2bcfe1ebdd32b5545558a526047830383c2641df2ab4bdd82a1f1",
-    "invites": "https://explorer.testnet.arc.io/tx/0xc8f55ee60c50023842ae4c5d67f0daf4177ff6184c7d4a47da44c2b927498f94",
-    "bind": "https://explorer.testnet.arc.io/tx/0x5067dc7fec26ad12ea4a173c77b62045a4a378d00052464e8def14a0934cd12b"
+    "createOrg": "https://explorer.testnet.arc.io/tx/0xdc50b30d28d7b3dae4f3cd03c9910a18d00042bf75f46b18bcc4c683d6c26ce9",
+    "budget": "https://explorer.testnet.arc.io/tx/0x1dc6ca5d8d507c06159d68cdc62a5576e593c7844b925b7cf89e191082036031",
+    "invites": "https://explorer.testnet.arc.io/tx/0x67a53a1adc25367a0c21a1d4442dae12758670a86e68ca0a561c1e86a751c2a0",
+    "bind": "https://explorer.testnet.arc.io/tx/0xda24c9ea2d28b4b5e5a98b63bfff47987d7c2dcce1cb09936c6a75a79961d242"
   }
 }

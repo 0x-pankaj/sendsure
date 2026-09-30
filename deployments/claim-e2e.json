@@ -1,20 +1,62 @@
 {
   "note": "First-party end-to-end test with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790683299,
+  "ranAtUnix": 1790754218,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x4452c133634731078E807d946f41FE974a6675b4",
-  "payee": "0x85F5dd99B44a50E037aD510940f69e76c23025F5",
-  "claimId": "0x5b208b2e1b1d3aef32d467d8e3a5dedef43003cbdd4be9c7838632d781b695a7",
+  "org": "0xe0970F9F341a578f09c7312Afa41959d06C1d9aB",
+  "payee": "0x156A95449A7fB225F4Ba3D441c8713BC9d213Ade",
+  "claimId": "0xcb2a85a02323bbe21946274eed8a8f74cc48c2b5e873e08e55d495dae9d0bd8c",
   "checks": {
-    "stored": "ESCALATED NEEDS_COSIGN_NEW_PAYOUT",
-    "duplicate": "DUPLICATE_REF",
-    "forged": "BAD_SIGNATURE",
-    "mismatch": 400,
-    "ownerSees": 1,
-    "strangerSees": 403
+    "passed": 11,
+    "total": 11,
+    "list": [
+      {
+        "ok": true,
+        "what": "sandbox org created 0xe0970F9F341a578f09c7312Afa41959d06C1d9aB"
+      },
+      {
+        "ok": true,
+        "what": "treasury funded with 0.7 USDC, budget 10 USDC"
+      },
+      {
+        "ok": true,
+        "what": "payee invited and bound"
+      },
+      {
+        "ok": true,
+        "what": "prepared (invoice normalized to INV-E2E-1)"
+      },
+      {
+        "ok": true,
+        "what": "claim stored; check() says ESCALATED NEEDS_COSIGN_NEW_PAYOUT"
+      },
+      {
+        "ok": true,
+        "what": "same invoice typed differently refused (Invoice INV-E2E-1 was already sent (open).)"
+      },
+      {
+        "ok": true,
+        "what": "claim signed by another key refused (The claim is not signed by the payee's proven address.)"
+      },
+      {
+        "ok": true,
+        "what": "invoice number that does not match the signed refHash refused (The claim does not match the invoice number. Prepare it again.)"
+      },
+      {
+        "ok": true,
+        "what": "owner sees 1 claim"
+      },
+      {
+        "ok": true,
+        "what": "stranger cannot list the org's claims (403)"
+      },
+      {
+        "ok": true,
+        "what": "payee sees their own claim"
+      }
+    ]
   },
   "links": {
-    "createOrg": "https://explorer.testnet.arc.io/tx/0x1b8eb234e6d0a8ea43a0fbb07361014f2e99da2aa4b0c2e3818d1f44513ecad5",
-    "bind": "https://explorer.testnet.arc.io/tx/0x8fd3232872ed9b5fedbadb6f3b6fa9c4512cd361d2fbb8f7d312e3049d63990d"
+    "createOrg": "https://explorer.testnet.arc.io/tx/0x2331ddc73472a67ae3eba78a4fe1a16e63322371507dc0200d51f7552ee6c7b7",
+    "bind": "https://explorer.testnet.arc.io/tx/0xc9fbca5a33c864f052b72f4a87df88fecb3e24e65c28124d4fd807b21bff9918"
   }
 }

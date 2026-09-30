@@ -1,6 +1,6 @@
 {
   "note": "First-party end-to-end test: our own Circle agent wallet buys SendSure's paid checks with x402 over Circle Gateway on Arc testnet. Not traction.",
-  "ranAtUnix": 1790684453,
+  "ranAtUnix": 1790754935,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "buyer": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
   "buyerGatewaySigner": "0x1222c4c16376961881cdcfffd6d737137f425dc3",
@@ -56,18 +56,18 @@
   },
   "verifyPayee": {
     "request": {
-      "org": "0xf5320255eeb4f02cd7cb2966ace2a76ed4b0e339",
-      "address": "0xf07cB3251337935f2e9CceD4Dd37cf5BB4F42475"
+      "org": "0x5932ba99f030b9273716e5d17cea6bebf2034161",
+      "address": "0xD0440aF504a281E543bfD4d532CBEF83C4207867"
     },
     "response": {
-      "org": "0xf5320255eEB4f02cd7Cb2966aCe2a76ED4b0E339",
-      "address": "0xf07cB3251337935f2e9CceD4Dd37cf5BB4F42475",
+      "org": "0x5932ba99f030b9273716e5D17CeA6bebf2034161",
+      "address": "0xD0440aF504a281E543bfD4d532CBEF83C4207867",
       "verified": true,
       "state": "BOUND",
       "proof": "PROVEN",
       "since": {
-        "tx": "0xf315269d5f34f3ea96e34c86785c87c57bf044db469de2586b001e3ade8bc8d0",
-        "block": 64606051
+        "tx": "0xdaf97f4c4b650857889e0d22f88ed4a6a2f127b7e1ab695fc0a364a3e0be2c53",
+        "block": 64743880
       },
       "orgTier": "sandbox"
     },
@@ -78,7 +78,7 @@
       "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73",
       "receipt": {
         "success": true,
-        "transaction": "c58d8b5a-05c8-41db-9499-45acb8ca9263",
+        "transaction": "503b65bf-b7e1-458b-8ec6-ba828d4f8c51",
         "network": "eip155:5042002",
         "payer": "0x1222c4c16376961881cdcfffd6d737137f425dc3"
       }
@@ -109,29 +109,79 @@
       {
         "line": 2,
         "payee": "Alice",
-        "address": "0x5A666D108978A999b5BdBac500329b93dF3FB484",
+        "address": "0x84f0C1B95d9189b2BD598820Cf368d5214B44AB9",
         "amount": 120,
         "action": "REVIEW",
         "status": "CHANGED",
         "flags": [],
-        "explanation": "Different from the address you paid last time (0xf07cB3251337935f2e9CceD4Dd37cf5BB4F42475). Confirm it with the payee through a channel you already trust, or ask them to prove it on SendSure."
+        "explanation": "Different from the address you paid last time (0xD0440aF504a281E543bfD4d532CBEF83C4207867). Confirm it with the payee through a channel you already trust, or ask them to prove it on SendSure."
       },
       {
         "line": 3,
         "payee": "Bob",
-        "address": "0xf07c6D108978a999b5bDbAC500329b93Df3f2475",
+        "address": "0xD044C1b95D9189b2BD598820CF368d5214b47867",
         "amount": 80,
         "action": "STOP",
         "status": "LOOKALIKE",
         "flags": [],
-        "explanation": "Looks like 0xf07cB3251337935f2e9CceD4Dd37cf5BB4F42475 (same start and end, different middle). This is how address poisoning works. Do not pay until the payee confirms."
+        "explanation": "Looks like 0xD0440aF504a281E543bfD4d532CBEF83C4207867 (same start and end, different middle). This is how address poisoning works. Do not pay until the payee confirms."
       }
     ],
     "payment": "$0.005 USDC"
   },
   "dashboardFirstPartyPaidCalls": {
-    "calls": 8,
-    "usdc": "0.024",
+    "calls": 10,
+    "usdc": "0.03",
     "payers": 1
+  },
+  "checks": {
+    "passed": 11,
+    "total": 11,
+    "list": [
+      {
+        "ok": true,
+        "what": "unpaid call answered 402 with PAYMENT-REQUIRED (x402 v2)"
+      },
+      {
+        "ok": true,
+        "what": "accepts Arc testnet through Circle Gateway, 0.001 USDC (12 networks in all)"
+      },
+      {
+        "ok": true,
+        "what": "catalog lists 2 paid services"
+      },
+      {
+        "ok": true,
+        "what": "circle services inspect: payable, $0.001 USDC"
+      },
+      {
+        "ok": true,
+        "what": "estimate: $0.001 USDC on eip155:5042002, nothing paid"
+      },
+      {
+        "ok": true,
+        "what": "paid verify-payee: BOUND, proof PROVEN"
+      },
+      {
+        "ok": true,
+        "what": "Gateway settled the payment (503b65bf-b7e1-458b-8ec6-ba828d4f8c51)"
+      },
+      {
+        "ok": true,
+        "what": "paid check-payout: $0.005 USDC"
+      },
+      {
+        "ok": true,
+        "what": "changed wallet flagged: REVIEW"
+      },
+      {
+        "ok": true,
+        "what": "look-alike address stopped: LOOKALIKE"
+      },
+      {
+        "ok": true,
+        "what": "dashboard counts 10 first-party paid calls (+2)"
+      }
+    ]
   }
 }

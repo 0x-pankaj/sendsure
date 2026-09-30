@@ -1,41 +1,147 @@
 {
   "note": "First-party end-to-end test: Odoo 19 Community (Docker) with the sendsure_payables add-on, against the live SendSure, SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790684686,
+  "ranAtUnix": 1790755876,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "odoo": "19.0-20260908",
-  "org": "0x9Ee053a6791B8fAC383Cbe63dae323e645b1493c",
-  "payee": "0x20bbcf858C5719E88C1D06a9E093e26e3972C516",
+  "org": "0x3a98ba9f2bD8718801fF941c864598E74f040d43",
+  "payee": "0x6451F03c468C56F33A82aa1BC0fFdD187C713024",
   "bill": {
-    "name": "BILL/2026/09/0003",
-    "invoiceRef": "INV-ODOO-MUMNCD0I",
+    "name": "BILL/2026/09/0004",
+    "invoiceRef": "INV-ODOO-MUNTQWST",
     "amountUsd": "0.25",
     "state": "paid",
     "sendsure": "paid"
   },
   "refused": {
-    "trustSlippedInWallet": "0xC2840A6d8F4c88AcaCfdb4BF3b04EE6d2093890E is not the address Maria Lopez Design mumncd0i proved in SendSure (0x20bbcf858C5719E88C1D06a9E093e26e3972C516). Someone may have added this wallet to the vendor; do not trust it.",
+    "trustSlippedInWallet": "0xE2CCB388ecdC8D54983A0b93cc9b24C9Ca937af9 is not the address Maria Lopez Design muntqwst proved in SendSure (0x6451F03c468C56F33A82aa1BC0fFdD187C713024). Someone may have added this wallet to the vendor; do not trust it.",
     "agentUserTrust": "You do not have the rights to trust or un-trust accounts.",
-    "sendBeforeTrust": "Trust Maria Lopez Design mumncd0i's proven wallet 0x20bbcf858C5719E88C1D06a9E093e26e3972C516 first (Invoicing > Vendors > the vendor > Invoicing tab > bank accounts; needs the right to validate bank accounts).",
+    "sendBeforeTrust": "Trust Maria Lopez Design muntqwst's proven wallet 0x6451F03c468C56F33A82aa1BC0fFdD187C713024 first (Invoicing > Vendors > the vendor > Invoicing tab > bank accounts; needs the right to validate bank accounts).",
     "wrongAmountClaim": "PROPOSAL_MISMATCH",
     "manualUsdcPayment": "Payments with USDC on Arc (SendSure) are recorded by SendSure from the chain, with their transaction. To pay this vendor, use \"Pay with SendSure\" on the bill."
   },
-  "cosign": "https://explorer.testnet.arc.io/tx/0x315a56f82d539fff004aa602de89da94b551019e9b19be6dc4e13e472377a376",
-  "settle": "https://explorer.testnet.arc.io/tx/0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050",
+  "cosign": "https://explorer.testnet.arc.io/tx/0xe3a412c857bdc9a9a647b98c17ba25b3f0b3349a323f89fc215feda9491fe8e0",
+  "settle": "https://explorer.testnet.arc.io/tx/0xdbc75803dee6a04b7e6767e37b638debf88b288dd7bb4ad0d99b27cf039f4a06",
   "odooPayment": {
-    "name": "PSSU/2026/00003",
+    "name": "PSSU/2026/00004",
     "amount": 0.25,
     "currency": "USC",
     "journal": "USDC on Arc (SendSure) (USC)",
-    "memo": "SendSure 0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050"
+    "memo": "SendSure 0xdbc75803dee6a04b7e6767e37b638debf88b288dd7bb4ad0d99b27cf039f4a06"
   },
   "settlement": {
-    "tx": "0x3c2329d52432d15146cd8d77f1730765bc9657b993404858690267116e159050",
-    "block": 64607716,
-    "paidAt": "2026-09-29T12:24:31.000Z",
+    "tx": "0xdbc75803dee6a04b7e6767e37b638debf88b288dd7bb4ad0d99b27cf039f4a06",
+    "block": 64746452,
+    "paidAt": "2026-09-30T08:11:02.000Z",
     "amount": "250000",
     "amountUsdc": "0.25",
-    "payout": "0x20bbcf858C5719E88C1D06a9E093e26e3972C516",
+    "payout": "0x6451F03c468C56F33A82aa1BC0fFdD187C713024",
     "token": "0x3600000000000000000000000000000000000000",
-    "decisionHash": "0xe2b4fdd855e5c90d8fefd835e0db38daa56d62cb83935141ed90087abdef1e69"
+    "decisionHash": "0xa1e010236a6667d1387ba1a18b8a6a0e6d6794fbde1c620fdc2ba1af08869564"
+  },
+  "checks": {
+    "passed": 25,
+    "total": 25,
+    "list": [
+      {
+        "ok": true,
+        "what": "Odoo 19.0-20260908 with sendsure_payables at http://127.0.0.1:18069"
+      },
+      {
+        "ok": true,
+        "what": "sandbox org 0x3a98ba9f2bD8718801fF941c864598E74f040d43 with a payee who proved 0x6451F03c468C56F33A82aa1BC0fFdD187C713024"
+      },
+      {
+        "ok": true,
+        "what": "owner created an integration key (shown once, stored as a hash)"
+      },
+      {
+        "ok": true,
+        "what": "a payee cannot create a key for the org (403)"
+      },
+      {
+        "ok": true,
+        "what": "Odoo connected to org 0x3a98ba9f2bD8718801fF941c864598E74f040d43"
+      },
+      {
+        "ok": true,
+        "what": "USDC (USC, 6 decimals) and journal \"USDC on Arc (SendSure) (USC)\" set up"
+      },
+      {
+        "ok": true,
+        "what": "vendor linked by invite link: bound, proven 0x6451F03c468C56F33A82aa1BC0fFdD187C713024"
+      },
+      {
+        "ok": true,
+        "what": "the proven wallet was added to the vendor, untrusted"
+      },
+      {
+        "ok": true,
+        "what": "even the admin cannot trust a wallet the vendor did not prove: \"0xE2CCB388ecdC8D54983A0b93cc9b24C9Ca937af9 is not the address Maria Lopez Design muntqwst …\""
+      },
+      {
+        "ok": true,
+        "what": "the AP agent user cannot trust a wallet (Odoo's own rule)"
+      },
+      {
+        "ok": true,
+        "what": "\"Pay with SendSure\" waits until a person trusts the proven wallet"
+      },
+      {
+        "ok": true,
+        "what": "bill BILL/2026/09/0004 sent by the AP agent user: waiting_for_payee"
+      },
+      {
+        "ok": true,
+        "what": "the vendor sees it once in SendSure, from Odoo: INV-ODOO-MUNTQWST, 0.25 USDC"
+      },
+      {
+        "ok": true,
+        "what": "a claim for a different amount than the bill is refused (PROPOSAL_MISMATCH)"
+      },
+      {
+        "ok": true,
+        "what": "the vendor signed the bill: ESCALATED (first payment needs a co-sign)"
+      },
+      {
+        "ok": true,
+        "what": "Odoo's cron asked the agent to run: needs_cosign (This is the first payment to a new or changed payout address, so a person has to co-sign it before it can be paid. The amount is small ($0.25) and nothing else looks wrong.)"
+      },
+      {
+        "ok": true,
+        "what": "the owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0xe3a412c857bdc9a9a647b98c17ba25b3f0b3349a323f89fc215feda9491fe8e0"
+      },
+      {
+        "ok": true,
+        "what": "the next cron run: the agent paid it on Arc, https://explorer.testnet.arc.io/tx/0xdbc75803dee6a04b7e6767e37b638debf88b288dd7bb4ad0d99b27cf039f4a06"
+      },
+      {
+        "ok": true,
+        "what": "the vendor's proven address received 0.25 USDC"
+      },
+      {
+        "ok": true,
+        "what": "recorded through Register Payment: PSSU/2026/00004, 0.25 USC, memo \"SendSure 0xdbc75803d…\""
+      },
+      {
+        "ok": true,
+        "what": "to the proven wallet, from the SendSure journal"
+      },
+      {
+        "ok": true,
+        "what": "bill paid, 0.00 left open, paid exactly 0.250000 USDC"
+      },
+      {
+        "ok": true,
+        "what": "syncing again records nothing twice"
+      },
+      {
+        "ok": true,
+        "what": "a hand-made USDC payment in the SendSure journal is refused: nothing is recorded without an Arc tx"
+      },
+      {
+        "ok": true,
+        "what": "SendSure's view matches: Settled event carries 250000 (0.25 USDC) to 0x6451F03c468C56F33A82aa1BC0fFdD187C713024"
+      }
+    ]
   }
 }

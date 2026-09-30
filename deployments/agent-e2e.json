@@ -1,44 +1,94 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790683531,
+  "ranAtUnix": 1790754433,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x2b612798C41131b44636D749ED99891e0ae11dbB",
-  "payee": "0x20e7f3b2Ec19674da4f1e6A002192d5f3c244A69",
+  "org": "0xCb844d307ED6CAac9BE812392dF7ceDBab496972",
+  "payee": "0xc4792bc86D1acC8906896a826F9b863eb33058fc",
   "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
   "runs": [
     {
       "invoice": "INV-A",
       "action": "escalate",
-      "reason": "This is the first payment to this payee's address, so a person must co-sign before it can be paid. The description says \"first half of September\" but the dates cover the second half (Sep 15–29), so please check which work this invoice is for."
+      "reason": "This is the first payment to this payee's address, so a person has to co-sign it before it can be paid. Also, the description says 'first half of September' but the dates given are Sept 16–30, so check which work this covers."
     },
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0xe5d98f5b91c2c40633176318d44c37cb7b69154bcfadb06044956b699a17f77d",
-      "decisionHash": "0x0a4e318579565e02cd93959cea8a665ae42359422da3db72d5c874a79609b0c5"
+      "tx": "https://explorer.testnet.arc.io/tx/0x773ee6734b2487b57cfdd92316e9df137684c934f99e7592bdb70a33d47f2ffb",
+      "decisionHash": "0x6277d3af7f8b8b8ea48bed2586794d48a5760c304e838431a19beb1cb00763f2"
     },
     {
       "invoice": "INV-B",
       "action": "escalate",
-      "reason": "The invoice asks for payment to a new wallet and says it's urgent, which is a common fraud sign. It's also for the same amount and overlapping dates as another recent bill from this payee, so please confirm with them directly before approving."
+      "reason": "The invoice asks to pay a new wallet and says it's urgent, which is a common scam pattern. It also has the same amount and overlapping dates as another claim from this payee, so please check with the payee through a contact you already trust before paying."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0x387bed8da292f6a5f885938b55329399a2bf4132009578e6eba14af8a04ef08c",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x7e59f706f13ff26a88b9ca725a90c574eef162bc9d1fbca6fd338071ae04f665",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x6a237f09f0fedfe7cc4a111290a1d34f2813ec7c5d2d97875280f18785a40021",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x31a7e92bad5a02083f0c8d079f0e1a235f20b4af8f5db34723e6e6494bb6ac7d",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64605338,
+      "block": 64743534,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0xe5d98f5b91c2c40633176318d44c37cb7b69154bcfadb06044956b699a17f77d",
+      "tx": "0x773ee6734b2487b57cfdd92316e9df137684c934f99e7592bdb70a33d47f2ffb",
       "event": "Settled",
       "carriesDecisionHash": true
     }
+  },
+  "checks": {
+    "passed": 11,
+    "total": 11,
+    "list": [
+      {
+        "ok": true,
+        "what": "org 0xCb844d307ED6CAac9BE812392dF7ceDBab496972 created, funded, budgeted; payee bound"
+      },
+      {
+        "ok": true,
+        "what": "run #1: INV-A escalate (This is the first payment to this payee's address, so a person has to co-sign it before it can be paid. Also, the description says 'first half of September' but the dates given are Sept 16–30, so check which work this covers.)"
+      },
+      {
+        "ok": true,
+        "what": "run #2: INV-A pay -> Settled"
+      },
+      {
+        "ok": true,
+        "what": "payee received 0.3 USDC at their own address"
+      },
+      {
+        "ok": true,
+        "what": "the Settled event carries the logged decision hash"
+      },
+      {
+        "ok": true,
+        "what": "run #3: INV-B passes the contract but the agent says escalate (The invoice asks to pay a new wallet and says it's urgent, which is a common scam pattern. It also has the same amount and overlapping dates as another claim from this payee, so please check with the payee through a contact you already trust before paying.)"
+      },
+      {
+        "ok": true,
+        "what": "the model reviewed run #3 (rules + anthropic/claude-opus-5.5 via MeshAPI): escalate: The invoice asks to pay a new wallet and says it's urgent, which is a common scam pattern. It also has the same amount and overlapping dates as another claim from this payee, so please check with the payee through a contact you already trust before paying."
+      },
+      {
+        "ok": true,
+        "what": "replay of decision #2: chain ok, payee signature ok, check() at block 64743534 = PAYABLE, payment event carries its hash, anchor #2 matches"
+      },
+      {
+        "ok": true,
+        "what": "decision log intact (3 entries)"
+      },
+      {
+        "ok": true,
+        "what": "log head anchored on-chain (anchor #3)"
+      },
+      {
+        "ok": true,
+        "what": "books: 1 payment, 1 chain balance check; bean-check not installed (skipped)"
+      }
+    ]
   }
 }

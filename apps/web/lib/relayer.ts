@@ -262,13 +262,20 @@ export async function verifyBind(req: BindRequest): Promise<void> {
 export async function submitBind(req: BindRequest): Promise<RelayResult> {
   const { message: m, signature } = req;
   const wallet = relayer();
-  try {
-    const { request } = await serverClient.simulateContract({
+  const simulate = () =>
+    serverClient.simulateContract({
       account: wallet.account,
       address: registry,
       abi: payeeRegistryAbi,
       functionName: "bindWithSig",
       args: [m.org, m.payeeRef, m.payout, m.realAccountCommit, m.realProofType, m.nonce, m.validUntil, signature],
+    });
+  try {
+    // An invite opened seconds ago may not be on this RPC node yet: read once more before saying it isn't open.
+    const { request } = await simulate().catch(async (err) => {
+      if (toRelayError(err).message !== "This invite is not open (it is NONE).") throw err;
+      await new Promise((r) => setTimeout(r, 2500));
+      return simulate();
     });
     return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
   } catch (err) {

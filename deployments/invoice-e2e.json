@@ -1,27 +1,82 @@
 {
   "note": "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790684328,
+  "ranAtUnix": 1790754812,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x6E86cae0b0D358B6c948dEF36390c746F2390BD2",
+  "org": "0x26A53B1D3C1dA0cabFF5a79B7332C37ed6a4DDd5",
   "text": {
     "invoice": "INV-2026-044",
     "amount": "250000",
     "warnings": [
-      "The invoice requests payment to a new address (0x000000000000000000000000000000000000dEaD) due to a claimed bank change; SendSure only pays the payee's proven address, so this change must be verified before paying.",
-      "The invoice amount is unusually small ($0.25); please confirm this is correct and not a typo."
+      "The invoice asks for payment to a new address (0x000000000000000000000000000000000000dEaD) because of a bank change. SendSure will ignore this and pay only the payee's proven address.",
+      "The new address is a well-known burn address. Money sent there can never be recovered. This is a common sign of fraud, so check with the payee through a contact method you already trust.",
+      "The amount due is only 0.25 USD, which is very low for logo design and a brand guide. Check that the amount is right before confirming."
     ],
-    "model": "anthropic/claude-sonnet-5"
+    "model": "anthropic/claude-opus-5.5"
   },
   "photo": {
     "invoice": "NS-2026-031",
     "amount": "200000",
-    "model": "anthropic/claude-sonnet-5"
+    "model": "anthropic/claude-opus-5.5"
   },
   "claim": {
-    "claimId": "0x993157310adc750aa2e6c4313d086f372f8b52e4fd826f5d7ca6ba87d5bc4171",
+    "claimId": "0xe4f17453b12e6b2a396c0fcf45b74e334d17fe952a6ce3b76c1aa88904013c68",
     "outcome": "ESCALATED",
     "reason": "NEEDS_COSIGN_NEW_PAYOUT",
     "reasonText": "First payment to a new or changed address needs a human co-sign.",
     "stored": true
+  },
+  "checks": {
+    "passed": 12,
+    "total": 12,
+    "list": [
+      {
+        "ok": true,
+        "what": "sandbox org 0x26A53B1D3C1dA0cabFF5a79B7332C37ed6a4DDd5 with a bound payee"
+      },
+      {
+        "ok": true,
+        "what": "text invoice read in 19.3 s: INV-2026-044, 0.25 USDC"
+      },
+      {
+        "ok": true,
+        "what": "work period 2026-09-01 to 2026-09-15"
+      },
+      {
+        "ok": true,
+        "what": "the \"changed banks\" line is reported, and warned about first: The invoice asks for payment to a new address (0x000000000000000000000000000000000000dEaD) because of a bank change. SendSure will ignore this and pay only the payee's proven address."
+      },
+      {
+        "ok": true,
+        "what": "no noise about USD vs USDC (read by anthropic/claude-opus-5.5)"
+      },
+      {
+        "ok": true,
+        "what": "quotes checked word for word in the text"
+      },
+      {
+        "ok": true,
+        "what": "photo read: NS-2026-031, 0.2 USDC"
+      },
+      {
+        "ok": true,
+        "what": "the payee sees 2 invoices to confirm"
+      },
+      {
+        "ok": true,
+        "what": "payee signed the invoice as their claim: ESCALATED NEEDS_COSIGN_NEW_PAYOUT"
+      },
+      {
+        "ok": true,
+        "what": "payee rejected the other invoice"
+      },
+      {
+        "ok": true,
+        "what": "payer sees one claimed, one rejected"
+      },
+      {
+        "ok": true,
+        "what": "reading it again warns: already claimed"
+      }
+    ]
   }
 }

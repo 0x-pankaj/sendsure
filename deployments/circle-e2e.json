@@ -1,28 +1,74 @@
 {
   "note": "First-party end-to-end test: the Circle agent wallet (Circle CLI) settles a SANDBOX org's claim. Throwaway keys, not traction.",
-  "ranAtUnix": 1790683721,
+  "ranAtUnix": 1790754626,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0xf59381a0DdaFd518300cF01A56Ef77aD954b986a",
+  "org": "0x5932ba99f030b9273716e5D17CeA6bebf2034161",
   "circleAgentWallet": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
-  "payee": "0x4E77Ce7C2c64119abE74fC2EcfeceB15FE4060E1",
-  "cosign": "https://explorer.testnet.arc.io/tx/0x76bcf2ab0a16d2f5fbbd9ec6b54f36e246c365a2367292a914689ea20d9da21a",
-  "settle": "https://explorer.testnet.arc.io/tx/0xb2d26c680905d3a4bd53063f7bf2a053975194d4195d43958dc863777ba98025",
-  "decisionHash": "0x063c1749cddee19f2f4d303de9c41f4a588dc94eab493ef8e4187d4879bdfaf6",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x3fc348a16b9e2ef5ddbf470191d3c9a9db9360c70177faa8f61a27188ba57575",
+  "payee": "0xD0440aF504a281E543bfD4d532CBEF83C4207867",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x8d2fe9556e060a0f088764d176d3049ac2f5a0bd93f8b352ae58afa500c58c89",
+  "settle": "https://explorer.testnet.arc.io/tx/0x3b9d9ad298f3be1c0d5b69ab3c6e6d1b3f42a07009ca187bf229521578ee486f",
+  "decisionHash": "0x170991e86b415ae17774c14041b3d1496cfd114bd16348c58436f1ed8a7b7e91",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x67355734912d6a57eae5cf1979b9a3b38f268fd8df8521318533b74bee975ec2",
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64605772,
+      "block": 64743944,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "anchored": {
       "anchorSeq": 1,
-      "tx": "0x3fc348a16b9e2ef5ddbf470191d3c9a9db9360c70177faa8f61a27188ba57575",
+      "tx": "0x67355734912d6a57eae5cf1979b9a3b38f268fd8df8521318533b74bee975ec2",
       "coversThrough": 1,
       "matches": true
     }
+  },
+  "checks": {
+    "passed": 10,
+    "total": 10,
+    "list": [
+      {
+        "ok": true,
+        "what": "sandbox org 0x5932ba99f030b9273716e5D17CeA6bebf2034161 with a bound payee"
+      },
+      {
+        "ok": true,
+        "what": "claim INV-C stored: ESCALATED NEEDS_COSIGN_NEW_PAYOUT"
+      },
+      {
+        "ok": true,
+        "what": "owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0x8d2fe9556e060a0f088764d176d3049ac2f5a0bd93f8b352ae58afa500c58c89"
+      },
+      {
+        "ok": true,
+        "what": "Circle agent wallet 0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07 signed in (ERC-1271 signature checked on-chain)"
+      },
+      {
+        "ok": true,
+        "what": "Circle agent wallet sent settle(): Settled https://explorer.testnet.arc.io/tx/0x3b9d9ad298f3be1c0d5b69ab3c6e6d1b3f42a07009ca187bf229521578ee486f"
+      },
+      {
+        "ok": true,
+        "what": "payee received 0.2 USDC"
+      },
+      {
+        "ok": true,
+        "what": "Settled carries the logged decision hash"
+      },
+      {
+        "ok": true,
+        "what": "Circle agent wallet anchored the log: #1 https://explorer.testnet.arc.io/tx/0x67355734912d6a57eae5cf1979b9a3b38f268fd8df8521318533b74bee975ec2"
+      },
+      {
+        "ok": true,
+        "what": "SendSure recorded the claim as settled with the Circle tx"
+      },
+      {
+        "ok": true,
+        "what": "replay verified"
+      }
+    ]
   }
 }

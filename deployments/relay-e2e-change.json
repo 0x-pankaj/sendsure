@@ -1,25 +1,50 @@
 {
   "note": "First-party end-to-end test on the SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790683059,
+  "ranAtUnix": 1790755702,
   "relayerBase": "https://sendsure.0xpankaj.workers.dev",
   "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
-  "payeeRef": "0x481e297d71629741e9b3fd47b20f8568170a0b288d1ea24442e49ae86085998c",
-  "payeeA": "0x24b3a070d7bE42300ddaaaF77788E33657767E0F",
-  "newAddressC": "0x10c66Fcb5ad408431d2e04fF12272BF607aBf09f",
-  "attacker": "0x33F984839453E6eb6B99341EFb0D287aA27De079",
+  "payeeRef": "0xe9493c1e95264e04cef57e2dc75ab343ae3776cabeb259c54d40735307b2396d",
+  "payeeA": "0x7Ac82313ABAf27595c0AcA2984Bc5A4Ec198af67",
+  "newAddressC": "0xb5F752b8AA73fa5Dd5CfA2dF6CeA95464f1c047E",
+  "attacker": "0x71cb0e35B35008574A43b1784446dF943aE6f31b",
   "checks": {
-    "attackerChange": "400 BadSignature",
-    "attackerRebind": "409 BadState",
-    "realChange": "200 success",
-    "pendingNewPayout": "0x10c66Fcb5ad408431d2e04fF12272BF607aBf09f",
-    "waitHours": 24,
-    "replay": "409 ChangeAlreadyPending",
-    "cancelledByPayer": true
+    "passed": 7,
+    "total": 7,
+    "list": [
+      {
+        "ok": true,
+        "what": "attacker's change refused (400 The current payout address did not sign this change.)"
+      },
+      {
+        "ok": true,
+        "what": "re-binding the used invite refused (409 This invite was already used.)"
+      },
+      {
+        "ok": true,
+        "what": "change with both keys recorded (200 success)"
+      },
+      {
+        "ok": true,
+        "what": "payouts still go to A while the change waits (0x7Ac82313ABAf27595c0AcA2984Bc5A4Ec198af67)"
+      },
+      {
+        "ok": true,
+        "what": "pending: C after ~24.0 h"
+      },
+      {
+        "ok": true,
+        "what": "replay refused (409 ChangeAlreadyPending)"
+      },
+      {
+        "ok": true,
+        "what": "payer cancelled it; payout stays A (https://explorer.testnet.arc.io/tx/0x289de159844f03c29d48df56fc3e7c7d5a668183cb52c57bab30c8c48ac510d8)"
+      }
+    ]
   },
   "links": {
-    "openSlot": "https://explorer.testnet.arc.io/tx/0x6370583910a0a469686c1ad5b8265327bd08d6238bf1232018b66ff4e0ad5a83",
-    "bind": "https://explorer.testnet.arc.io/tx/0xdb6280d40552ce604c9ceaf7827cf834fea1e461be4fefd24f52b8da01ef2254",
-    "change": "https://explorer.testnet.arc.io/tx/0x0c99193f295730e741a692a50eeb5fad9f0ee7f0d0c551709d2f722bf5139d52",
-    "cancel": "https://explorer.testnet.arc.io/tx/0x39fd119e85c3a27a54611cb2fc1335497406d34061ebb0d72e58c597ee3227b7"
+    "openSlot": "https://explorer.testnet.arc.io/tx/0xe7db1ffb8e8d64ddb210b7a131ea68b6875ff0a9a7474220140bdd9def254492",
+    "bind": "https://explorer.testnet.arc.io/tx/0xca6e376a9ce8ac8619e4d583770d91029f3216c0ff234c5dd5502cc9d25c4514",
+    "change": "https://explorer.testnet.arc.io/tx/0xb3464493857c29bfe8f8a0a78402d0a3ba482077f5820314d646e5f7f76bc89c",
+    "cancel": "https://explorer.testnet.arc.io/tx/0x289de159844f03c29d48df56fc3e7c7d5a668183cb52c57bab30c8c48ac510d8"
   }
 }
