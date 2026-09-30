@@ -88,7 +88,14 @@ export async function setupSandboxOrg(base: string, fundUsdc: string): Promise<S
 }
 
 /** The payee prepares, signs and sends one claim, like the verify page does. */
-export async function sendClaim(s: SandboxOrg, invoiceRef: string, amount: string, description: string) {
+export async function sendClaim(
+  s: SandboxOrg,
+  invoiceRef: string,
+  amount: string,
+  description: string,
+  /** The work period as days ago: [start, end]. Default: the last 14 days. */
+  daysAgo: [number, number] = [14, 0],
+) {
   const prep = await api(s.base, "/api/claims/prepare", {
     token: s.payeeToken,
     body: { org: s.org, payeeRef: s.payeeRef, invoiceRef },
@@ -98,8 +105,8 @@ export async function sendClaim(s: SandboxOrg, invoiceRef: string, amount: strin
     token: prep.body.token,
     amount: usdc(amount),
     refHash: prep.body.refHash,
-    periodStart: now() - 14n * 86_400n,
-    periodEnd: now(),
+    periodStart: now() - BigInt(daysAgo[0]) * 86_400n,
+    periodEnd: now() - BigInt(daysAgo[1]) * 86_400n,
     nonce: BigInt(prep.body.nonce),
     validUntil: BigInt(prep.body.validUntil),
   };

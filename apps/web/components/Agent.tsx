@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
-import { explorerTx } from "@sendsure/chain";
+import { explorerTx, formatUsdc } from "@sendsure/chain";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
 import { walletErrorText, type Signer } from "../lib/wallet";
 
@@ -26,7 +26,17 @@ interface RunResult {
   decisions: RunDecision[];
   anchor: { txHash: Hex; anchorSeq: number; decisionSeq: number } | null;
   modelError: string | null;
+  cash?: { balance: string; allowance: string; available: string; payable: string; waitingCosign: string; shortBy: string };
 }
+
+interface Autopilot {
+  enabled: boolean;
+  lastCheckedAt: number | null;
+  lastRunAt: number | null;
+  lastSummary: string | null;
+}
+
+const when = (unix: number) => new Date(unix * 1000).toLocaleString();
 
 const CHIP: Record<RunDecision["action"], [string, string]> = {
   pay: ["PAY", "Pay"],
@@ -41,6 +51,37 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
   const [busy, setBusy] = useState(false);
   const [run, setRun] = useState<RunResult | null>(null);
   const [error, setError] = useState("");
+  const [auto, setAuto] = useState<Autopilot | null>(null);
+  const [autoBusy, setAutoBusy] = useState(false);
+
+  // Autopilot's state is read once the wallet has a session (after any signed action on this page).
+  async function loadAutopilot() {
+    try {
+      setAuto(await jsonOrThrow<Autopilot>(await authedFetch(signer, `/api/org/autopilot?org=${org}`)));
+    } catch {
+      // not the owner or an approver: the switch stays hidden
+    }
+  }
+  useEffect(() => {
+    setAuto(null);
+  }, [org]);
+
+  async function toggleAutopilot(enabled: boolean) {
+    setError("");
+    setAutoBusy(true);
+    try {
+      const res = await authedFetch(signer, "/api/org/autopilot", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ org, enabled }),
+      });
+      setAuto(await jsonOrThrow<Autopilot>(res));
+    } catch (err) {
+      setError(walletErrorText(err));
+    } finally {
+      setAutoBusy(false);
+    }
+  }
 
   async function go() {
     setError("");
@@ -53,6 +94,7 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
       });
       setRun(await jsonOrThrow<RunResult>(res));
       onRan();
+      void loadAutopilot();
     } catch (err) {
       setError(walletErrorText(err));
     } finally {
@@ -67,9 +109,34 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
         The agent checks every open claim against your rules, holds anything unusual, asks you to co-sign where a person must, and
         pays the rest from your budget. Each decision is logged, its hash goes into the payment, and the log is anchored on Arc.
       </p>
-      <button className="btn" disabled={busy} onClick={go}>
-        {busy ? "The agent is working…" : "Run the agent now"}
-      </button>
+      <div className="row">
+        <button className="btn" disabled={busy} onClick={go}>
+          {busy ? "The agent is working…" : "Run the agent now"}
+        </button>
+        {auto ? (
+          <button className="btn secondary" disabled={autoBusy} onClick={() => void toggleAutopilot(!auto.enabled)}>
+            {autoBusy ? "Check your wallet…" : auto.enabled ? "Turn autopilot off" : "Turn autopilot on"}
+          </button>
+        ) : (
+          <button className="btn secondary" disabled={autoBusy} onClick={() => void loadAutopilot()}>
+            Autopilot settings
+          </button>
+        )}
+      </div>
+      {auto && (
+        <p className={`notice ${auto.enabled ? "ok" : "warn"}`}>
+          <b>Autopilot is {auto.enabled ? "on" : "off"}.</b>{" "}
+          {auto.enabled
+            ? "The agent checks your open claims every minute and runs by itself when something changes: a new claim, your co-sign, or funds arriving. It has no extra power: your budget and co-sign rules apply to every run."
+            : "The agent runs only when you press the button. Turn autopilot on and it runs by itself when a claim arrives, you co-sign, or funds arrive, always inside your budget and co-sign rules."}
+          {auto.lastRunAt && auto.lastRunAt <= Date.now() / 1000 && (
+            <>
+              {" "}
+              Last run by itself: {when(auto.lastRunAt)}. {auto.lastSummary}
+            </>
+          )}
+        </p>
+      )}
       {error && <p className="notice">{error}</p>}
       {run && (
         <div style={{ marginTop: 14 }}>
@@ -77,6 +144,15 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
             <b>{run.summary}</b> <span className="hint">({run.planner})</span>
           </p>
           {run.modelError && <p className="hint">The AI review was skipped this time; the rules decided alone.</p>}
+          {run.cash && (
+            <p className={BigInt(run.cash.shortBy) > 0n ? "notice warn" : "hint"}>
+              Cash at this run: your wallet can pay {formatUsdc(BigInt(run.cash.available))} USDC right now (balance{" "}
+              {formatUsdc(BigInt(run.cash.balance))}, budget allowance {formatUsdc(BigInt(run.cash.allowance))}); {formatUsdc(BigInt(run.cash.payable))}{" "}
+              USDC was ready to pay and {formatUsdc(BigInt(run.cash.waitingCosign))} USDC waits for a co-sign.
+              {BigInt(run.cash.shortBy) > 0n &&
+                ` Short by ${formatUsdc(BigInt(run.cash.shortBy))} USDC: the oldest work was paid first and the rest waits for funds.`}
+            </p>
+          )}
           {run.decisions.length > 0 && (
             <div className="table-wrap">
               <table style={{ minWidth: 640 }}>

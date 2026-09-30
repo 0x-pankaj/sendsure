@@ -437,7 +437,7 @@ export async function runAgentForKey(org: Address) {
   // Its own budget, so a books system's runs never block a person's "Run the agent" in /org.
   if (!allow(`agent-run-key:${org}`, 20, 60 * 60_000))
     throw new RelayError(429, "The agent ran many times this hour. Please wait a bit.", "RATE_LIMITED");
-  const out = await runAgent(org, { execute: true });
+  const out = await runAgent(org, { execute: true, trigger: "books" });
   return {
     run_id: out.runId,
     planner: out.planner,
