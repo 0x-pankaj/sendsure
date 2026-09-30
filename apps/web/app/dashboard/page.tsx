@@ -16,6 +16,7 @@ interface Bucket {
 }
 interface Stats {
   tiers: Record<Tier, Bucket>;
+  agentRuns?: Record<Tier, { runs: number; byAutopilot: number }>;
   recentPayments: { tx: string; block: number; org: string; payout: string; amountUsdc: string; tier: Tier }[];
   indexer: { block?: number; updatedAt?: number; error?: string };
   paidCalls?: {
@@ -84,6 +85,26 @@ export default function Dashboard() {
                     ))}
                   </tr>
                 ))}
+                {data.agentRuns && (
+                  <>
+                    <tr>
+                      <td>Agent runs</td>
+                      {TIERS.map((t) => (
+                        <td key={t.key} className={t.key === "external" ? "" : "hint"}>
+                          {data.agentRuns![t.key].runs}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td>… started by autopilot (no person pressed run)</td>
+                      {TIERS.map((t) => (
+                        <td key={t.key} className={t.key === "external" ? "" : "hint"}>
+                          {data.agentRuns![t.key].byAutopilot}
+                        </td>
+                      ))}
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
           </div>

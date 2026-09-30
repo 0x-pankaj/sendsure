@@ -98,11 +98,28 @@ export async function stats() {
     b.payers.add(r.payer.toLowerCase());
     byEndpoint[r.endpoint] = (byEndpoint[r.endpoint] ?? 0) + r.n;
   }
+  // Agent runs come from SendSure's own log (their decisions are what gets anchored on-chain).
+  const runRows = await db.all<{ org: string; n: number; auto: number }>(
+    `SELECT org, count(*) AS n, sum(CASE WHEN detail LIKE '%"trigger":"autopilot"%' THEN 1 ELSE 0 END) AS auto
+     FROM runs WHERE finished_at IS NOT NULL GROUP BY org`,
+  );
+  const agentRuns: Record<Tier, { runs: number; byAutopilot: number }> = {
+    external: { runs: 0, byAutopilot: 0 },
+    "first-party": { runs: 0, byAutopilot: 0 },
+    sandbox: { runs: 0, byAutopilot: 0 },
+  };
+  for (const r of runRows) {
+    const t = tierByOrg.get(r.org.toLowerCase());
+    if (!t) continue;
+    agentRuns[t].runs += r.n;
+    agentRuns[t].byAutopilot += r.auto ?? 0;
+  }
   const out = Object.fromEntries(
     Object.entries(buckets).map(([k, { paid, ...b }]) => [k, { ...b, paidUsdc: formatUsdc(paid) }]),
   ) as Record<Tier, Bucket>;
   return {
     tiers: out,
+    agentRuns,
     paidCalls: {
       external: { calls: paidCalls.external.calls, usdc: formatUsdc(paidCalls.external.usdc), payers: paidCalls.external.payers.size },
       firstParty: {

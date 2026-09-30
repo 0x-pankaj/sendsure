@@ -1,0 +1,104 @@
+{
+  "note": "Autopilot and the cash plan on a SANDBOX org with throwaway keys. Every run was started by the Worker's cron. Not traction.",
+  "ranAtUnix": 1790788667,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0xcB922d40a5F1350184F922D1D3F57e31307dc991",
+  "cosign": "https://explorer.testnet.arc.io/tx/0xb138897b0e78d40636dddf98dff9e34a60e3b835e970b344ea39c4642c32970b",
+  "runs": [
+    {
+      "trigger": "autopilot",
+      "summary": "One claim this run for $0.20 (brand guide work). The contract flags it as a first-time payment to a new/changed payout address, which requires a human co-sign before it can be paid, so it is being escalated.",
+      "cash": {
+        "balance": "700000",
+        "allowance": "10000000",
+        "available": "700000",
+        "payable": "0",
+        "waitingCosign": "200000",
+        "shortBy": "0"
+      }
+    },
+    {
+      "trigger": "autopilot",
+      "summary": "The one claim this run is being paid: 0.2 USDC for the September brand guide. The treasury has 0.69811 USDC, so there's enough to cover it.",
+      "cash": {
+        "balance": "698110",
+        "allowance": "10000000",
+        "available": "698110",
+        "payable": "200000",
+        "waitingCosign": "0",
+        "shortBy": "0"
+      }
+    },
+    {
+      "trigger": "autopilot",
+      "summary": "Both invoices from this payee check out - amounts match their billing history and cover distinct, non-overlapping work periods. Treasury currently has enough to cover only one of the two claims right now, so the older work (INV-D, August) will be paid first and INV-C will wait until more funds are available. 1 claim(s) wait for funds: 0.06567 USDC short, oldest work paid first.",
+      "cash": {
+        "balance": "494330",
+        "allowance": "9800000",
+        "available": "494330",
+        "payable": "560000",
+        "waitingCosign": "0",
+        "shortBy": "65670"
+      }
+    },
+    {
+      "trigger": "autopilot",
+      "summary": "I approved the one claim in this run, INV-C for 0.31 USDC. The treasury has 0.44433 USDC available, so there's enough to pay it now.",
+      "cash": {
+        "balance": "444330",
+        "allowance": "9550000",
+        "available": "444330",
+        "payable": "310000",
+        "waitingCosign": "0",
+        "shortBy": "0"
+      }
+    }
+  ],
+  "payments": [
+    "https://explorer.testnet.arc.io/tx/0xc6afeeb38338f1541692bbc635d2bd57e28f891acd5e33359f292e6315275109",
+    "https://explorer.testnet.arc.io/tx/0x79f4a4a78c740c316e1b9487954267715b0c52929dd7becfe50c98168fb26592",
+    "https://explorer.testnet.arc.io/tx/0x82c9d5d96b68a8cd2d72b9d3acff98dce20da8700621f4f2fcf5ca4b1403e664"
+  ],
+  "checks": {
+    "passed": 9,
+    "total": 9,
+    "list": [
+      {
+        "ok": true,
+        "what": "autopilot on by the owner; a payee is refused (403 FORBIDDEN)"
+      },
+      {
+        "ok": true,
+        "what": "the agent ran by itself (autopilot) and asks for a co-sign: This payee's payout address is new or changed, and the contract requires a human co-sign before any payment can go out."
+      },
+      {
+        "ok": true,
+        "what": "nothing changed for two minutes: still 1 run (the model was not asked again)"
+      },
+      {
+        "ok": true,
+        "what": "after the co-sign the agent ran by itself and paid: Settled, payee received 0.2 USDC"
+      },
+      {
+        "ok": true,
+        "what": "treasury holds 0.49433 USDC; 0.56 USDC of co-signed claims is due"
+      },
+      {
+        "ok": true,
+        "what": "cash plan: the older work (INV-D) is paid, INV-C waits: Waiting for funds: your wallet can pay 0.49433 USDC right now and 0.56 USDC is due. The oldest work is paid first. Add 0.06567 USDC (or raise the budget allowance) and the agent pays this on its next run."
+      },
+      {
+        "ok": true,
+        "what": "the run recorded what it saw: can pay 0.49433, short by 0.06567 USDC"
+      },
+      {
+        "ok": true,
+        "what": "after a 0.2 USDC top-up the agent ran by itself and paid INV-C: Settled"
+      },
+      {
+        "ok": true,
+        "what": "autopilot off; 4 runs in total, all started by the scheduler: true"
+      }
+    ]
+  }
+}

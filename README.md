@@ -19,7 +19,7 @@ keeps the three apart, from chain events alone.
 1. [`/try`](https://sendsure.0xpankaj.workers.dev/try): the whole story with no wallet. A payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
 2. Open a payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim, and the agent's anchored decision (a sandbox payment from our tests).
 3. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
-4. Books: [the Odoo add-on](integrations/odoo) (screenshots and a one-command Docker setup) and the [beancount ledger](deployments/books-e2e.beancount) reconciled to the chain.
+4. Books: [`/books`](https://sendsure.0xpankaj.workers.dev/books) shows every format and lets you download the demo org's ledger. In the repo: [the Odoo add-on](integrations/odoo) (screenshots and a one-command Docker setup), and the same payments as [beancount](deployments/books-e2e.beancount) and [hledger](deployments/books-e2e.journal), each reconciled to the chain.
 5. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
 
 ## Traction so far
@@ -40,7 +40,8 @@ Paid agent calls over Circle Gateway (x402): 8, all first-party.
 |---|---|
 | [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet | In two minutes: a payee proves their address, a look-alike address is caught, an attacker's claim is refused on-chain, a "pay my new wallet" change is refused, a real payment is escalated, co-signed and paid, then an inbox of tricky claims (a duplicate under a new number, an undescribed claim, a hidden instruction to the AI) that Claude holds with reasons. Receipt and books included. |
 | [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. |
-| [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent, co-sign, download books. You only sign; SendSure pays the gas. |
+| [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent or turn on autopilot, co-sign, download books. You only sign; SendSure pays the gas. |
+| [`/books`](https://sendsure.0xpankaj.workers.dev/books) | The books, exact to the last decimal: Odoo, beancount, hledger, journal CSV and statement CSV. Download the demo org's ledger in each format. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
 | [Odoo add-on](integrations/odoo), for your books | Odoo 19: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved, and each Arc payment is recorded back through Register Payment, exactly, with the tx in the memo. `./run.sh up` in `integrations/odoo`. |
 | Pay per call, for agents | [`/api/x402`](https://sendsure.0xpankaj.workers.dev/api/x402): verify a payee ($0.001) or check a payout file ($0.005), paid in USDC with x402 over Circle Gateway. `circle services pay https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee -X POST -d '{"org":"0x…","address":"0x…"}' --address <your agent wallet> --chain ARC-TESTNET --max-amount 0.001` |
@@ -71,6 +72,12 @@ flowchart LR
    then Claude (Opus 5.5 via MeshAPI, one key with Sonnet 5 as fallback) reviews with read-only tools. The model
    can only make a decision more careful. Every decision is hash-chained; its hash goes into the payment; the log head is
    anchored on-chain.
+   - **Cash plan.** The contract checks each claim alone. When the claims to pay do not fit together in what the
+     treasury can pay right now (its balance, capped by the allowance), the agent pays the oldest work first and holds
+     the rest with the exact amount that is short, instead of letting payments fail on-chain.
+   - **Autopilot.** The owner can let the agent run on its own. Every minute a cron re-reads each open claim's
+     `check()`, whether a person co-signed, and the funds; the agent runs (and the model is asked) only when one of
+     those changed. It gets no new power: the same budget, co-sign rules and cash plan apply.
 4. **A person co-signs** first payments to a new address, payer-vouched addresses and amounts
    above the threshold, on-chain, for that exact claim.
 5. **The agent pays** with `settle()`: on the live site, SendSure's server agent key; from the
@@ -91,10 +98,12 @@ flowchart LR
 | Relayer | Checks each signature offline, simulates, then submits; per-address limits count only verified requests. | [`apps/web/lib/relayer.ts`](apps/web/lib/relayer.ts), [`orgRelay.ts`](apps/web/lib/orgRelay.ts) |
 | Claims | Salted invoice refs, the contract's dry run before storing, one open claim per invoice. | [`apps/web/lib/claims.ts`](apps/web/lib/claims.ts) |
 | Agent | Rules, red flags, the MeshAPI tool loop, settle and anchor. | [`apps/web/lib/agent.ts`](apps/web/lib/agent.ts), [`llm.ts`](apps/web/lib/llm.ts) |
+| Cash plan | Fits the claims to pay into what the treasury can pay now: oldest work first, the rest waits with the amount short. Pure code, no model. | [`apps/web/lib/cash.ts`](apps/web/lib/cash.ts) |
+| Autopilot | Owner opt-in. The cron runs the agent only when a claim's on-chain state, a co-sign or the funds changed; at most one run per org every two minutes. | [`apps/web/lib/autopilot.ts`](apps/web/lib/autopilot.ts), [`worker.ts`](apps/web/worker.ts) |
 | Invoice reading | Two passes: every field with a verbatim quote (checked in code), then a validated claim proposal; payment instructions in an invoice are flagged, never used. | [`apps/web/lib/invoices.ts`](apps/web/lib/invoices.ts) |
 | Decision log | Hash chain, anchors, and replay without the model. | [`decisionLog.ts`](apps/web/lib/decisionLog.ts), [`replay.ts`](apps/web/lib/replay.ts) |
 | Circle agent wallet runner | Signs in as the Circle agent wallet (ERC-1271), sends `settle()` and `anchor()` with `circle wallet execute`. | [`scripts/agent-circle.ts`](scripts/agent-circle.ts) |
-| Books | Beancount with each payment's claim, decision hash and Arc tx; daily balances from the chain. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
+| Books | Beancount, hledger, journal CSV and statement CSV from one list of movements: each payment with its claim, decision hash and Arc tx; daily balances from the chain; six decimals, never rounded. | [`packages/core/src/beancount.ts`](packages/core/src/beancount.ts), [`ledgers.ts`](packages/core/src/ledgers.ts), [`apps/web/lib/books.ts`](apps/web/lib/books.ts) |
 | Indexer and dashboard | Chain events into D1 (≤ 9,999-block windows); three tiers; public receipts. | [`indexer.ts`](apps/web/lib/indexer.ts), [`stats.ts`](apps/web/lib/stats.ts), [`receipt.ts`](apps/web/lib/receipt.ts) |
 | Odoo add-on | Odoo only lets a person trust a vendor wallet that is the address the vendor proved. Bills go to SendSure. Settlements are recorded exactly (half a cent is never rounded away), and a USDC payment without an Arc tx is refused. | [`integrations/odoo/`](integrations/odoo/) |
 | Integration keys | Owner-created, hashed and revocable. A key can send bills and read their status, never approve or co-sign. | [`apps/web/lib/integrations.ts`](apps/web/lib/integrations.ts) |
@@ -124,6 +133,7 @@ flowchart LR
 | Payee | Prove their address; sign claims; change address with both keys and a waiting period. | Get paid outside the caps, the allowance or a required co-sign. |
 | Relayer key | Pay gas for signatures that it checked. | Anything else: it has no role in any contract. |
 | The model (Claude via MeshAPI) | Hold or escalate a claim, with reasons. | Pay, add payees, change amounts, or overrule a person's co-sign. |
+| Autopilot (the scheduler) | Decide when the agent runs, for orgs whose owner turned it on; an approver can turn it off. | Anything the agent cannot: it only starts the same run a person would. |
 
 The worst case for a stolen agent key is bounded by the allowance the treasury granted, paid only
 to addresses payees proved, for claims they signed, with first payments waiting for a person.
@@ -146,7 +156,10 @@ to addresses payees proved, for claims they signed, with first payments waiting 
 
 Known limits: testnet only; not audited; an invite link works for whoever uses it first (the
 first-payment co-sign is the backstop); rate limits live in each Worker isolate; the hosted agent
-settles with a server key, not yet a Circle wallet; payout addresses are EVM only.
+settles with a server key, not yet a Circle wallet; payout addresses are EVM only; the cash plan covers
+the treasury's balance and allowance, while the period caps are still enforced claim by claim by the contract.
+
+What comes next, with dates: [ROADMAP.md](ROADMAP.md).
 
 ## Prior art, and what's different
 
@@ -162,17 +175,22 @@ settles with a server key, not yet a Circle wallet; payout addresses are EVM onl
 ## Tests and live runs
 
 - Contracts: 47 tests (`forge test` in [`contracts/`](contracts/)): 30 Mandate, 14 registry, 3 invariants.
-- TypeScript: 63 tests (`pnpm test`): payout check and books (17), chain helpers with live
-  cross-checks against the deployed contracts (16), web server (30).
+- TypeScript: 74 tests (`pnpm test`): payout check and books (23), chain helpers with live
+  cross-checks against the deployed contracts (16), web server (35).
 - Odoo add-on: 14 tests (`integrations/odoo/run.sh test`), run inside Odoo 19.
 - Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction):
   [bind](deployments/relay-e2e.json) 4/4, [change](deployments/relay-e2e-change.json) 7/7,
   [org](deployments/org-e2e.json) 9/9, [claim](deployments/claim-e2e.json) 11/11,
-  [agent](deployments/agent-e2e.json) 11/11 (with the model's reasons), [circle](deployments/circle-e2e.json) 10/10,
+  [agent](deployments/agent-e2e.json) 13/13 (with the model's reasons, and its books checked by `bean-check` and `hledger`),
+  [autopilot](deployments/autopilot-e2e.json) 9/9 (nobody pressed run: the agent woke for a new claim, a co-sign and a
+  top-up, stayed asleep while nothing changed, and when 0.56 USDC was due with 0.49 in the treasury it paid the older work
+  and held the rest), [circle](deployments/circle-e2e.json) 10/10,
   [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12,
   [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway),
   [odoo](deployments/odoo-e2e.json) 25/25 (a real Odoo 19 bill paid on Arc and recorded back exactly);
-  [books](deployments/books-e2e.beancount) pass `bean-check`. Each run record lists every check it
+  the books of the agent run pass `bean-check` ([beancount](deployments/books-e2e.beancount)) and `hledger check --strict`
+  ([journal](deployments/books-e2e.journal)), with the same payments as [journal CSV](deployments/books-e2e.journal.csv)
+  and [statement CSV](deployments/books-e2e.statement.csv). Each run record lists every check it
   made under `checks` (`passed`, `total`, and each check by name), so these counts can be recounted.
 
 ## Run it

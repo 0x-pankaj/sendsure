@@ -1,0 +1,5 @@
+date,entry,account,debit,credit,currency,payee,description,invoice,arc_tx,claim_id,decision_hash,payout_address
+2026-09-30,1,Assets:Arc:Treasury,0.698110,,USDC,,"Movements outside SendSure (deposits, gas, other transfers), from the chain balance",,,,,
+2026-09-30,1,Equity:Treasury-Other-Flows,,0.698110,USDC,,"Movements outside SendSure (deposits, gas, other transfers), from the chain balance",,,,,
+2026-09-30,2,Expenses:Contractors:Test-payee,0.300000,,USDC,Test payee,"SendSure payment, invoice INV-A",INV-A,0xcd406efb60a505687878ad47d6b84377fe946710df428b978e8ceb03b73f4aa9,0x74896b5db6bef3ec0f9e4c37cb3d200e204a80f2d52972dfaf34f4dbcf601437,0xd83c9b8b5d7b3f67e00e9ddee64ce4cdf33127a8ab7c72e909e2f251a276e1a4,0x94588D748f3A2e01D94795064445a25A74eBAb37
+2026-09-30,2,Assets:Arc:Treasury,,0.300000,USDC,Test payee,"SendSure payment, invoice INV-A",INV-A,0xcd406efb60a505687878ad47d6b84377fe946710df428b978e8ceb03b73f4aa9,0x74896b5db6bef3ec0f9e4c37cb3d200e204a80f2d52972dfaf34f4dbcf601437,0xd83c9b8b5d7b3f67e00e9ddee64ce4cdf33127a8ab7c72e909e2f251a276e1a4,0x94588D748f3A2e01D94795064445a25A74eBAb37
