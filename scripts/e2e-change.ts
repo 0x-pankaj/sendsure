@@ -24,7 +24,7 @@ import {
   type ChangeMessage,
 } from "@sendsure/chain";
 import { arg, loadEnv, need } from "./lib/env";
-import { bindFreshPayee, bindMessage, check, failed, postRelay, soon } from "./lib/relay";
+import { bindFreshPayee, bindMessage, check, failed, postRelay, soon, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "http://localhost:3000")!;
@@ -104,6 +104,6 @@ const out = {
     cancel: explorerTx(cancelTx),
   },
 };
-writeFileSync(resolve(import.meta.dirname, "../deployments/relay-e2e-change.json"), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(resolve(import.meta.dirname, "../deployments/relay-e2e-change.json"), `${JSON.stringify(withChecks(out), null, 2)}\n`);
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/relay-e2e-change.json");
 process.exitCode = failed() ? 1 : 0;

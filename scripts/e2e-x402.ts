@@ -13,7 +13,7 @@ import { getAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { CIRCLE_AGENT } from "./agent-circle";
 import { arg } from "./lib/env";
-import { check, failed } from "./lib/relay";
+import { check, failed, withChecks } from "./lib/relay";
 
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
 if (!/^https:\/\/[\w.-]+(:\d+)?$/.test(base)) throw new Error(`--base must be a plain https origin, got ${base}`);
@@ -90,7 +90,7 @@ check(after.paidCalls?.firstParty.calls === callsBefore + 2, `dashboard counts $
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/x402-e2e.json"),
-  `${JSON.stringify(
+  `${JSON.stringify(withChecks(
     {
       note: "First-party end-to-end test: our own Circle agent wallet buys SendSure's paid checks with x402 over Circle Gateway on Arc testnet. Not traction.",
       ranAtUnix: Math.floor(Date.now() / 1000),
@@ -104,7 +104,7 @@ writeFileSync(
       verifyPayee: { request: JSON.parse(body), response: v.response, payment: { ...v.payment, receipt: settlement } },
       checkPayout: { summary: p.response?.summary, rows, payment: p.payment?.amount },
       dashboardFirstPartyPaidCalls: after.paidCalls?.firstParty,
-    },
+    }),
     null,
     2,
   )}\n`,

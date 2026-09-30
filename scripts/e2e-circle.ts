@@ -13,7 +13,7 @@ import { deployment, explorerTx, formatUsdc, mandateAbi, usdc } from "@sendsure/
 import { CIRCLE_AGENT, runWithCircle, signInAsCircleAgent } from "./agent-circle";
 import { arg, loadEnv } from "./lib/env";
 import { client, cosignAsOwner, sendClaim, setupSandboxOrg } from "./lib/flows";
-import { api, check, failed } from "./lib/relay";
+import { api, check, failed, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
@@ -76,7 +76,7 @@ check(
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/circle-e2e.json"),
-  `${JSON.stringify(
+  `${JSON.stringify(withChecks(
     {
       note: "First-party end-to-end test: the Circle agent wallet (Circle CLI) settles a SANDBOX org's claim. Throwaway keys, not traction.",
       ranAtUnix: Math.floor(Date.now() / 1000),
@@ -94,7 +94,7 @@ writeFileSync(
         checkAtBlock: replay.checkAtBlock,
         anchored: replay.anchored,
       },
-    },
+    }),
     null,
     2,
   )}\n`,

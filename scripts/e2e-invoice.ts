@@ -11,7 +11,7 @@ import { resolve } from "node:path";
 import { claimTypes, formatUsdc, mandateDomain, type Claim } from "@sendsure/chain";
 import { arg, loadEnv } from "./lib/env";
 import { setupSandboxOrg } from "./lib/flows";
-import { api, check, failed } from "./lib/relay";
+import { api, check, failed, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
@@ -72,7 +72,7 @@ check(((again.extraction?.warnings ?? []) as string[]).some((w) => /already clai
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/invoice-e2e.json"),
-  `${JSON.stringify({ note: "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, org: s.org, text: { invoice: a.invoice_ref, amount: a.amount, warnings, model: a.extraction?.model }, photo: { invoice: b.invoice_ref, amount: b.amount, model: b.extraction?.model }, claim: sent }, null, 2)}\n`,
+  `${JSON.stringify(withChecks({ note: "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, org: s.org, text: { invoice: a.invoice_ref, amount: a.amount, warnings, model: a.extraction?.model }, photo: { invoice: b.invoice_ref, amount: b.amount, model: b.extraction?.model }, claim: sent }), null, 2)}\n`,
 );
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/invoice-e2e.json");
 process.exitCode = failed() ? 1 : 0;

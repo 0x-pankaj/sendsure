@@ -39,7 +39,7 @@ body {
   font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 a { color: var(--accent); text-underline-offset: 3px; }
-code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; overflow-wrap: anywhere; }
 .wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; }
 header.site { border-bottom: 1px solid var(--line); background: var(--surface); }
 header.site .wrap { display: flex; gap: 20px; align-items: center; min-height: 56px; flex-wrap: wrap; }
@@ -84,5 +84,10 @@ tr:last-child td { border-bottom: 0; }
 .steps h3 { margin: 0 0 6px; font-size: 1.05rem; }
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
 dl.facts dt { color: var(--muted); }
-dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+/* Phones: labels above values, so long labels and addresses never push the page sideways. */
+@media (max-width: 600px) {
+  dl.facts { grid-template-columns: 1fr; gap: 2px; }
+  dl.facts dd { margin-bottom: 10px; }
+}
 .linkish { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

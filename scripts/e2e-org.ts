@@ -33,7 +33,7 @@ import {
   type OrgRules,
 } from "@sendsure/chain";
 import { arg } from "./lib/env";
-import { bindMessage, check, failed, postRelay } from "./lib/relay";
+import { bindMessage, check, failed, postRelay, withChecks } from "./lib/relay";
 
 const base = arg("base", "http://localhost:3000")!;
 const client = createPublicClient({ chain: arcTestnet, transport: http() });
@@ -122,6 +122,6 @@ const out = {
     bind: r6.body.txHash ? explorerTx(r6.body.txHash) : null,
   },
 };
-writeFileSync(resolve(import.meta.dirname, "../deployments/org-e2e.json"), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(resolve(import.meta.dirname, "../deployments/org-e2e.json"), `${JSON.stringify(withChecks(out), null, 2)}\n`);
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/org-e2e.json");
 process.exitCode = failed() ? 1 : 0;

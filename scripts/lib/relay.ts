@@ -40,11 +40,19 @@ export async function bindFreshPayee(base: string, org: Hex, ownerKey: Hex) {
 }
 
 let failures = 0;
+const checks: { ok: boolean; what: string }[] = [];
 export function check(ok: boolean, what: string): void {
   console.log(`${ok ? "PASS" : "FAIL"}  ${what}`);
+  checks.push({ ok, what });
   if (!ok) failures++;
 }
 export const failed = () => failures;
+
+/** A run record carries every check it made, so "N/N passed" can be recounted from the file. */
+export const withChecks = <T extends object>(record: T) => ({
+  ...record,
+  checks: { passed: checks.filter((c) => c.ok).length, total: checks.length, list: checks },
+});
 
 // ------------------------------------------------------------------ app API helpers (sessions, orgs)
 

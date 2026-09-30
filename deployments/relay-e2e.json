@@ -1,20 +1,37 @@
 {
   "note": "First-party end-to-end test on the SANDBOX org with a throwaway key. Not traction.",
-  "ranAtUnix": 1790682953,
+  "ranAtUnix": 1790753955,
   "relayerBase": "https://sendsure.0xpankaj.workers.dev",
   "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
-  "payeeRef": "0x31e5fcbe93850b32a046d0b8f963d3fb522d0a0d3edddb602d4672859985ecf0",
-  "payout": "0xC8C2fE4dd4d9cf3f76A301337cD81399ed7e61Bb",
-  "openSlotTx": "0x77d38ce8ffd21147d4ac755afbca07b713ea66a3591f6d6963ecbe9b0c826249",
-  "bindTx": "0xd53db932574dbb9335a6f22759506cd45fce2130a287b58075f7ea6d0306b2f6",
+  "payeeRef": "0x98afeda0fef47ceb5b4841a43ab7d313e881efcf21b41c78f424fa146749605f",
+  "payout": "0x6c8A66c414334754BD524Eb7CdC392Cc131d1D45",
+  "openSlotTx": "0x198466e5e8ec36b60c93773179276296db926d835ac6414ca0b206f3dbdd4056",
+  "bindTx": "0xe7492e214d634f143cc164b27cc935d77f366edc8aa30ed015e15d829d0acf03",
   "checks": {
-    "forgedRefused": "BadSignature",
-    "bound": "BOUND/PROVEN",
-    "replayRefused": "NonceUsed"
+    "passed": 4,
+    "total": 4,
+    "list": [
+      {
+        "ok": true,
+        "what": "forged signature refused (400 BadSignature)"
+      },
+      {
+        "ok": true,
+        "what": "relayer submitted bindWithSig (200 success)"
+      },
+      {
+        "ok": true,
+        "what": "registry: BOUND PROVEN 0x6c8A66c414334754BD524Eb7CdC392Cc131d1D45"
+      },
+      {
+        "ok": true,
+        "what": "replay refused (409 NonceUsed)"
+      }
+    ]
   },
   "links": {
-    "openSlot": "https://explorer.testnet.arc.io/tx/0x77d38ce8ffd21147d4ac755afbca07b713ea66a3591f6d6963ecbe9b0c826249",
-    "bind": "https://explorer.testnet.arc.io/tx/0xd53db932574dbb9335a6f22759506cd45fce2130a287b58075f7ea6d0306b2f6",
-    "payout": "https://explorer.testnet.arc.io/address/0xC8C2fE4dd4d9cf3f76A301337cD81399ed7e61Bb"
+    "openSlot": "https://explorer.testnet.arc.io/tx/0x198466e5e8ec36b60c93773179276296db926d835ac6414ca0b206f3dbdd4056",
+    "bind": "https://explorer.testnet.arc.io/tx/0xe7492e214d634f143cc164b27cc935d77f366edc8aa30ed015e15d829d0acf03",
+    "payout": "https://explorer.testnet.arc.io/address/0x6c8A66c414334754BD524Eb7CdC392Cc131d1D45"
   }
 }

@@ -1,5 +1,7 @@
 # SendSure build plan: the source of truth
 
+> Judges: this is the working build log. The submission is [README.md](README.md).
+
 > **Any new session starts here.** Read "Resume here", do the next unchecked task, then follow the
 > working agreement. This file is updated in the same commit as the work it describes.
 

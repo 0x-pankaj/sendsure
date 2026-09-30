@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { arg } from "./lib/env";
-import { api, check, failed } from "./lib/relay";
+import { api, check, failed, withChecks } from "./lib/relay";
 
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
 const session = randomUUID();
@@ -39,7 +39,7 @@ check(lookalike.verified === false, `lookup: the attacker's address is not`);
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/try-e2e.json"),
-  `${JSON.stringify({ note: "Live /try walkthrough on the SANDBOX demo org. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, bind, attack, change, pay, inbox }, null, 2)}\n`,
+  `${JSON.stringify(withChecks({ note: "Live /try walkthrough on the SANDBOX demo org. Not traction.", ranAtUnix: Math.floor(Date.now() / 1000), base, bind, attack, change, pay, inbox }), null, 2)}\n`,
 );
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/try-e2e.json");
 process.exitCode = failed() ? 1 : 0;

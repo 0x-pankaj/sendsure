@@ -18,7 +18,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { claimTypes, deployment, explorerTx, formatUsdc, mandateDomain, usdc, type Claim } from "@sendsure/chain";
 import { arg, loadEnv } from "./lib/env";
 import { client, cosignAsOwner, setupSandboxOrg, type SandboxOrg } from "./lib/flows";
-import { api, check, failed } from "./lib/relay";
+import { api, check, failed, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
@@ -224,7 +224,7 @@ check(bills?.[0]?.settlement?.amount === "250000" && bills[0].settlement.payout 
 
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/odoo-e2e.json"),
-  `${JSON.stringify(
+  `${JSON.stringify(withChecks(
     {
       note: "First-party end-to-end test: Odoo 19 Community (Docker) with the sendsure_payables add-on, against the live SendSure, SANDBOX org with throwaway keys. Not traction.",
       ranAtUnix: Math.floor(Date.now() / 1000),
@@ -238,7 +238,7 @@ writeFileSync(
       settle: explorerTx(b.sendsure_tx),
       odooPayment: { name: p?.name, amount: p?.amount, currency: p?.currency_id?.[1], journal: p?.journal_id?.[1], memo: p?.memo },
       settlement: bills?.[0]?.settlement,
-    },
+    }),
     null,
     2,
   )}\n`,

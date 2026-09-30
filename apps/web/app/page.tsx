@@ -46,10 +46,11 @@ export default function Home() {
           </p>
         </li>
         <li>
-          <h3>4. The Circle agent wallet pays; your books reconcile</h3>
+          <h3>4. The agent pays; your books reconcile</h3>
           <p className="hint">
-            Money moves only from your own wallet, only through the contract. Each payment gets a public receipt and a beancount entry
-            that matches your treasury&apos;s on-chain balance.
+            Money moves only from your own wallet, only through the contract, whichever agent sends it (SendSure&apos;s server
+            agent, or a Circle agent wallet). Each payment gets a public receipt and a beancount entry that matches your
+            treasury&apos;s on-chain balance, or is recorded straight into Odoo.
           </p>
         </li>
       </ol>

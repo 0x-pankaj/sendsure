@@ -7,6 +7,7 @@
 //   5. replaying the same signature is refused, and a signature from another key is refused
 //   pnpm tsx scripts/e2e-bind.ts [--base http://localhost:3000] [--org 0x...]
 import { writeFileSync } from "node:fs";
+import { check, failed, withChecks } from "./lib/relay";
 import { resolve } from "node:path";
 import { createPublicClient, getAddress, http, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -40,10 +41,6 @@ async function relay(message: BindMessage, signature: Hex) {
   return { status: res.status, body: (await res.json()) as { txHash?: Hex; status?: string; error?: string; code?: string } };
 }
 
-const check = (ok: boolean, what: string) => {
-  console.log(`${ok ? "PASS" : "FAIL"}  ${what}`);
-  if (!ok) process.exitCode = 1;
-};
 
 const payeeRef = randomBytes32();
 const openTx = await openInvite({ org, payeeRef, ownerKey: need("DEPLOYER_PRIVATE_KEY") as Hex });
@@ -90,5 +87,6 @@ const out = {
   checks: { forgedRefused: forged.body.code, bound: `${p.state}/${p.tier}`, replayRefused: replay.body.code },
   links: { openSlot: explorerTx(openTx), bind: ok.body.txHash ? explorerTx(ok.body.txHash) : null, payout: explorerAddress(payee.address) },
 };
-writeFileSync(resolve(import.meta.dirname, "../deployments/relay-e2e.json"), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(resolve(import.meta.dirname, "../deployments/relay-e2e.json"), `${JSON.stringify(withChecks(out), null, 2)}\n`);
 console.log("4. written deployments/relay-e2e.json");
+process.exitCode = failed() ? 1 : 0;

@@ -33,7 +33,7 @@ import {
   type OrgRules,
 } from "@sendsure/chain";
 import { arg, loadEnv, need } from "./lib/env";
-import { api, bindMessage, check, failed, postRelay, signInAs } from "./lib/relay";
+import { api, bindMessage, check, failed, postRelay, signInAs, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "http://localhost:3000")!;
@@ -136,6 +136,6 @@ const out = {
   },
   links: { createOrg: created.body.txHash ? explorerTx(created.body.txHash) : null, bind: bound.body.txHash ? explorerTx(bound.body.txHash) : null },
 };
-writeFileSync(resolve(import.meta.dirname, "../deployments/claim-e2e.json"), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(resolve(import.meta.dirname, "../deployments/claim-e2e.json"), `${JSON.stringify(withChecks(out), null, 2)}\n`);
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed; written deployments/claim-e2e.json");
 process.exitCode = failed() ? 1 : 0;

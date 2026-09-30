@@ -9,13 +9,30 @@ budget an Arc contract enforces. Then it writes each payment into the books the 
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
 Arc testnet (chain 5042002). Testnet only; not audited.
 
+**What's real and what's sandbox.** The contracts, the payments and the Odoo records are all real
+Arc testnet transactions. Activity from our own tests runs on *sandbox* orgs and is never counted as
+traction; our own team's org is labelled *first-party*. The [dashboard](https://sendsure.0xpankaj.workers.dev/dashboard)
+keeps the three apart, from chain events alone.
+
 ## For judges: a 3-minute tour
 
 1. [`/try`](https://sendsure.0xpankaj.workers.dev/try): the whole story with no wallet. A payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
-2. Open any payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim, and the agent's anchored decision.
+2. Open a payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim, and the agent's anchored decision (a sandbox payment from our tests).
 3. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
 4. Books: [the Odoo add-on](integrations/odoo) (screenshots and a one-command Docker setup) and the [beancount ledger](deployments/books-e2e.beancount) reconciled to the chain.
 5. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
+
+## Traction so far
+
+Honest numbers on Sep 30 (live, always current: [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard), [`/api/stats`](https://sendsure.0xpankaj.workers.dev/api/stats)):
+
+| Tier | Orgs | Payments | Notes |
+|---|---|---|---|
+| External (outside teams) | 0 | 0 | Outreach started Sep 30. |
+| First-party (our own team, real wallet) | 1 | 0 | Set up through the real MetaMask flow. |
+| Sandbox (our tests, never counted) | 36 | 21 (4.8 USDC) | Throwaway keys; every run record is in [`deployments/`](deployments/). |
+
+Paid agent calls over Circle Gateway (x402): 8, all first-party.
 
 ## Try it
 
@@ -31,6 +48,19 @@ Arc testnet (chain 5042002). Testnet only; not audited.
 
 ## How it works
 
+```mermaid
+flowchart LR
+  P[Payee wallet] -- "Bind / Claim (EIP-712)" --> R[SendSure relayer]
+  R --> REG[PayeeRegistry on Arc]
+  O[Payer: /org or Odoo] -- claims, invoices --> A[Agent: contract check, then Claude]
+  A -- hash-chained decisions --> L[(Decision log)] -- anchor --> M
+  H[Person co-signs] --> M[Mandate on Arc]
+  A -- "settle()" --> M
+  M -- USDC from payer's wallet --> P
+  M -- events --> I[Indexer] --> D[Dashboard, receipts, beancount, Odoo]
+  X[Other agents] -- "x402 via Circle Gateway" --> V[Paid checks]
+```
+
 1. **The payee proves their address, once.** The payer sends an invite link. The payee signs an
    EIP-712 `Bind` with the wallet they want to be paid to; SendSure's relayer submits it.
 2. **The payee signs a claim for each invoice.** Or the payer uploads the invoice (text or a photo)
@@ -38,13 +68,15 @@ Arc testnet (chain 5042002). Testnet only; not audited.
    server salts the invoice number (`refHash`), runs the contract's own `check()` and stores the
    signed claim.
 3. **The agent runs.** Rules first (the `check()` result plus red flags from the payee's history),
-   then Claude (Opus 5.5 via MeshAPI, Sonnet 5 as fallback) reviews with read-only tools. The model
+   then Claude (Opus 5.5 via MeshAPI, one key with Sonnet 5 as fallback) reviews with read-only tools. The model
    can only make a decision more careful. Every decision is hash-chained; its hash goes into the payment; the log head is
    anchored on-chain.
 4. **A person co-signs** first payments to a new address, payer-vouched addresses and amounts
    above the threshold, on-chain, for that exact claim.
-5. **The Circle agent wallet pays** with `settle()`. The contract re-checks everything and moves
-   USDC from the payer's own wallet through a capped allowance.
+5. **The agent pays** with `settle()`: on the live site, SendSure's server agent key; from the
+   command line, the Circle agent wallet ([`scripts/agent-circle.ts`](scripts/agent-circle.ts), used in
+   the [circle run](deployments/circle-e2e.json)). Either way the contract re-checks everything and
+   moves USDC from the payer's own wallet through a capped allowance; neither agent can pay outside it.
 6. **Receipts and books.** A public receipt per payment, and beancount books reconciled to the
    treasury's on-chain balance.
 
@@ -113,7 +145,8 @@ to addresses payees proved, for claims they signed, with first payments waiting 
 | Replayed signatures | Per-signer nonces, expiries, EIP-712 domains with chain id and contract. | registry and relayer tests |
 
 Known limits: testnet only; not audited; an invite link works for whoever uses it first (the
-first-payment co-sign is the backstop); rate limits live in each Worker isolate.
+first-payment co-sign is the backstop); rate limits live in each Worker isolate; the hosted agent
+settles with a server key, not yet a Circle wallet; payout addresses are EVM only.
 
 ## Prior art, and what's different
 
@@ -139,7 +172,8 @@ first-payment co-sign is the backstop); rate limits live in each Worker isolate.
   [try](deployments/try-e2e.json) 10/10, [invoice](deployments/invoice-e2e.json) 12/12,
   [x402](deployments/x402-e2e.json) 11/11 (our Circle agent wallet paying through Gateway),
   [odoo](deployments/odoo-e2e.json) 25/25 (a real Odoo 19 bill paid on Arc and recorded back exactly);
-  [books](deployments/books-e2e.beancount) pass `bean-check`.
+  [books](deployments/books-e2e.beancount) pass `bean-check`. Each run record lists every check it
+  made under `checks` (`passed`, `total`, and each check by name), so these counts can be recounted.
 
 ## Run it
 
@@ -147,7 +181,7 @@ first-payment co-sign is the backstop); rate limits live in each Worker isolate.
 pnpm install && pnpm gen && pnpm typecheck && pnpm test
 pnpm --filter @sendsure/web dev                    # local; needs apps/web/.env.local (see PLAN.md)
 pnpm --filter @sendsure/web cf:deploy              # Cloudflare Workers + D1
-pnpm e2e:agent --base https://sendsure.0xpankaj.workers.dev
+pnpm e2e:agent --base https://sendsure.0xpankaj.workers.dev   # needs throwaway keys in .env (see PLAN.md)
 ```
 
 ## What existed before the hackathon
