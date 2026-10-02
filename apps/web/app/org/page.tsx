@@ -66,6 +66,27 @@ export default function OrgPage() {
 
   useEffect(() => setOrgs(loadOrgs()), []);
 
+  // Orgs this wallet owns on Arc that this browser has never seen (made in another browser or on another computer).
+  const [elsewhere, setElsewhere] = useState<Address[]>([]);
+  useEffect(() => {
+    setElsewhere([]);
+    if (!signer || signer.kind === "test") return;
+    fetch(`/api/org/mine?owner=${signer.address}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ orgs: { org: Address; tier: number }[] }>) : null))
+      .then((out) => {
+        const known = new Set(loadOrgs().map((o) => o.org.toLowerCase()));
+        setElsewhere((out?.orgs ?? []).filter((o) => !known.has(o.org.toLowerCase())).map((o) => o.org));
+      })
+      .catch(() => undefined);
+  }, [signer]);
+
+  function openHere(org: Address) {
+    if (!signer) return;
+    remember({ org, owner: signer.address, name: "My team", salt: newSalt(), createdAt: Math.floor(Date.now() / 1000), vendors: [] });
+    setElsewhere((list) => list.filter((o) => o !== org));
+    setCreating(false);
+  }
+
   const mine = useMemo(() => (signer ? orgs.filter((o) => same(o.owner, signer.address)) : []), [orgs, signer]);
   const current = mine.find((o) => same(o.org, selected ?? undefined)) ?? mine[0] ?? null;
 
@@ -137,6 +158,26 @@ export default function OrgPage() {
         </p>
       ) : (
         <>
+          {elsewhere.length > 0 && (
+            <div className="notice warn">
+              <p>
+                <b>This wallet already owns {elsewhere.length === 1 ? "an org" : `${elsewhere.length} orgs`} on Arc</b> that this browser
+                doesn&apos;t know yet (made in another browser or on another computer).
+              </p>
+              {elsewhere.map((o) => (
+                <p key={o} className="row">
+                  <span className="mono">{short(o)}</span>
+                  <button className="btn secondary" onClick={() => openHere(o)}>
+                    Open it here
+                  </button>
+                </p>
+              ))}
+              <p className="hint">
+                The org, its budget and its payees&apos; proven addresses live on Arc and work here. Payee names stay in the browser
+                where you typed them: download the org file there and use &ldquo;Import an org file&rdquo; (bottom of this page) to bring them over.
+              </p>
+            </div>
+          )}
           <p className="hint">
             Connected: <span className="mono">{signer.address}</span>
             {signer.kind === "test" && " (a throwaway test wallet in this tab: close the tab and it is gone)"}
