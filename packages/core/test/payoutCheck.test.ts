@@ -98,3 +98,18 @@ describe("checkPayout", () => {
     );
   });
 });
+
+describe("addresses on other chains", () => {
+  it("accepts valid Stellar, bech32 and SS58 addresses and refuses broken ones", async () => {
+    const { addressKind } = await import("../src/index");
+    // Stellar's documented example account, and the same with one character changed (checksum fails).
+    expect(addressKind("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")).toBe("other");
+    expect(addressKind("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2A")).toBe("invalid");
+    // BIP-173 / BIP-350 test vectors: bech32 and bech32m; then a corrupted one.
+    expect(addressKind("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")).toBe("other");
+    expect(addressKind("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0")).toBe("other");
+    expect(addressKind("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5")).toBe("invalid");
+    // Polkadot SS58 (base58, 48 characters).
+    expect(addressKind("15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5")).toBe("other");
+  });
+});

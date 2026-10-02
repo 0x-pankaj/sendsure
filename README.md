@@ -227,7 +227,7 @@ The books apps handle whole invoices in USD. What comes next, with dates: [ROADM
 | Where | Count | Command |
 |---|---|---|
 | Contracts | 47 (30 Mandate, 14 registry, 3 invariants) | `forge test` in [`contracts/`](contracts/) |
-| TypeScript | 74 (payout check and books 23, chain helpers with live cross-checks against the deployed contracts 16, web server 35) | `pnpm test` |
+| TypeScript | 78 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 38) | `pnpm test` |
 | Odoo add-on | 14, inside Odoo 19 | `integrations/odoo/run.sh test` |
 | ERPNext app | 25, inside ERPNext 15, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` |
 

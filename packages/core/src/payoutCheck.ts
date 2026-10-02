@@ -42,12 +42,59 @@ export function normalizeName(name: string): string {
 
 export type AddressKind = "evm" | "other" | "invalid";
 
+/** Stellar account (G…, 56 chars, base32): version byte and CRC16-XModem checksum must match. */
+export function isStellarAccount(a: string): boolean {
+  if (!/^G[A-Z2-7]{55}$/.test(a)) return false;
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const bytes: number[] = [];
+  let bits = 0;
+  let value = 0;
+  for (const ch of a) {
+    value = (value << 5) | alphabet.indexOf(ch);
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  if (bytes.length !== 35 || bytes[0] !== 6 << 3) return false;
+  let crc = 0;
+  for (const b of bytes.slice(0, 33)) {
+    crc ^= b << 8;
+    for (let i = 0; i < 8; i++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+  }
+  return bytes[33] === (crc & 0xff) && bytes[34] === crc >> 8;
+}
+
+/** bech32 / bech32m address (cosmos1…, dydx1…, osmo1…, bc1…): the checksum must verify. */
+export function isBech32Address(raw: string): boolean {
+  const a = raw.toLowerCase();
+  if (raw !== a && raw !== raw.toUpperCase()) return false;
+  const pos = a.lastIndexOf("1");
+  if (pos < 1 || pos + 7 > a.length || a.length > 90) return false;
+  const charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+  const hrp = a.slice(0, pos);
+  const data = [...a.slice(pos + 1)].map((c) => charset.indexOf(c));
+  if (data.some((d) => d < 0) || !/^[\x21-\x7e]+$/.test(hrp)) return false;
+  const G = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+  let chk = 1;
+  for (const v of [...[...hrp].map((c) => c.charCodeAt(0) >> 5), 0, ...[...hrp].map((c) => c.charCodeAt(0) & 31), ...data]) {
+    const top = chk >>> 25;
+    chk = ((chk & 0x1ffffff) << 5) ^ v;
+    for (let i = 0; i < 5; i++) if ((top >>> i) & 1) chk ^= G[i]!;
+  }
+  return chk === 1 || chk === 0x2bc830a3; // bech32 or bech32m
+}
+
 export function addressKind(address: string): AddressKind {
   const a = address.trim();
   if (/^0x[0-9a-fA-F]{40}$/.test(a)) return isAddress(a, { strict: true }) ? "evm" : "invalid";
   if (a.startsWith("0x")) return "invalid";
-  // Solana (base58, 32-44) or Tron (T + 33 base58): compared exactly.
-  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a)) return "other";
+  // Other chains are compared exactly (no checksum case to normalise):
+  if (isStellarAccount(a)) return "other"; // Stellar
+  if (isBech32Address(a)) return "other"; // Cosmos chains (cosmos1, dydx1, osmo1…), Bitcoin bc1
+  // Solana (32-44), Tron (T + 33) and Polkadot/Substrate SS58 (47-48), all base58.
+  if (/^[1-9A-HJ-NP-Za-km-z]{32,48}$/.test(a)) return "other";
   return "invalid";
 }
 
