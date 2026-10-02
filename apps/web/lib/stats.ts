@@ -5,6 +5,7 @@
 import type { Address } from "viem";
 import { SENDSURE_AGENTS, formatUsdc } from "@sendsure/chain";
 import { getDb } from "./db";
+import { usageTotals } from "./notify";
 
 /** Our own keys. Add more with FIRST_PARTY_ADDRESSES (comma-separated), e.g. Pankaj's own wallet. */
 const BUILT_IN = [
@@ -120,6 +121,7 @@ export async function stats() {
   return {
     tiers: out,
     agentRuns,
+    usage: await usageTotals().catch(() => ({})),
     paidCalls: {
       external: { calls: paidCalls.external.calls, usdc: formatUsdc(paidCalls.external.usdc), payers: paidCalls.external.payers.size },
       firstParty: {

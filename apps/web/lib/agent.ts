@@ -16,6 +16,7 @@ import {
   REASON_TEXT,
   deployment,
   encodeClaim,
+  explorerTx,
   formatUsdc,
   mandateAbi,
   readPayee,
@@ -24,6 +25,7 @@ import {
   type Reason,
 } from "@sendsure/chain";
 import { planCash, type CashSnapshot } from "./cash";
+import { inBackground, notifyOrg } from "./notify";
 import { getDb, type Db } from "./db";
 import { appendDecision, head } from "./decisionLog";
 import { lastModel, meshConfigured, meshModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
@@ -569,6 +571,15 @@ export async function runAgent(
   if (opts.execute && decisions.length) {
     anchor = await anchorHead(db, org).catch(() => null);
   }
+  // Tell the org's people (their webhook, if set): a claim that newly needs a co-sign, and every payment.
+  const notes: string[] = [];
+  for (const d of decisions) {
+    const prev = (decided.find((x) => x.item.row.claim_id === d.claimId)?.item.row as { agent_action?: string } | undefined)?.agent_action;
+    if (d.tx?.outcome === "Settled") notes.push(`Paid: invoice ${d.invoiceRef}, ${d.amountUsdc} USDC to the payee's proven address. ${explorerTx(d.tx.hash)}`);
+    else if (d.action === "escalate" && prev !== "escalate") notes.push(`Waiting for your co-sign: invoice ${d.invoiceRef}, ${d.amountUsdc} USDC. ${d.reason}`);
+  }
+  if (notes.length) await inBackground(notifyOrg(org, notes.join("\n")));
+
   const counts = decisions.reduce<Record<string, number>>((acc, d) => ((acc[d.action] = (acc[d.action] ?? 0) + 1), acc), {});
   const summary =
     (model?.summary ||

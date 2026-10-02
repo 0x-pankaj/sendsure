@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ping } from "../lib/ping";
 import { LEDGER_FORMATS, toLedger, toStatementCsv, type LedgerFormat, type LedgerInput } from "@sendsure/core";
 
 /** What the books API returns (amounts as strings); names are added by the caller, in the browser. */
@@ -56,6 +57,7 @@ export function LedgerDownload(props: { load: () => Promise<LedgerInput>; fileBa
       const a = document.createElement("a");
       a.href = url;
       a.download = `${props.fileBase}.${f.extension}`;
+      ping("books_download");
       a.click();
       URL.revokeObjectURL(url);
       const beyond = format === "statement" ? toStatementCsv(data).beyondCents : 0;

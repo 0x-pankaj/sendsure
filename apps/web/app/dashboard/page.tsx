@@ -17,6 +17,7 @@ interface Bucket {
 interface Stats {
   tiers: Record<Tier, Bucket>;
   agentRuns?: Record<Tier, { runs: number; byAutopilot: number }>;
+  usage?: Record<string, number>;
   recentPayments: { tx: string; block: number; org: string; payout: string; amountUsdc: string; tier: Tier }[];
   indexer: { block?: number; updatedAt?: number; error?: string };
   paidCalls?: {
@@ -115,6 +116,13 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+          {data.usage && (
+            <p className="hint" style={{ maxWidth: 900 }}>
+              Anonymous counts (no addresses, amounts or files, and our own test runs included): payout checks run{" "}
+              <b>{data.usage.check_run ?? 0}</b> · invite links opened <b>{data.usage.invite_open ?? 0}</b> · /try walkthroughs
+              started <b>{data.usage.try_start ?? 0}</b> · ledgers downloaded <b>{data.usage.books_download ?? 0}</b>.
+            </p>
+          )}
           {data.paidCalls && (
             <>
               <h2>Agents paying SendSure per call</h2>

@@ -5,6 +5,8 @@ import { getAddress } from "viem";
 import { explorerAddress } from "@sendsure/chain";
 import { checkPayout, parsePayoutCsv, type CheckedRow } from "@sendsure/core";
 import { DemoBooks } from "../../components/DemoBooks";
+import { GetSetUp } from "../../components/GetSetUp";
+import { ping } from "../../lib/ping";
 
 type Scene = "bind" | "attack" | "change" | "pay" | "inbox";
 type InboxClaim = { what: string; invoice: string; amountUsdc: string; contract: string; agent: string; paid: boolean };
@@ -52,6 +54,7 @@ export default function TryPage() {
   async function run(scene: Scene) {
     setError("");
     setBusy(scene);
+    if (scene === "bind") ping("try_start");
     try {
       const res = await fetch("/api/try", {
         method: "POST",
@@ -208,6 +211,7 @@ export default function TryPage() {
           {results.pay ? <DemoBooks /> : <p className="hint">Finish step 4 to download the books.</p>}
         </li>
       </ol>
+      {results.pay && <GetSetUp source="try" title="Want this for your team’s next real payout?" />}
 
       {error && (
         <p className="notice" role="alert">

@@ -23,6 +23,8 @@ import { AgentPanel } from "../../components/Agent";
 import { Books } from "../../components/Books";
 import { AddInvoice } from "../../components/Invoices";
 import { Integrations } from "../../components/Integrations";
+import { Notify } from "../../components/Notify";
+import { GetSetUp } from "../../components/GetSetUp";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
@@ -177,6 +179,7 @@ export default function OrgPage() {
           {error}
         </p>
       )}
+      {!signer && <GetSetUp source="org" title="Prefer to set it up together?" />}
       <Help topic="setting up" />
     </>
   );
@@ -450,6 +453,7 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
       <OrgClaims org={org.org} signer={signer} payeeName={payeeName} version={runs} />
       <Books org={org.org} orgName={org.name} signer={signer} payeeName={payeeName} />
       <AddInvoice org={org.org} signer={signer} vendors={org.vendors} />
+      <Notify org={org.org} signer={signer} />
       <Integrations org={org.org} signer={signer} />
     </>
   );

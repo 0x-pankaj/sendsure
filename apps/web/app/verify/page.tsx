@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getAddress, isAddress, type Address, type Hex } from "viem";
 import {
+  ORG_TIER,
   SIGNATURE_TTL_SECONDS,
   ZERO_BYTES32,
   arcTestnet,
@@ -10,6 +11,7 @@ import {
   explorerAddress,
   explorerTx,
   formatDuration,
+  mandateAbi,
   payeeRegistryAbi,
   randomNonce,
   readOrg,
@@ -36,6 +38,7 @@ import {
   type Signer,
 } from "../../lib/wallet";
 import { Help } from "../../components/Help";
+import { ping } from "../../lib/ping";
 
 interface Invite {
   org: Address;
@@ -63,6 +66,13 @@ function readInvite(): Invite | null {
   return { org: getAddress(org), payeeRef: ref as Hex, payer: (q.get("name") ?? "").trim().slice(0, 80) };
 }
 
+/** MetaMask's universal link: opens this exact page in the MetaMask app's browser (or the store if it is missing). */
+function metamaskLink(): string {
+  if (typeof window === "undefined") return "https://metamask.app.link";
+  const { host, pathname, search } = window.location;
+  return `https://metamask.app.link/dapp/${host}${pathname}${search}`;
+}
+
 export default function VerifyPage() {
   const [invite, setInvite] = useState<Invite | null | undefined>(undefined);
   const [loaded, setLoaded] = useState<Loaded>({ kind: "loading" });
@@ -73,8 +83,22 @@ export default function VerifyPage() {
   const [relayFailed, setRelayFailed] = useState(false);
   const [tx, setTx] = useState<{ hash: Hex; status: string } | null>(null);
   const [changing, setChanging] = useState(false);
+  // A test wallet is offered only on sandbox orgs: on a real payer's invite it would bind a key that vanishes with the tab.
+  const [sandboxOrg, setSandboxOrg] = useState<boolean | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => setInvite(readInvite()), []);
+  useEffect(() => {
+    const inv = readInvite();
+    setInvite(inv);
+    if (inv) ping("invite_open");
+  }, []);
+  useEffect(() => {
+    if (!invite) return;
+    publicClient
+      .readContract({ address: invite.org, abi: mandateAbi, functionName: "tier" })
+      .then((t) => setSandboxOrg(Number(t) === ORG_TIER.SANDBOX))
+      .catch(() => setSandboxOrg(false));
+  }, [invite]);
 
   /** Reads the invite. After our own transaction, `until` re-reads briefly in case the RPC node lags a block. */
   const refresh = useCallback(async (inv: Invite, until?: (p: PayeeView) => boolean) => {
@@ -241,19 +265,50 @@ export default function VerifyPage() {
                   </p>
                 ) : (
                   <>
-                    <div className="row">
-                      <button className="btn" disabled={busy !== ""} onClick={() => connect("browser")}>
-                        {busy === "connect" ? "Waiting for your wallet…" : "Connect wallet"}
-                      </button>
-                      <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
-                        No wallet? Use a test wallet
-                      </button>
-                    </div>
+                    {hasBrowserWallet() ? (
+                      <div className="row">
+                        <button className="btn" disabled={busy !== ""} onClick={() => connect("browser")}>
+                          {busy === "connect" ? "Waiting for your wallet…" : "Connect wallet"}
+                        </button>
+                        {sandboxOrg && (
+                          <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
+                            No wallet? Use a test wallet
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="notice warn">
+                        <p>
+                          <b>No wallet in this browser.</b> On a phone, open this page inside your wallet app. On a computer,
+                          install MetaMask or Rabby, then reload.
+                        </p>
+                        <div className="row" style={{ marginTop: 8 }}>
+                          <a className="btn" href={metamaskLink()}>
+                            Open in MetaMask
+                          </a>
+                          <button
+                            className="btn secondary"
+                            onClick={() =>
+                              void navigator.clipboard.writeText(window.location.href).then(() => setCopied(true), () => undefined)
+                            }
+                          >
+                            {copied ? "Link copied" : "Copy this link"}
+                          </button>
+                          {sandboxOrg && (
+                            <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
+                              Use a test wallet
+                            </button>
+                          )}
+                        </div>
+                        <p className="hint">
+                          Other wallet apps (Rabby, Coinbase Wallet, Trust): open their built-in browser and paste the link.
+                        </p>
+                      </div>
+                    )}
                     <p className="hint">
-                      {hasBrowserWallet()
-                        ? "Works with MetaMask, Rabby and other browser wallets. "
-                        : "No browser wallet found. "}
-                      The test wallet is for trying SendSure on testnet only. For real payouts, use your own wallet.
+                      {sandboxOrg
+                        ? "This is a test org. The test wallet is for trying SendSure only; for real payouts, use your own wallet."
+                        : "Use a wallet you control: this address is where you will be paid. Works with MetaMask, Rabby and other EVM wallets."}
                     </p>
                   </>
                 )}

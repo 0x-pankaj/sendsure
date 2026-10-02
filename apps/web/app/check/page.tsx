@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { checkPayout, checkedRowsToRecords, parsePayoutCsv, toCsv, type CheckedRow } from "@sendsure/core";
 import { EXAMPLE_CURRENT, EXAMPLE_LAST } from "../../lib/examples";
 import { Help } from "../../components/Help";
+import { GetSetUp } from "../../components/GetSetUp";
+import { ping } from "../../lib/ping";
 
 const ORDER = { STOP: 0, REVIEW: 1, PAY: 2 } as const;
 const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -34,6 +36,16 @@ export default function CheckPage() {
     return { ...checked, rows, warnings: [...cur.warnings, ...prev.warnings.map((w) => `Last payout: ${w}`)] };
   }, [current, last]);
 
+  // Anonymous count of checks run (nothing about the file leaves the browser). The example file is not counted.
+  const counted = useRef("");
+  useEffect(() => {
+    if (!result || !result.rows.length || current === EXAMPLE_CURRENT) return;
+    const key = `${current.length}:${result.rows.length}`;
+    if (counted.current === key) return;
+    counted.current = key;
+    ping("check_run");
+  }, [result, current]);
+
   function download() {
     if (!result) return;
     const blob = new Blob([toCsv(checkedRowsToRecords(result.rows))], { type: "text/csv" });
@@ -53,7 +65,7 @@ export default function CheckPage() {
         wallets, look-alike addresses (address poisoning), duplicates and unusual amounts. Your contractors do not need to
         do anything.
       </p>
-      <p className="privacy">Your files never leave this browser. Nothing is uploaded or stored.</p>
+      <p className="privacy">Your files never leave this browser and are never stored. We only count, anonymously, that a check ran.</p>
 
       <div className="grid" style={{ marginTop: 20 }}>
         <div className="card">
@@ -111,6 +123,7 @@ export default function CheckPage() {
           </div>
         </>
       )}
+      <GetSetUp source="check" title="Want this before every payout, enforced by a contract?" />
       <Help topic="the payout check" />
     </>
   );

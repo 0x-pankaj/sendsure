@@ -26,7 +26,8 @@ export default function DataPage() {
       <ul>
         <li>Payee names and emails you type in <a href="/org">/org</a>. They never reach our server.</li>
         <li>
-          Payout files you check in <a href="/check">/check</a>: the check runs entirely in your browser; nothing is uploaded.
+          Payout files you check in <a href="/check">/check</a>: the check runs entirely in your browser; the file is never
+          uploaded (only an anonymous count that a check ran).
         </li>
       </ul>
 
@@ -40,7 +41,16 @@ export default function DataPage() {
         <li>Bills your Odoo sends: bill number, amount, date and line descriptions.</li>
         <li>The agent&apos;s decision log (what it checked and why), which anyone with the org can replay.</li>
         <li>A secret salt per org (so invoice numbers stay private on-chain), and integration keys as hashes only.</li>
-        <li>No accounts, passwords or emails: you sign in by signing a message with your wallet.</li>
+        <li>No accounts or passwords: you sign in by signing a message with your wallet.</li>
+        <li>
+          If you fill in &ldquo;Get set up&rdquo;: what you typed there (team, how to reach you, how you pay, your next payout),
+          to contact you about setting it up. Nothing else.
+        </li>
+        <li>If your org turns on notifications: the Discord or Slack webhook URL you gave, to post your notices there.</li>
+        <li>
+          Anonymous counts: that a payout check ran, an invite link was opened, a walkthrough started or a ledger was
+          downloaded, per day. No addresses, amounts, files or anything that identifies you.
+        </li>
       </ul>
 
       <h2>Sent to an AI model</h2>

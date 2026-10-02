@@ -9,6 +9,7 @@ import {
   claimIdOf,
   deployment,
   encodeClaim,
+  formatUsdc,
   mandateAbi,
   mandateFactoryAbi,
   normalizeInvoiceRef,
@@ -22,6 +23,7 @@ import {
 } from "@sendsure/chain";
 import { getDb } from "./db";
 import { markProposalClaimed } from "./invoices";
+import { inBackground, notifyOrg } from "./notify";
 import { RelayError, isBytes32, isSignature, serverClient, toAddress, toObject, toUint } from "./relayer";
 
 const USDC = deployment.usdc as Address;
@@ -222,6 +224,12 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     throw err;
   }
   if (proposal) await markProposalClaimed(org, proposal.id, claimId);
+  await inBackground(
+    notifyOrg(
+      org,
+      `New claim signed by a payee: invoice ${invoiceRef}, ${formatUsdc(claim.amount)} USDC. The contract says: ${REASON_TEXT[reason] ?? outcome}`,
+    ),
+  );
   return { claimId, outcome, reason, reasonText: REASON_TEXT[reason], stored: true };
 }
 
