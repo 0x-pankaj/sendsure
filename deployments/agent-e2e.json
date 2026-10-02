@@ -1,42 +1,42 @@
 {
   "note": "First-party end-to-end agent run with throwaway keys on a SANDBOX org. Not traction.",
-  "ranAtUnix": 1790788872,
+  "ranAtUnix": 1790947875,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x74F6aD345f1266d267c89Ba0d1c257F02A12bfCB",
-  "payee": "0x94588D748f3A2e01D94795064445a25A74eBAb37",
+  "org": "0xb231ebf9F14EA3d627A4d9D521137FA99142CD71",
+  "payee": "0x9a5a4797fac2428acfdf99b331B89A423f06ED54",
   "planner": "rules + anthropic/claude-opus-5.5 via MeshAPI",
   "runs": [
     {
       "invoice": "INV-A",
       "action": "escalate",
-      "reason": "This is the first payment to this payee's address, so a person must co-sign before it can be paid. Please also check the dates: the description says the first half of September, but the work period listed is Sept 16–30."
+      "reason": "This is the first payment to a new or changed payout address, so a person must co-sign before it can be paid. Also, the description says 'first half of September' but the dates given are Sept 18 to Oct 2, so please check which work this invoice covers."
     },
     {
       "invoice": "INV-A",
       "action": "pay",
-      "tx": "https://explorer.testnet.arc.io/tx/0xcd406efb60a505687878ad47d6b84377fe946710df428b978e8ceb03b73f4aa9",
-      "decisionHash": "0xd83c9b8b5d7b3f67e00e9ddee64ce4cdf33127a8ab7c72e909e2f251a276e1a4"
+      "tx": "https://explorer.testnet.arc.io/tx/0x79048997c9dce4175df0316e1224a23f6ffd8b6e906b184341f9691e507b7140",
+      "decisionHash": "0xa8e5e012fae08039294dd2a7be4b8a52c6263dab17376b95304451a750245d06"
     },
     {
       "invoice": "INV-B",
       "action": "escalate",
-      "reason": "The note asks us to send the money to a new wallet and says it's urgent, which is a common scam pattern. It's also the same amount as another recent claim from this payee, and the dates overlap, so this work may have been billed twice."
+      "reason": "The invoice asks to send the money to a new wallet and says it's urgent, which is a common sign of fraud. It also has the same amount as another claim from this payee, and the work dates overlap, so it may be a double bill."
     }
   ],
-  "cosign": "https://explorer.testnet.arc.io/tx/0x45d464624e0772fe9bdd4f76c849b8c8a112b371129ee3f5816390d30cf0bca1",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x8247e9b2ea6dda5c34cf8c8fba4901ea71557b8dc0f2b49d97c0064a58dd30ff",
+  "cosign": "https://explorer.testnet.arc.io/tx/0xab4ec140d2d67e87a635e35e6dfa5334e562482ee897946914e33ad90aea1b28",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x90c1404960165527a26a9a24967072208f6df622e1df8049b526c7472eac9f34",
   "logIntact": true,
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64811008,
+      "block": 65122969,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "payment": {
-      "tx": "0xcd406efb60a505687878ad47d6b84377fe946710df428b978e8ceb03b73f4aa9",
+      "tx": "0x79048997c9dce4175df0316e1224a23f6ffd8b6e906b184341f9691e507b7140",
       "event": "Settled",
       "carriesDecisionHash": true
     }
@@ -47,11 +47,11 @@
     "list": [
       {
         "ok": true,
-        "what": "org 0x74F6aD345f1266d267c89Ba0d1c257F02A12bfCB created, funded, budgeted; payee bound"
+        "what": "org 0xb231ebf9F14EA3d627A4d9D521137FA99142CD71 created, funded, budgeted; payee bound"
       },
       {
         "ok": true,
-        "what": "run #1: INV-A escalate (This is the first payment to this payee's address, so a person must co-sign before it can be paid. Please also check the dates: the description says the first half of September, but the work period listed is Sept 16–30.)"
+        "what": "run #1: INV-A escalate (This is the first payment to a new or changed payout address, so a person must co-sign before it can be paid. Also, the description says 'first half of September' but the dates given are Sept 18 to Oct 2, so please check which work this invoice covers.)"
       },
       {
         "ok": true,
@@ -67,15 +67,15 @@
       },
       {
         "ok": true,
-        "what": "run #3: INV-B passes the contract but the agent says escalate (The note asks us to send the money to a new wallet and says it's urgent, which is a common scam pattern. It's also the same amount as another recent claim from this payee, and the dates overlap, so this work may have been billed twice.)"
+        "what": "run #3: INV-B passes the contract but the agent says escalate (The invoice asks to send the money to a new wallet and says it's urgent, which is a common sign of fraud. It also has the same amount as another claim from this payee, and the work dates overlap, so it may be a double bill.)"
       },
       {
         "ok": true,
-        "what": "the model reviewed run #3 (rules + anthropic/claude-opus-5.5 via MeshAPI): escalate: The note asks us to send the money to a new wallet and says it's urgent, which is a common scam pattern. It's also the same amount as another recent claim from this payee, and the dates overlap, so this work may have been billed twice."
+        "what": "the model reviewed run #3 (rules + anthropic/claude-opus-5.5 via MeshAPI): escalate: The invoice asks to send the money to a new wallet and says it's urgent, which is a common sign of fraud. It also has the same amount as another claim from this payee, and the work dates overlap, so it may be a double bill."
       },
       {
         "ok": true,
-        "what": "replay of decision #2: chain ok, payee signature ok, check() at block 64811008 = PAYABLE, payment event carries its hash, anchor #2 matches"
+        "what": "replay of decision #2: chain ok, payee signature ok, check() at block 65122969 = PAYABLE, payment event carries its hash, anchor #2 matches"
       },
       {
         "ok": true,
@@ -87,11 +87,11 @@
       },
       {
         "ok": true,
-        "what": "books: 1 payment, 1 chain balance check; bean-check passes"
+        "what": "books: 1 payment, 1 chain balance check; bean-check not installed (skipped)"
       },
       {
         "ok": true,
-        "what": "books: hledger check --strict passes (balance asserted from the chain)"
+        "what": "books: hledger check --strict not installed (skipped)"
       },
       {
         "ok": true,
