@@ -1,4 +1,4 @@
-from odoo import _, models
+from odoo import _, api, models
 from odoo.exceptions import UserError
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
@@ -7,6 +7,13 @@ from .sendsure_client import is_evm_address
 
 class ResPartnerBank(models.Model):
     _inherit = 'res.partner.bank'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        banks = super().create(vals_list)
+        # The same rule as write(): a wallet created already trusted must be the vendor's proven address.
+        banks.filtered('allow_out_payment')._sendsure_check_trust()
+        return banks
 
     def write(self, vals):
         # Odoo's own control: only people with the "Validate bank account" right may trust an account.
@@ -18,8 +25,12 @@ class ResPartnerBank(models.Model):
     def _sendsure_check_trust(self):
         client = self.env['sendsure.client']
         wallets = self.filtered(lambda b: is_evm_address(b.acc_number))
-        if not wallets or not client.is_configured():
+        if not wallets:
             return
+        if not client.is_configured():
+            raise UserError(_(
+                "Connect SendSure first (Invoicing > Configuration > Settings > SendSure). A wallet can be trusted only "
+                "after its owner proves it in SendSure by signing with it."))
         vendors = wallets.mapped('partner_id.commercial_partner_id')
         unlinked = vendors.filtered(lambda p: not p.sendsure_payee_ref)
         if unlinked:

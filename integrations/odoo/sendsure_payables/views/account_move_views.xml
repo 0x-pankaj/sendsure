@@ -8,10 +8,14 @@
             <xpath expr="//header/button[@id='account_invoice_payment_btn']" position="before">
                 <button name="action_sendsure_send" type="object" string="Pay with SendSure" class="oe_highlight"
                         groups="account.group_account_invoice"
-                        invisible="move_type != 'in_invoice' or state != 'posted' or payment_state != 'not_paid' or sendsure_state"/>
+                        invisible="move_type != 'in_invoice' or state != 'posted' or payment_state != 'not_paid' or sendsure_state not in (False, 'withdrawn', 'rejected_by_payee', 'refused')"/>
                 <button name="action_sendsure_refresh" type="object" string="Refresh SendSure"
                         groups="account.group_account_invoice"
                         invisible="not sendsure_external_id or sendsure_state in ('paid', 'needs_review')"/>
+                <button name="action_sendsure_record_review" type="object" string="Record SendSure payment"
+                        groups="account.group_account_manager" class="btn-warning"
+                        invisible="sendsure_state != 'needs_review'"
+                        confirm="This records the exact amount SendSure paid on Arc. Any difference stays open on the bill for you to book. Continue?"/>
             </xpath>
             <xpath expr="//header" position="after">
                 <div class="alert alert-info mb-0" role="alert" invisible="not sendsure_state or sendsure_state in ('paid', 'needs_review')">
@@ -56,6 +60,6 @@
         <field name="binding_view_types">list</field>
         <field name="group_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
         <field name="state">code</field>
-        <field name="code">records.filtered(lambda m: m.move_type == 'in_invoice' and not m.sendsure_state).action_sendsure_send()</field>
+        <field name="code">records.filtered(lambda m: m.move_type == 'in_invoice' and m.state == 'posted' and m.sendsure_state in (False, 'withdrawn', 'rejected_by_payee', 'refused')).action_sendsure_send()</field>
     </record>
 </odoo>

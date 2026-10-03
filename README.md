@@ -101,7 +101,7 @@ transaction as the reference, once. Live page: [`/books`](https://sendsure.0xpan
 
 | Books | How | Proof |
 |---|---|---|
-| **Odoo 19** | An add-on: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved (checked against Arc at that moment, even for the admin); the USDC journal's only way out is SendSure; each payment is recorded through Odoo's own Register Payment with the tx in the memo. | [`integrations/odoo/`](integrations/odoo/): 14 tests inside Odoo, [live run](deployments/odoo-e2e.json) 25/25 |
+| **Odoo 19** | An add-on: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved (checked against Arc at that moment, even for the admin); the USDC journal's only way out is SendSure; each payment is recorded through Odoo's own Register Payment with the tx in the memo. | [`integrations/odoo/`](integrations/odoo/): 28 tests inside Odoo, [live run](deployments/odoo-e2e.json) 27/27 |
 | **ERPNext 15** | A Frappe app: "Pay with SendSure" on a purchase invoice. The supplier's proven address is read from SendSure and cannot be typed in, by anyone; only an Accounts Manager approves it; a Payment Entry on the SendSure mode is refused unless SendSure read the settlement from Arc; the ledger rows are read back after posting. | [`integrations/erpnext/`](integrations/erpnext/): 25 tests inside ERPNext, [live run](deployments/erpnext-e2e.json) 29/29 |
 | **beancount** | Every payment with its claim, decision hash and Arc tx; the treasury balance asserted from the chain after each payment day; movements outside SendSure as one explicit entry computed from that balance. | [`beancount.ts`](packages/core/src/beancount.ts); the [agent run's ledger](deployments/books-e2e.beancount) passes `bean-check` |
 | **hledger** | The same books as a journal with declared accounts and a balance assertion per day. hledger refuses the file if the balance is off by 0.000001. | [`ledgers.ts`](packages/core/src/ledgers.ts); the [journal](deployments/books-e2e.journal) passes `hledger check --strict` |
@@ -228,7 +228,7 @@ The books apps handle whole invoices in USD. What comes next, with dates: [ROADM
 |---|---|---|
 | Contracts | 47 (30 Mandate, 14 registry, 3 invariants) | `forge test` in [`contracts/`](contracts/) |
 | TypeScript | 78 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 38) | `pnpm test` |
-| Odoo add-on | 14, inside Odoo 19 | `integrations/odoo/run.sh test` |
+| Odoo add-on | 28, inside Odoo 19 | `integrations/odoo/run.sh test` |
 | ERPNext app | 25, inside ERPNext 15, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` |
 
 Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction). Each record
@@ -246,7 +246,7 @@ lists every check it made under `checks`.
 | [try](deployments/try-e2e.json) | 10/10 | The judge path on the demo org, end to end. |
 | [invoice](deployments/invoice-e2e.json) | 12/12 | Claude reads an invoice with quotes; the payee signs the proposal; payment instructions in the invoice are flagged. |
 | [x402](deployments/x402-e2e.json) | 11/11 | A 402, then two paid calls settled through Circle Gateway, counted on the dashboard. |
-| [odoo](deployments/odoo-e2e.json) | 25/25 | A real Odoo 19 bill paid on Arc and recorded back exactly, once. |
+| [odoo](deployments/odoo-e2e.json) | 27/27 | A real Odoo 19 bill paid on Arc and recorded back exactly, once; a sent bill cannot also be paid by hand, and cancelling it withdraws it from SendSure. |
 | [erpnext](deployments/erpnext-e2e.json) | 29/29 | A real ERPNext 15 purchase invoice paid on Arc and recorded back exactly, once. |
 | [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
 

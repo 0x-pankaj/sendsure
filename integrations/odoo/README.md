@@ -71,7 +71,7 @@ pnpm e2e:odoo     # needs ./run.sh up first
 
 ## Tests and live runs
 
-- **Odoo tests** (`./run.sh test`), 14 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
+- **Odoo tests** (`./run.sh test`), 28 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
   - currency and journal setup;
   - invite-link parsing;
   - only the proven wallet can be trusted;
@@ -83,13 +83,25 @@ pnpm e2e:odoo     # needs ./run.sh up first
   - an exact payment is recorded once;
   - half a cent is not rounded away;
   - a payment to an untrusted address is not recorded;
-  - the cron job runs the agent and records the payment.
-- **Live run** ([`deployments/odoo-e2e.json`](../../deployments/odoo-e2e.json)), 25 of 25 checks passed.
+  - the cron job runs the agent and records the payment;
+  - when the bill changes after it was sent: cancelling or resetting it withdraws it from SendSure (and it can be
+    sent again after editing); a bill already paid on Arc cannot be cancelled; no hand payment while SendSure is
+    paying; a payment for a bill that is no longer posted waits for a person; a transaction recorded for one bill
+    is never reused for another;
+  - one bill that fails to record never blocks the others; a manager can record a payment that needs review,
+    and SendSure states exactly what Odoo rounded away;
+  - sending several bills goes on past one refusal;
+  - nobody can type an Arc transaction on a payment (UI, RPC or the wizard), and a recorded one cannot be reset;
+  - a wallet created already trusted must be the proven one; a stray trusted wallet loses its trust; moving back to
+    an old address needs trust again; relinking a vendor untrusts its wallets.
+- **Live run** ([`deployments/odoo-e2e.json`](../../deployments/odoo-e2e.json)), 27 of 27 checks passed.
   An "AP agent" user with only the Invoicing role linked a vendor and sent a 0.25 USD bill. The admin
   could not trust a wallet that was slipped onto the vendor. The vendor signed the bill, and a claim for
   a different amount was refused. The cron job ran the agent, and the payment waited for a co-sign.
   After the owner co-signed on-chain, the next cron run paid it on Arc. Odoo then recorded 0.25 USDC
   through Register Payment with the tx in the memo, and the bill was paid with 0.00 left open.
+  A second bill could not be paid by hand while it was with SendSure, and cancelling it in Odoo
+  withdrew it from SendSure.
 
 ## Files
 
@@ -102,5 +114,13 @@ pnpm e2e:odoo     # needs ./run.sh up first
 | [`models/account_payment.py`](sendsure_payables/models/account_payment.py) | The SendSure payment method: needs a trusted wallet and refuses a payment without an Arc tx. |
 | [`models/account_move.py`](sendsure_payables/models/account_move.py) | "Pay with SendSure", status sync, and exact recording of each settlement. |
 | [`apps/web/lib/integrations.ts`](../../apps/web/lib/integrations.ts) | SendSure's side: hashed, revocable integration keys and the `/api/v1` endpoints. |
+
+If a bill is cancelled, reset to draft or deleted after "Pay with SendSure", Odoo first withdraws it from SendSure,
+so the agent never pays it. If SendSure already paid it, Odoo refuses to cancel it and records the payment instead.
+While a bill is with SendSure, Register Payment refuses to pay it another way. If a payment ever cannot be recorded
+automatically (a different amount, a wallet no longer trusted), the bill says why, and an accounting manager can
+record the exact Arc amount with "Record SendSure payment"; any difference Odoo would round away is stated on the bill.
+
+The SendSure API is used only by accounting users and the cron; its methods cannot be called over RPC.
 
 One SendSure org per Odoo database. Testnet only today.

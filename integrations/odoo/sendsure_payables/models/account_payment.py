@@ -1,5 +1,5 @@
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 METHOD = 'sendsure_usdc'
 
@@ -10,7 +10,8 @@ class AccountPaymentMethod(models.Model):
     @api.model
     def _get_payment_method_information(self):
         res = super()._get_payment_method_information()
-        res[METHOD] = {'mode': 'multi', 'type': ('bank',)}
+        # 'unique': one journal per company (the SendSure journal), so it never shows up on other bank journals.
+        res[METHOD] = {'mode': 'unique', 'type': ('bank',)}
         return res
 
 
@@ -33,6 +34,30 @@ class AccountPayment(models.Model):
         # method turns Odoo's own "recipient must be trusted" check on for USDC payouts.
         return super()._get_method_codes_needing_bank_account() + [METHOD]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # The Arc transaction is a fact read from the chain by SendSure's own recording (which runs as sudo).
+        # Nobody may type one in, over the UI or RPC.
+        if not self.env.su and any(vals.get('sendsure_tx') for vals in vals_list):
+            raise AccessError(_("Only SendSure records an Arc transaction on a payment."))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'sendsure_tx' in vals and not self.env.su:
+            raise AccessError(_("Only SendSure records an Arc transaction on a payment."))
+        return super().write(vals)
+
+    def action_draft(self):
+        if not self.env.su and self.filtered('sendsure_tx'):
+            raise UserError(_("This payment was recorded from a transaction on Arc. It cannot be reset: the money moved. "
+                              "Book any correction as a separate entry."))
+        return super().action_draft()
+
+    def action_cancel(self):
+        if not self.env.su and self.filtered('sendsure_tx'):
+            raise UserError(_("This payment was recorded from a transaction on Arc. It cannot be cancelled: the money moved."))
+        return super().action_cancel()
+
     def action_post(self):
         for payment in self:
             if payment.payment_method_code == METHOD and payment.payment_type == 'outbound' and not payment.sendsure_tx:
@@ -47,6 +72,6 @@ class AccountPaymentRegister(models.TransientModel):
 
     def _create_payment_vals_from_wizard(self, batch_result):
         vals = super()._create_payment_vals_from_wizard(batch_result)
-        if self.env.context.get('sendsure_tx'):
+        if self.env.su and self.env.context.get('sendsure_tx'):
             vals['sendsure_tx'] = self.env.context['sendsure_tx']
         return vals

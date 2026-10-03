@@ -27,6 +27,8 @@ STATES = [
 ]
 # States that can still change on SendSure's side.
 IN_FLIGHT = ('waiting_for_payee', 'signed', 'needs_cosign', 'held', 'paid_unconfirmed')
+# Ended without a payment: the bill may be sent again (after it is withdrawn from SendSure).
+RESENDABLE = ('withdrawn', 'rejected_by_payee', 'refused')
 USDC_DECIMALS = 6
 EXPLORER_TX = 'https://explorer.testnet.arc.io/tx/%s'
 
@@ -95,9 +97,22 @@ class AccountMove(models.Model):
         }
 
     def action_sendsure_send(self):
+        """Every bill is checked first; only then is anything sent. A bill SendSure refuses gets the reason on it
+        and the others are still sent, so no bill exists in SendSure without Odoo knowing its id."""
         client = self.env['sendsure.client']
-        for bill in self:
-            out = client.send_bill(bill._sendsure_payload())
+        bills = self.filtered(lambda m: not m.sendsure_state or m.sendsure_state in RESENDABLE)
+        for bill in bills.filtered(lambda m: m.sendsure_external_id):
+            bill._sendsure_withdraw_quietly()
+        payloads = [(bill, bill._sendsure_payload()) for bill in bills]
+        for bill, payload in payloads:
+            try:
+                out = client.send_bill(payload)
+            except SendSureError as err:
+                if len(payloads) == 1:
+                    raise
+                bill.write({'sendsure_reason': ("SendSure refused it: %s" % err)[:250]})
+                bill._message_log(body=_("SendSure did not take this bill: %(err)s", err=str(err)))
+                continue
             bill.sendsure_external_id = out['external_id']
             bill._sendsure_apply(out)
             if not out.get('duplicate'):
@@ -107,6 +122,64 @@ class AccountMove(models.Model):
                     % {'amount': escape(out.get('amount_usdc', ''))})
         return True
 
+    # ------------------------------------------------------------------ withdraw (cancel, reset, delete)
+
+    def _sendsure_withdraw_quietly(self):
+        """For a bill that ended without a payment: free its id in SendSure so it can be sent again."""
+        for bill in self.filtered('sendsure_external_id'):
+            try:
+                self.env['sendsure.client'].withdraw(bill.sendsure_external_id)
+            except SendSureError as err:
+                if err.code == 'ALREADY_PAID':
+                    raise UserError(_("SendSure already paid %(bill)s on Arc; it will be recorded here.", bill=bill.name)) from err
+                raise
+            bill.sendsure_external_id = False
+
+    def _sendsure_withdraw(self, what):
+        """Called after Odoo cancelled, reset or is deleting bills: SendSure must not pay them. If SendSure cannot
+        confirm that, the whole action is undone (an error rolls back the transaction)."""
+        for bill in self.filtered(lambda m: m.sendsure_external_id and m.sendsure_state in IN_FLIGHT):
+            try:
+                self.env['sendsure.client'].withdraw(bill.sendsure_external_id)
+            except SendSureError as err:
+                if err.code == 'ALREADY_PAID':
+                    raise UserError(_(
+                        "SendSure already paid %(bill)s on Arc, so it cannot be %(what)s. The payment is recorded here at the "
+                        "next sync (or click Refresh SendSure).", bill=bill.name, what=what)) from err
+                raise UserError(_(
+                    "%(bill)s was not %(what)s: SendSure could not confirm it will not pay it (%(err)s). Try again in a minute.",
+                    bill=bill.name, what=what, err=str(err))) from err
+            if bill.exists():
+                bill.write({'sendsure_state': 'withdrawn', 'sendsure_external_id': False,
+                            'sendsure_reason': _("Withdrawn from SendSure when the bill was %(what)s.", what=what)})
+                bill._message_log(body=_("Withdrawn from SendSure (the bill was %(what)s): the agent will not pay it.", what=what))
+
+    def button_draft(self):
+        res = super().button_draft()
+        self._sendsure_withdraw(_("reset to draft"))
+        return res
+
+    def button_cancel(self):
+        res = super().button_cancel()
+        self._sendsure_withdraw(_("cancelled"))
+        return res
+
+    def unlink(self):
+        in_flight = self.filtered(lambda m: m.sendsure_external_id and m.sendsure_state in IN_FLIGHT)
+        if in_flight:
+            in_flight._sendsure_withdraw(_("deleted"))
+        return super().unlink()
+
+    def action_register_payment(self):
+        if not self.env.context.get('sendsure_tx'):
+            busy = self.filtered(lambda m: m.sendsure_state in IN_FLIGHT)
+            if busy:
+                raise UserError(_(
+                    "%(bill)s is being paid with SendSure. Paying it another way could pay the vendor twice. Reset it to "
+                    "draft or cancel it first (that withdraws it from SendSure), or wait for the payment to be recorded.",
+                    bill=busy[0].name))
+        return super().action_register_payment()
+
     # ------------------------------------------------------------------ sync
 
     def action_sendsure_refresh(self):
@@ -114,14 +187,28 @@ class AccountMove(models.Model):
         return True
 
     def _sendsure_sync(self):
+        """Each bill on its own: one bill that cannot be recorded never blocks the others."""
         bills = self.filtered('sendsure_external_id')
         if not bills:
             return
         by_id = {b['external_id']: b for b in self.env['sendsure.client'].bills(bills.mapped('sendsure_external_id'))}
         for bill in bills:
             info = by_id.get(bill.sendsure_external_id)
-            if info:
-                bill._sendsure_apply(info)
+            if not info:
+                if bill.sendsure_state in IN_FLIGHT:
+                    bill.write({'sendsure_state': 'withdrawn', 'sendsure_external_id': False,
+                                'sendsure_reason': _("Not found in SendSure any more (withdrawn).")})
+                continue
+            try:
+                with self.env.cr.savepoint():
+                    bill._sendsure_apply(info)
+            except SendSureError as err:
+                _logger.warning("SendSure: %s: %s", bill.name, err)
+            except Exception as err:  # noqa: BLE001 - a person must look at this bill; the others go on
+                _logger.exception("SendSure: could not apply the status of %s", bill.name)
+                if info.get('status') == 'paid':
+                    bill.write({'sendsure_state': 'needs_review',
+                                'sendsure_reason': (_("Paid on Arc, but Odoo could not record it: %s") % err)[:250]})
 
     def _sendsure_apply(self, info):
         self.ensure_one()
@@ -134,18 +221,25 @@ class AccountMove(models.Model):
         self.write({'sendsure_state': status if status in dict(STATES) else 'held',
                     'sendsure_reason': (info.get('reason') or '')[:250]})
 
-    def _sendsure_record_payment(self, info):
-        """Record what Arc says was paid, through Odoo's own Register Payment, only if it is exact."""
+    def _sendsure_record_payment(self, info, accept_difference=False):
+        """Record what Arc says was paid, through Odoo's own Register Payment, only if it is exact.
+        `accept_difference`: a manager decided to record the exact Arc amount and book the rest by hand."""
         self.ensure_one()
         s = info['settlement']
         tx = s['tx']
         paid = Decimal(s['amount']).scaleb(-USDC_DECIMALS)  # exact: atomic units / 10^6
         base = {'sendsure_tx': tx, 'sendsure_amount_paid': str(paid), 'sendsure_receipt_url': info.get('receipt_url')}
-        if self.env['account.payment'].sudo().search_count([('sendsure_tx', '=', tx)]):
-            self.write(dict(base, sendsure_state='paid', sendsure_reason=info.get('reason')))
+        recorded = self.env['account.payment'].sudo().search([('sendsure_tx', '=', tx)])
+        if recorded:
+            if self in recorded.reconciled_bill_ids:
+                self.write(dict(base, sendsure_state='paid', sendsure_reason=info.get('reason')))
+            else:
+                self.write(dict(base, sendsure_state='needs_review', sendsure_reason=_(
+                    "This Arc transaction is already recorded as %(payment)s for another bill. Check which bill it paid.",
+                    payment=', '.join(recorded.mapped('name')))))
             return
         vendor = self.partner_id.commercial_partner_id
-        problem = self._sendsure_exactness_problem(paid, s['payout'])
+        problem = self._sendsure_exactness_problem(paid, s['payout'], accept_difference)
         if problem:
             self.write(dict(base, sendsure_state='needs_review', sendsure_reason=problem[:250]))
             self._message_log(body=Markup(_(
@@ -156,7 +250,8 @@ class AccountMove(models.Model):
         journal = company.sendsure_journal_id
         line = journal.outbound_payment_method_line_ids.filtered(lambda l: l.code == METHOD)[:1]
         wallet = self._sendsure_wallet_for(vendor, s['payout'])
-        wizard = self.env['account.payment.register'].with_company(company).with_context(
+        # sudo: only SendSure's own recording may put an Arc transaction on a payment (see account_payment.py).
+        wizard = self.env['account.payment.register'].sudo().with_company(company).with_context(
             active_model='account.move', active_ids=self.ids, sendsure_tx=tx,
         ).create({
             'journal_id': journal.id,
@@ -168,11 +263,21 @@ class AccountMove(models.Model):
             'communication': 'SendSure %s' % tx,
             'payment_difference_handling': 'open',
         })
+        open_before = Decimal(float_repr(self.amount_residual, self.currency_id.decimal_places))
         payments = wizard._create_payments()
         self.write(dict(base, sendsure_state='paid', sendsure_reason=info.get('reason')))
+        if accept_difference and paid != open_before and self.currency_id.is_zero(self.amount_residual):
+            # Odoo keeps the bill's currency at its own precision (cents for USD) and absorbs what is below it,
+            # without a write-off. Say exactly how much, so nobody thinks the amounts matched.
+            note = _("Recorded %(paid)s USDC against %(open)s %(cur)s. Odoo absorbed the %(diff)s difference at %(cur)s's "
+                     "precision, with no write-off: book it explicitly if it matters.",
+                     paid=paid, open=open_before, cur=self.currency_id.name, diff=format(abs(open_before - paid).normalize(), 'f'))
+            self.write({'sendsure_reason': note[:250]})
+            self._message_log(body=note)
         if not self.currency_id.is_zero(self.amount_residual):
-            self.write({'sendsure_state': 'needs_review',
-                        'sendsure_reason': _("Recorded, but %(left)s is still open on the bill.",
+            self.write({'sendsure_state': 'paid' if accept_difference else 'needs_review',
+                        'sendsure_reason': _("Recorded the exact Arc amount; %(left)s is still open on the bill. Book that "
+                                             "difference explicitly.",
                                              left=float_repr(self.amount_residual, self.currency_id.decimal_places))})
         self._message_log(body=Markup(_(
             "Paid on Arc: %(amount)s USDC to %(vendor)s's proven address <code>%(payout)s</code>. "
@@ -182,12 +287,15 @@ class AccountMove(models.Model):
                 'url': EXPLORER_TX % tx, 'receipt': escape(info.get('receipt_url') or ''),
                 'payment': escape(', '.join(payments.mapped('name')))})
 
-    def _sendsure_exactness_problem(self, paid, payout):
+    def _sendsure_exactness_problem(self, paid, payout, accept_difference=False):
         """Why this settlement cannot be recorded as-is, or None. Odoo marks a $250.00 bill paid by 249.995
         USDC with no write-off at all, so anything but an exact match is left for a person."""
         self.ensure_one()
+        if self.state != 'posted':
+            return _("SendSure paid this bill on Arc, but in Odoo it is %(state)s. Post it again to record the payment.",
+                     state=dict(self._fields['state'].selection).get(self.state, self.state))
         open_amount = Decimal(float_repr(self.amount_residual, self.currency_id.decimal_places))
-        if paid != open_amount:
+        if paid != open_amount and not accept_difference:
             return _("Arc paid %(paid)s USDC but the bill's open amount is %(open)s %(cur)s. Odoo would round the "
                      "difference away without a write-off, so record it by hand and book the difference explicitly.",
                      paid=paid, open=open_amount, cur=self.currency_id.name)
@@ -198,6 +306,27 @@ class AccountMove(models.Model):
         if not self.company_id.sendsure_journal_id:
             return _("The SendSure journal is missing. Run \"Test connection\" in the settings.")
         return None
+
+    def action_sendsure_record_review(self):
+        """Accounting managers: record a payment SendSure made on Arc that could not be recorded automatically.
+        The exact Arc amount is recorded; any difference stays open on the bill, to be booked explicitly."""
+        if not self.env.user.has_group('account.group_account_manager'):
+            raise UserError(_("Only an accounting manager can record a payment that needs review."))
+        bills = self.filtered(lambda m: m.sendsure_state == 'needs_review' and m.sendsure_tx)
+        if not bills:
+            return True
+        ids = self.env['sendsure.client'].bills(bills.mapped(lambda b: b.sendsure_external_id or ''))
+        by_tx = {b.get('settlement', {}).get('tx'): b for b in ids if b.get('status') == 'paid'}
+        for bill in bills:
+            info = by_tx.get(bill.sendsure_tx)
+            if not info:
+                raise UserError(_("SendSure no longer reports %(bill)s as paid. Click Refresh SendSure first.", bill=bill.name))
+            bill.sendsure_state = 'paid_unconfirmed'
+            bill._sendsure_record_payment(info, accept_difference=True)
+            if bill.sendsure_state == 'needs_review':
+                raise UserError(bill.sendsure_reason)
+            bill._message_log(body=_("%(user)s recorded this SendSure payment after review.", user=self.env.user.name))
+        return True
 
     def _sendsure_wallet_for(self, vendor, payout):
         return self.env['res.partner.bank'].sudo().search([
@@ -210,6 +339,7 @@ class AccountMove(models.Model):
         client = self.env['sendsure.client']
         if not client.is_configured():
             return
+        self.env['res.company'].search([('sendsure_journal_id', '!=', False)])._sendsure_maintain()
         self.env['res.partner']._cron_sendsure_refresh_vendors()
         bills = self.search([('sendsure_state', 'in', IN_FLIGHT)])
         try:

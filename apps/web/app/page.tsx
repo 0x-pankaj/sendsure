@@ -186,7 +186,7 @@ export default function Home() {
         <div className="split">
           <div className="cards" style={{ gridTemplateColumns: "1fr" }}>
             <div className="card">
-              <span className="tag">Add-on · live run 25/25</span>
+              <span className="tag">Add-on · live run 27/27</span>
               <h3>Odoo 19</h3>
               <p>
                 &ldquo;Pay with SendSure&rdquo; on a vendor bill. Odoo trusts only the wallet the vendor proved, and each

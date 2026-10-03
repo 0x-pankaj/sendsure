@@ -69,3 +69,41 @@ describe("integration keys", () => {
     await expect(requireKey(req("sk_live_other"))).rejects.toThrow(/Bearer/);
   });
 });
+
+describe("withdrawing a bill the books cancelled", () => {
+  it("stops a waiting or signed bill, frees its id, and refuses once it is paid", async () => {
+    const { withdrawBill } = await import("../lib/integrations");
+    const { getDb } = await import("../lib/db");
+    const db = await getDb();
+    const now = 1_790_000_000;
+    const proposal = (id: string, ext: string, claim: string | null, status: string) =>
+      db.run(
+        `INSERT INTO proposals (id, org, payee_ref, invoice_ref, amount, period_start, period_end, description, extraction, source, status, claim_id, external_system, external_id, created_at, updated_at)
+         VALUES (?, ?, ?, 'INV-1', '250000000', 0, 1, '', '{}', 'odoo', ?, ?, 'odoo', ?, ?, ?)`,
+        id, ORG, REF, status, claim, ext, now, now,
+      );
+    const claim = (id: string, status: string) =>
+      db.run(
+        `INSERT INTO claims (claim_id, org, payee_ref, payout, token, amount, ref_hash, invoice_ref, period_start, period_end, nonce, valid_until, payee_sig, description, source, status, created_at, updated_at)
+         VALUES (?, ?, ?, '0x1', '0x2', '250000000', ?, 'INV-1', 0, 1, '1', 9, '0x', '', 'invoice', ?, ?, ?)`,
+        id, ORG, REF, `0x${id.slice(2).padEnd(64, "0")}`, status, now, now,
+      );
+
+    await proposal("p1", "odoo:db:account.move:1", null, "proposed");
+    expect((await withdrawBill(ORG as never, { external_id: "odoo:db:account.move:1" })).status).toBe("withdrawn");
+    expect(await db.first("SELECT id FROM proposals WHERE external_id = 'odoo:db:account.move:1'")).toBeNull();
+
+    await claim("0xc2", "open");
+    await proposal("p2", "odoo:db:account.move:2", "0xc2", "claimed");
+    await withdrawBill(ORG as never, { external_id: "odoo:db:account.move:2" });
+    expect((await db.first<{ status: string }>("SELECT status FROM claims WHERE claim_id = '0xc2'"))?.status).toBe("withdrawn");
+
+    await claim("0xc3", "settled");
+    await proposal("p3", "odoo:db:account.move:3", "0xc3", "claimed");
+    await expect(withdrawBill(ORG as never, { external_id: "odoo:db:account.move:3" })).rejects.toThrow(/already paid/);
+    expect((await db.first<{ status: string }>("SELECT status FROM claims WHERE claim_id = '0xc3'"))?.status).toBe("settled");
+
+    // Unknown (already withdrawn) is fine: cancelling twice must not fail.
+    expect((await withdrawBill(ORG as never, { external_id: "odoo:db:account.move:9" })).status).toBe("withdrawn");
+  });
+});

@@ -43,8 +43,8 @@ export default function BooksPage() {
       <section className="section">
         <h2>Odoo 19</h2>
         <p className="sub">
-          An add-on for Odoo Community. It was tested inside Odoo (14 tests) and end to end: a real Odoo bill paid on Arc
-          testnet and recorded back, 25 of 25 checks.
+          An add-on for Odoo Community. It was tested inside Odoo (28 tests) and end to end: a real Odoo bill paid on Arc
+          testnet and recorded back, 27 of 27 checks.
         </p>
         <div className="split">
           <div>

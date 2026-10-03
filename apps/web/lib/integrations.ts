@@ -433,6 +433,36 @@ export async function listBills(org: Address, idsParam: string | null, origin: s
   return { bills: await Promise.all(rows.map((r) => billStatus(org, r, origin))) };
 }
 
+/**
+ * The books system cancelled a bill it sent (cancel, reset to draft, delete). It is withdrawn so the agent
+ * never pays it, unless it is already paid: then 409 ALREADY_PAID and the books must record the payment.
+ * The bill's id is freed, so the same bill can be sent again after it is edited and posted.
+ */
+export async function withdrawBill(org: Address, body: unknown) {
+  const b = toObject(body);
+  const externalId = typeof b.external_id === "string" ? b.external_id.trim() : "";
+  if (!externalId) throw new RelayError(400, "external_id is required.", "BAD_INPUT");
+  const db = await getDb();
+  const p = await db.first<ProposalRow>("SELECT * FROM proposals WHERE org = ? AND external_id = ?", org, externalId);
+  if (!p) return { external_id: externalId, status: "withdrawn", reason: "Not found in SendSure (already withdrawn)." };
+  const c = p.claim_id
+    ? await db.first<{ status: string; settle_tx: Hex | null }>("SELECT status, settle_tx FROM claims WHERE claim_id = ?", p.claim_id)
+    : null;
+  if (c?.status === "settled")
+    throw new RelayError(409, "This bill is already paid on Arc. Record the payment instead of cancelling the bill.", "ALREADY_PAID");
+  const now = nowSec();
+  if (p.claim_id && c && c.status !== "withdrawn")
+    await db.run("UPDATE claims SET status = 'withdrawn', updated_at = ? WHERE claim_id = ? AND status != 'settled'", now, p.claim_id);
+  // Keep the record for the audit trail, under an id the books will not ask for again.
+  await db.run(
+    "UPDATE proposals SET status = 'withdrawn', external_id = ?, updated_at = ? WHERE id = ?",
+    `${externalId}#withdrawn-${now}`,
+    now,
+    p.id,
+  );
+  return { external_id: externalId, status: "withdrawn", reason: "Withdrawn: the agent will not pay it." };
+}
+
 /** Ask the agent to run now. It pays only claims that pass the contract; people still co-sign. */
 export async function runAgentForKey(org: Address) {
   // Its own budget, so a books system's runs never block a person's "Run the agent" in /org.

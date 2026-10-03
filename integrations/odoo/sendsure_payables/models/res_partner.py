@@ -6,7 +6,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
-from .sendsure_client import PAYEE_REF, SendSureError
+from .sendsure_client import PAYEE_REF, SendSureError, is_evm_address
 
 _logger = logging.getLogger(__name__)
 
@@ -53,7 +53,25 @@ class ResPartner(models.Model):
         if 'sendsure_payee_ref' in vals:
             vals = dict(vals, sendsure_payee_ref=self._sendsure_parse_ref(vals['sendsure_payee_ref']),
                         sendsure_state=False, sendsure_address=False, sendsure_checked_at=False)
+            relinked = self.filtered(lambda p: p.sendsure_payee_ref and p.sendsure_payee_ref != vals['sendsure_payee_ref'])
+            res = super().write(vals)
+            # A vendor linked to another invite starts again: no wallet stays trusted until a person trusts the new one.
+            for partner in relinked:
+                partner._sendsure_untrust_wallets(_("the vendor was linked to another SendSure invite"))
+            return res
         return super().write(vals)
+
+    def _sendsure_untrust_wallets(self, why, keep=None):
+        """Archive and untrust this vendor's wallets (except `keep`), and say so on the vendor."""
+        self.ensure_one()
+        wallets = self.env['res.partner.bank'].sudo().search([('partner_id', '=', self.id)]).filtered(
+            lambda b: is_evm_address(b.acc_number)
+            and (not keep or sanitize_account_number(b.acc_number) != sanitize_account_number(keep)))
+        if not wallets:
+            return
+        wallets.write({'allow_out_payment': False, 'active': False})
+        self._message_log(body=_("SendSure: %(n)s wallet(s) archived and no longer trusted because %(why)s.",
+                                 n=len(wallets), why=why))
 
     def action_sendsure_refresh(self):
         self._sendsure_refresh()
@@ -77,6 +95,17 @@ class ResPartner(models.Model):
                 partner._sendsure_address_changed(old, new)
             if new:
                 partner._sendsure_wallet(new)
+                # A wallet trusted before SendSure was linked (or by any other route) that is not the proven address
+                # must not stay trusted.
+                stray = self.env['res.partner.bank'].sudo().search([
+                    ('partner_id', '=', partner.id), ('allow_out_payment', '=', True)]).filtered(
+                    lambda b: is_evm_address(b.acc_number)
+                    and sanitize_account_number(b.acc_number) != sanitize_account_number(new))
+                if stray:
+                    stray.write({'allow_out_payment': False})
+                    partner._message_log(body=_(
+                        "SendSure: %(addr)s is not the address %(vendor)s proved, so it is no longer trusted.",
+                        addr=', '.join(stray.mapped('acc_number')), vendor=partner.name))
             partner.write({'sendsure_state': state, 'sendsure_address': new or False, 'sendsure_checked_at': now})
 
     def _sendsure_wallet(self, address):
@@ -101,7 +130,8 @@ class ResPartner(models.Model):
         self.ensure_one()
         old_banks = self.env['res.partner.bank'].sudo().search([
             ('partner_id', '=', self.id), ('sanitized_acc_number', '=', sanitize_account_number(old))])
-        old_banks.write({'active': False})
+        # Untrusted as well as archived: if the vendor ever moves back to it, a person trusts it again.
+        old_banks.write({'active': False, 'allow_out_payment': False})
         self._message_log(body=Markup(_(
             "SendSure: %(vendor)s changed their proven payout address from <code>%(old)s</code> to <code>%(new)s</code>. "
             "SendSure accepts a change only when both the old and the new wallet sign it, after a waiting period the payer "

@@ -2,6 +2,8 @@ import logging
 
 from odoo import _, fields, models
 
+from .account_payment import METHOD
+
 _logger = logging.getLogger(__name__)
 
 
@@ -62,8 +64,23 @@ class ResCompany(models.Model):
                 self.env['account.payment.method.line'].sudo().create({
                     'journal_id': journal.id, 'payment_method_id': method.id, 'name': _("USDC on Arc (SendSure)"),
                 })
-            # Community's "Manual" method never checks that the recipient is trusted, so this journal has none:
-            # money leaves it only through SendSure.
-            manual = journal.outbound_payment_method_line_ids.filtered(lambda l: l.code == 'manual')
-            if manual:
-                manual.sudo().unlink()
+        self._sendsure_maintain()
+
+    def _sendsure_maintain(self):
+        """Run at setup and by the cron: the journal's only way out is SendSure, and USDC stays at 1:1 to USD."""
+        usc = self.env.ref('sendsure_payables.currency_usc', raise_if_not_found=False)
+        usd = self.env.ref('base.USD')
+        for company in self.filtered('sendsure_journal_id'):
+            # Community's "Manual" (or any other method) never checks that the recipient is trusted, so this
+            # journal has none of them: money leaves it only through SendSure.
+            others = company.sendsure_journal_id.outbound_payment_method_line_ids.filtered(lambda l: l.code != METHOD)
+            if others:
+                others.sudo().unlink()
+            # In a company kept in another currency, USC follows USD's rate day by day (one USDC is one dollar).
+            if usc and company.currency_id != usd:
+                today = fields.Date.context_today(self.with_company(company))
+                Rate = self.env['res.currency.rate'].sudo()
+                if not Rate.search_count([('currency_id', '=', usc.id), ('company_id', '=', company.id), ('name', '=', today)]):
+                    usd_rate = usd.with_company(company)._get_rates(company, today).get(usd.id)
+                    if usd_rate:
+                        Rate.create({'currency_id': usc.id, 'company_id': company.id, 'name': today, 'rate': usd_rate})

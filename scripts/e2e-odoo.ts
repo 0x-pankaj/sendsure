@@ -222,6 +222,30 @@ check(/recorded by SendSure/.test(manual ?? ""), `a hand-made USDC payment in th
 const bills = (await api(base, `/api/v1/bills?ids=${encodeURIComponent(b.sendsure_external_id)}`, { token: key })).body.bills as any[];
 check(bills?.[0]?.settlement?.amount === "250000" && bills[0].settlement.payout === s.payee.address, `SendSure's view matches: Settled event carries 250000 (0.25 USDC) to ${s.payee.address}`);
 
+// 7. A bill cancelled in Odoo after it was sent is withdrawn from SendSure: the agent will never pay it.
+const second = await agent("account.move", "create", [
+  {
+    move_type: "in_invoice",
+    partner_id: vendor,
+    invoice_date: new Date().toISOString().slice(0, 10),
+    ref: `${invoiceRef}-B`,
+    currency_id: (await admin("ir.model.data", "check_object_reference", ["base", "USD"]))[1],
+    invoice_line_ids: [[0, 0, { name: "Second bill", quantity: 1, price_unit: 0.15, tax_ids: [[6, 0, []]] }]],
+  },
+]);
+await agent("account.move", "action_post", [[second]]);
+await agent("account.move", "action_sendsure_send", [[second]]);
+const [sent2] = (await agent("account.move", "read", [[second], ["sendsure_external_id", "sendsure_state"]])) as any[];
+const handPay = await refused(agent("account.move", "action_register_payment", [[second]]));
+await agent("account.move", "button_cancel", [[second]]);
+const [cancelled] = (await agent("account.move", "read", [[second], ["state", "sendsure_state", "sendsure_external_id"]])) as any[];
+const stillThere = (await api(base, `/api/v1/bills?ids=${encodeURIComponent(sent2.sendsure_external_id)}`, { token: key })).body.bills as any[];
+check(sent2.sendsure_state === "waiting_for_payee" && /being paid with SendSure/.test(handPay ?? ""), `a sent bill cannot also be paid by hand in Odoo (no double payment)`);
+check(
+  cancelled.state === "cancel" && cancelled.sendsure_state === "withdrawn" && !cancelled.sendsure_external_id && stillThere.length === 0,
+  `cancelling a sent bill in Odoo withdraws it from SendSure: the agent will not pay it`,
+);
+
 writeFileSync(
   resolve(import.meta.dirname, "../deployments/odoo-e2e.json"),
   `${JSON.stringify(withChecks(

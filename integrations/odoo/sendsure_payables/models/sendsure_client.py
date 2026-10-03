@@ -10,7 +10,7 @@ import re
 import requests
 
 from odoo import _, api, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -56,6 +56,9 @@ class SendSureClient(models.AbstractModel):
 
     @api.model
     def _call(self, method, path, params=None, payload=None, timeout=TIMEOUT):
+        # The org's key is used for whoever triggers the call, so only accounting users (and the cron) may.
+        if not (self.env.su or self.env.is_superuser() or self.env.user.has_group('account.group_account_invoice')):
+            raise AccessError(_("Only accounting users can use SendSure."))
         url, key = self._config()
         if not key:
             raise SendSureError(_("SendSure is not connected. Add your key in Invoicing > Configuration > Settings."),
@@ -81,10 +84,12 @@ class SendSureClient(models.AbstractModel):
 
     # One method per endpoint, so tests can replace them.
 
+    @api.private
     @api.model
     def org(self):
         return self._call('GET', '/api/v1/org')
 
+    @api.private
     @api.model
     def payees(self, refs):
         out = []
@@ -93,14 +98,17 @@ class SendSureClient(models.AbstractModel):
             out += self._call('GET', '/api/v1/payees', params={'refs': ','.join(refs[i:i + 50])})['payees']
         return out
 
+    @api.private
     @api.model
     def verify(self, address):
         return self._call('GET', '/api/v1/verify', params={'address': address})
 
+    @api.private
     @api.model
     def send_bill(self, payload):
         return self._call('POST', '/api/v1/bills', payload=payload)
 
+    @api.private
     @api.model
     def bills(self, external_ids):
         out = []
@@ -109,6 +117,12 @@ class SendSureClient(models.AbstractModel):
             out += self._call('GET', '/api/v1/bills', params={'ids': ','.join(ids[i:i + 100])})['bills']
         return out
 
+    @api.private
+    @api.model
+    def withdraw(self, external_id):
+        return self._call('POST', '/api/v1/bills/withdraw', payload={'external_id': external_id})
+
+    @api.private
     @api.model
     def run_agent(self):
         return self._call('POST', '/api/v1/agent/run', timeout=AGENT_RUN_TIMEOUT)
