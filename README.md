@@ -248,6 +248,7 @@ lists every check it made under `checks`.
 | [x402](deployments/x402-e2e.json) | 11/11 | A 402, then two paid calls settled through Circle Gateway, counted on the dashboard. |
 | [odoo](deployments/odoo-e2e.json) | 25/25 | A real Odoo 19 bill paid on Arc and recorded back exactly, once. |
 | [erpnext](deployments/erpnext-e2e.json) | 29/29 | A real ERPNext 15 purchase invoice paid on Arc and recorded back exactly, once. |
+| [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
 
 The books of the agent run: [beancount](deployments/books-e2e.beancount) (`bean-check`),
 [hledger](deployments/books-e2e.journal) (`hledger check --strict`), [journal CSV](deployments/books-e2e.journal.csv)

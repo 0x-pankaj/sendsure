@@ -1,0 +1,72 @@
+{
+  "note": "Live site in a real browser with a MetaMask-like injected wallet; payer is our deployer key (first-party), payee a fresh key. Not traction.",
+  "ranAtUnix": 1791007125,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0x14CdCdd027E5fc724A4666920fe9871c4A5Bb935",
+  "payee": "0xCe8725025EE03C10FceDdaEC08447A61B20f494a",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x57418cf23d68c711dd62a75dca6a92035ec9e152bc6dd488aad7b36802f2c853",
+  "payment": "https://explorer.testnet.arc.io/tx/0xe8d4c39d52810278ead855afad92fa05facb00c47286c3fc0a376922676754ce",
+  "screenshots": "deployments/wallet-e2e/",
+  "checks": {
+    "passed": 14,
+    "total": 14,
+    "list": [
+      {
+        "ok": true,
+        "what": "payer connected on Ethereum, was asked to switch, Arc testnet was added and switched to (wallet_switchEthereumChain, wallet_addEthereumChain, wallet_switchEthereumChain)"
+      },
+      {
+        "ok": true,
+        "what": "the payer's earlier orgs on Arc are not shown (none found)"
+      },
+      {
+        "ok": true,
+        "what": "org 0x14CdCdd027E5fc724A4666920fe9871c4A5Bb935 created from the page, owned by the payer's wallet, production tier (first-party)"
+      },
+      {
+        "ok": true,
+        "what": "budget signed in the wallet: the contract may spend 3 USDC"
+      },
+      {
+        "ok": true,
+        "what": "invite created; link https://sendsure.0xpankaj.workers.dev/verify?org=0x14CdCdd02…"
+      },
+      {
+        "ok": true,
+        "what": "a real payer's invite offers no test wallet"
+      },
+      {
+        "ok": true,
+        "what": "payee proved 0xCe8725025EE03C10FceDdaEC08447A61B20f494a by signing in the wallet (relayer paid the gas)"
+      },
+      {
+        "ok": true,
+        "what": "payee signed a claim for 0.2 USDC in the wallet; the contract says it needs a co-sign (first payment)"
+      },
+      {
+        "ok": true,
+        "what": "agent run #1 from the page: needs your co-sign"
+      },
+      {
+        "ok": true,
+        "what": "after the agent run the claims list opens by itself, with the co-sign button"
+      },
+      {
+        "ok": true,
+        "what": "payer co-signed on-chain from the wallet: https://explorer.testnet.arc.io/tx/0x57418cf23d68c711dd62a75dca6a92035ec9e152bc6dd488aad7b36802f2c853"
+      },
+      {
+        "ok": true,
+        "what": "agent run #2 paid: payee received 0.2 USDC (https://explorer.testnet.arc.io/tx/0xe8d4c39d52810278ead855afad92fa05facb00c47286c3fc0a376922676754ce)"
+      },
+      {
+        "ok": true,
+        "what": "public receipt shows the payee's proof of address, the claim and the decision"
+      },
+      {
+        "ok": true,
+        "what": "on a fresh browser, the same wallet is offered its org from Arc (\"Open it here\")"
+      }
+    ]
+  }
+}

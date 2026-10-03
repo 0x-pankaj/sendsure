@@ -29,6 +29,7 @@
     "@sendsure/chain": "workspace:*",
     "@sendsure/core": "workspace:*",
     "@types/node": "22.20.4",
+    "playwright": "1.63.0",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "viem": "2.56.9",

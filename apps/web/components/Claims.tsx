@@ -285,9 +285,10 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
     }
   }, [org, signer]);
 
-  // Reload after an agent run (the parent bumps `version`), once claims are shown.
+  // After an agent run (the parent bumps `version`) the payer is signed in: show the claims, so a claim that
+  // needs a co-sign is right there with its button.
   useEffect(() => {
-    if (version && claims) void load();
+    if (version) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
 
@@ -315,7 +316,7 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
     if (cosigned[c.claim_id]) {
       return (
         <div className="hint">
-          Co-signed (<a href={explorerTx(cosigned[c.claim_id]!)}>tx</a>). Run the agent to pay it.
+          Co-signed (<a href={explorerTx(cosigned[c.claim_id]!)}>tx</a>).{c.status === "open" && " Run the agent to pay it (autopilot does it by itself)."}
         </div>
       );
     }
