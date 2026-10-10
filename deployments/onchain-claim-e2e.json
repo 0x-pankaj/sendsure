@@ -1,0 +1,47 @@
+{
+  "note": "First-party test on a SANDBOX org with throwaway keys. Not traction.",
+  "ranAtUnix": 1791664657,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0x71ceE97C3341a24B7DC7C6DD88cE0a3cde4f641b",
+  "payee": "0x00594b2E74f3c6Cd5d901a9e8EAd7CAe09026f56",
+  "submitTx": "0x2f4d58864989ba1b568a1ea957180135bd772b74a04e742f57c26f0a264a3c87",
+  "payment": "0x3f0672dcb791e5015baf1d1c52e68b9db7fcdcf4c49ce65b1a52fc7731eb5f82",
+  "checks": {
+    "passed": 8,
+    "total": 8,
+    "list": [
+      {
+        "ok": true,
+        "what": "sandbox org 0x71ceE97C3341a24B7DC7C6DD88cE0a3cde4f641b with a bound payee 0x00594b2E74f3c6Cd5d901a9e8EAd7CAe09026f56"
+      },
+      {
+        "ok": true,
+        "what": "a claim with no signature that was never sent on Arc is refused (400 NOT_SUBMITTED)"
+      },
+      {
+        "ok": true,
+        "what": "the payee's account sent submitClaim() on Arc: https://explorer.testnet.arc.io/tx/0x2f4d58864989ba1b568a1ea957180135bd772b74a04e742f57c26f0a264a3c87"
+      },
+      {
+        "ok": true,
+        "what": "SendSure stored it with no signature: ESCALATED NEEDS_COSIGN_NEW_PAYOUT (200)"
+      },
+      {
+        "ok": true,
+        "what": "the agent paid it: pay -> Settled 0x3f0672dcb791e5015baf1d1c52e68b9db7fcdcf4c49ce65b1a52fc7731eb5f82"
+      },
+      {
+        "ok": true,
+        "what": "the payee's proven address received 0.2 USDC"
+      },
+      {
+        "ok": true,
+        "what": "replay: authorised on-chain by the payee, check() matches at block 66535027, payment carries the decision hash"
+      },
+      {
+        "ok": true,
+        "what": "another address cannot submit a claim for this payee (NotPayee)"
+      }
+    ]
+  }
+}
