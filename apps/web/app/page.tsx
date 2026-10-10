@@ -425,6 +425,9 @@ export default function Home() {
             <p>USDC moves from your wallet through the contract. Each payment gets a public receipt and lands in your books, exact.</p>
           </div>
         </div>
+        <p className="hint" style={{ marginTop: 20 }}>
+          <a href="/docs">Read the full guide</a>: every step, who can move money, and how to use it for each role.
+        </p>
       </section>
 
       {/* ------------------------------------------------------------ who it is for */}

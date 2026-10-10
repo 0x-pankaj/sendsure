@@ -43,8 +43,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/org">For payers</a>
               <a href="/try">Try it</a>
               <a href="/books">Books</a>
+              <a href="/docs">Docs</a>
               <a href="/dashboard">Dashboard</a>
-              <a href={REPO}>GitHub</a>
             </nav>
             <div className="actions">
               <a className="btn secondary" href="/try">
@@ -74,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <li><a href="/try">Try it, no wallet</a></li>
                   <li><a href="/org">Set up your team</a></li>
                   <li><a href="/verify">For payees</a></li>
+                  <li><a href="/docs">How it works</a></li>
                 </ul>
               </div>
               <div>

@@ -83,6 +83,16 @@ header.site nav a { color: var(--ink-2); text-decoration: none; font-weight: 600
 header.site nav a:hover { color: var(--ink); background: var(--bg-tint); }
 header.site .actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 header.site .actions .btn { padding: 9px 16px; font-size: 0.92rem; }
+header.site .actions .btn { white-space: nowrap; }
+@media (min-width: 981px) {
+  header.site nav { flex-wrap: nowrap; }
+  header.site nav a { white-space: nowrap; }
+}
+@media (min-width: 981px) and (max-width: 1160px) {
+  header.site .wrap { gap: 16px; }
+  header.site nav { gap: 0; }
+  header.site nav a { padding: 8px 9px; }
+}
 @media (max-width: 980px) {
   /* Two rows on small screens: keep it in the page (not sticky) so it never covers the content. */
   header.site { position: static; background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -322,4 +332,84 @@ dl.facts dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
   .ticket .amount { font-size: 1.5rem; }
   .stage { padding: 18px; }
   .float { font-size: 0.8rem; }
+}
+
+/* ------------------------------------------------------------------ docs */
+/* One reading column with a sticky contents rail on wide screens; chips at the top on smaller ones. */
+.docs { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; align-items: start; }
+.docs .toc { position: sticky; top: 92px; padding-top: 6px; }
+.docs .toc nav { display: grid; gap: 2px; margin-left: -10px; }
+.docs .toc nav a { color: var(--ink-2); text-decoration: none; font-size: 0.9rem; font-weight: 600; padding: 6px 10px; border-radius: 8px; }
+.docs .toc nav a:hover { background: var(--bg-tint); color: var(--ink); }
+.doc { min-width: 0; }
+.doc > section { margin-top: 72px; scroll-margin-top: 92px; }
+.doc > section > h2 { font-size: clamp(1.5rem, 2.8vw, 2.1rem); margin: 0 0 12px; }
+.doc > section > .sub { color: var(--muted); font-size: 1.05rem; max-width: 68ch; margin: 0 0 24px; }
+.doc table { min-width: 640px; }
+.doc table.two { min-width: 520px; }
+.doc td.yes { color: var(--pay); font-weight: 700; }
+.doc td.no { color: var(--stop); font-weight: 700; }
+.toc-chips { display: none; }
+@media (max-width: 1080px) {
+  .docs { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .docs .toc { display: none; }
+  .toc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc-chips a { font-size: 0.84rem; font-weight: 700; text-decoration: none; padding: 7px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--ink-2); }
+  .toc-chips a:hover { border-color: var(--brand); color: var(--brand); }
+  .doc > section { scroll-margin-top: 16px; }
+}
+@media (max-width: 600px) {
+  /* One swipeable row on phones, so the contents don't push the guide below the fold. */
+  .toc-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .toc-chips a { white-space: nowrap; }
+}
+
+.flow { list-style: none; margin: 0; padding: 0; counter-reset: flow; max-width: 780px; }
+.flow > li { position: relative; padding: 0 0 26px 60px; }
+.flow > li::before {
+  counter-increment: flow; content: counter(flow);
+  position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--navy); color: #fff; font: 800 0.95rem/40px var(--font-sans); text-align: center;
+}
+.flow > li::after { content: ""; position: absolute; left: 19px; top: 46px; bottom: 6px; width: 2px; background: var(--line); }
+.flow > li:last-child::after { display: none; }
+.flow .who { font: 800 0.7rem/1 var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; color: #6d5bd0; }
+.flow h3 { margin: 6px 0 6px; font-size: 1.08rem; }
+.flow p { margin: 0; color: var(--muted); }
+
+.roles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.roles a { font-weight: 700; font-size: 0.9rem; text-decoration: none; padding: 9px 15px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); background: #fff; }
+.roles a:hover { border-color: var(--brand); color: var(--brand); }
+.guide { margin-top: 22px; padding: clamp(20px, 3vw, 30px); border-radius: 22px; border: 1px solid var(--line); background: var(--bg-soft); scroll-margin-top: 92px; }
+.guide > h3 { margin: 0 0 6px; font-size: 1.3rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.guide > p { color: var(--muted); margin: 0 0 12px; }
+.guide .where { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; padding: 4px 9px; border-radius: 7px; background: #fff; border: 1px solid var(--line); color: var(--ink-2); text-decoration: none; letter-spacing: 0; }
+.guide ol { margin: 0; padding-left: 22px; display: grid; gap: 9px; color: var(--ink-2); }
+.guide ol li::marker { font-weight: 800; color: var(--brand); }
+.guide .hint { margin-top: 14px; }
+.guide .chip { vertical-align: 1px; }
+@media (max-width: 1080px) { .guide { scroll-margin-top: 16px; } }
+
+.stats.five { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 860px) { .stats.five { grid-template-columns: 1fr 1fr; } }
+
+.faq { max-width: 780px; }
+.faq details { border: 1px solid var(--line); border-radius: var(--radius); background: #fff; padding: 0 20px; box-shadow: var(--shadow-sm); }
+.faq details + details { margin-top: 10px; }
+.faq summary { cursor: pointer; font-weight: 700; padding: 16px 0; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-weight: 800; color: var(--brand); }
+.faq details[open] summary::after { content: "–"; }
+.faq summary:focus-visible { outline: 3px solid rgba(13, 122, 87, 0.35); outline-offset: 2px; border-radius: 6px; }
+.faq details p { color: var(--muted); margin: 0 0 16px; }
+.doc .cta-band { margin-top: 88px; }
+/* Phones: each table row becomes a small card with labelled cells, so no column hides off-screen. */
+@media (max-width: 640px) {
+  .doc .table-wrap.stack { overflow: visible; border: 0; background: none; box-shadow: none; border-radius: 0; }
+  .doc .stack table { min-width: 0; }
+  .doc .stack thead { display: none; }
+  .doc .stack tr { display: block; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+  .doc .stack td { display: block; border: 0; padding: 2px 0; }
+  .doc .stack td[data-label]::before { content: attr(data-label); display: block; margin-top: 8px; font: 700 0.68rem/1.5 var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .doc .stack tbody tr:hover td { background: none; }
 }
