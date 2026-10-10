@@ -39,3 +39,10 @@ describe("autopilot: run only when something changed", () => {
     expect(somethingChanged({}, {})).toBe(false);
   });
 });
+
+describe("autopilot: a failed check is retried soon, then backs off", () => {
+  it("2, 4, 8, 16, then at most 30 minutes", async () => {
+    const { retryDelay } = await import("../lib/autopilot");
+    expect([1, 2, 3, 4, 5, 6, 20].map((n) => retryDelay(n) / 60)).toEqual([2, 4, 8, 16, 30, 30, 30]);
+  });
+});

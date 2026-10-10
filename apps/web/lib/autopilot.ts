@@ -19,6 +19,11 @@ const MIN_INTERVAL = 120;
 const MAX_RUNS_PER_DAY = 60;
 const DAY = 86_400;
 
+/** After `errors` failed checks in a row, wait this long before the next try: 2, 4, 8, 16, then 30 minutes. */
+export function retryDelay(errors: number): number {
+  return Math.min(30 * 60, MIN_INTERVAL * 2 ** Math.max(0, errors - 1));
+}
+
 interface AutopilotRow {
   org: Address;
   enabled: number;
@@ -29,6 +34,9 @@ interface AutopilotRow {
   last_run_id: string | null;
   last_summary: string | null;
   seen: string | null;
+  errors: number | null;
+  last_error: string | null;
+  last_error_at: number | null;
 }
 
 interface OpenClaim {
@@ -142,7 +150,7 @@ export async function autopilotTick(opts: { maxOrgs?: number; maxRuns?: number; 
       // Remember the state AFTER the run, so the run's own effects (a payment, less cash) don't start another.
       const after = await readState(row.org);
       await db.run(
-        "UPDATE autopilot SET seen = ?, last_run_at = ?, last_run_id = ?, last_summary = ? WHERE org = ?",
+        "UPDATE autopilot SET seen = ?, last_run_at = ?, last_run_id = ?, last_summary = ?, errors = 0, last_error = NULL WHERE org = ?",
         JSON.stringify(after),
         now,
         run.runId,
@@ -151,9 +159,22 @@ export async function autopilotTick(opts: { maxOrgs?: number; maxRuns?: number; 
       );
       out.ran.push({ org: row.org, runId: run.runId, summary: run.summary });
     } catch (err) {
-      // A failing org (RPC trouble, no gas) is tried again in ten minutes, not every minute.
-      await db.run("UPDATE autopilot SET last_run_at = ? WHERE org = ?", now + 8 * 60, row.org).catch(() => undefined);
-      out.skipped.push({ org: row.org, why: String(err).slice(0, 200) });
+      // A failing org (RPC trouble, no gas) is tried again in two minutes, backing off if it keeps failing.
+      // The reason is kept for the owner to see; last_run_at in the future holds the next try back.
+      const errors = (row.errors ?? 0) + 1;
+      const why = String((err as { shortMessage?: string })?.shortMessage ?? err).slice(0, 300);
+      console.error(`autopilot ${row.org}: check failed (${errors} in a row): ${why}`);
+      await db
+        .run(
+          "UPDATE autopilot SET last_run_at = ?, errors = ?, last_error = ?, last_error_at = ? WHERE org = ?",
+          now + retryDelay(errors) - MIN_INTERVAL,
+          errors,
+          why,
+          now,
+          row.org,
+        )
+        .catch(() => undefined);
+      out.skipped.push({ org: row.org, why });
     }
   }
   return out;
@@ -166,6 +187,10 @@ const view = (row: AutopilotRow | null) => ({
   lastCheckedAt: row?.last_tick_at ?? null,
   lastRunAt: row?.last_run_at ?? null,
   lastSummary: row?.last_summary ?? null,
+  // Set only while the last check failed; cleared by the next good run.
+  lastError: row?.errors ? row.last_error : null,
+  lastErrorAt: row?.errors ? row.last_error_at : null,
+  nextTryAt: row?.errors && row.last_run_at ? row.last_run_at + MIN_INTERVAL : null,
 });
 
 export async function getAutopilot(session: Address, orgParam: string | null) {

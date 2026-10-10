@@ -34,6 +34,9 @@ interface Autopilot {
   lastCheckedAt: number | null;
   lastRunAt: number | null;
   lastSummary: string | null;
+  lastError: string | null;
+  lastErrorAt: number | null;
+  nextTryAt: number | null;
 }
 
 const when = (unix: number) => new Date(unix * 1000).toLocaleString();
@@ -133,6 +136,13 @@ export function AgentPanel(props: { org: Address; signer: Signer; payeeName: (re
             <>
               {" "}
               Last run by itself: {when(auto.lastRunAt)}. {auto.lastSummary}
+            </>
+          )}
+          {auto.enabled && auto.lastError && (
+            <>
+              {" "}
+              Its last check failed{auto.lastErrorAt ? ` (${when(auto.lastErrorAt)})` : ""}: {auto.lastError}.{" "}
+              {auto.nextTryAt ? `It tries again after ${when(auto.nextTryAt)}.` : ""}
             </>
           )}
         </p>
