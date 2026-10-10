@@ -1,4 +1,4 @@
-// Server only. Reading an invoice with AI (Claude via MeshAPI), in two passes:
+// Server only. Reading an invoice with AI (Claude, Anthropic API), in two passes:
 //   1. evidence: every field with a verbatim quote from the invoice; code then checks each quote is
 //      really in the text (for a photo, the model first transcribes it and quotes are checked
 //      against that transcript)
@@ -8,7 +8,7 @@ import type { Address, Hex } from "viem";
 import { normalizeInvoiceRef, readPayee, refHashOf, usdc } from "@sendsure/chain";
 import { isOwnerOrApprover, orgSalt } from "./claims";
 import { getDb } from "./db";
-import { callTool, lastModel, meshConfigured, type Part, type ToolSpec } from "./llm";
+import { callTool, lastModel, modelConfigured, type Part, type ToolSpec } from "./llm";
 import { RelayError, isBytes32, serverClient, toAddress, toObject } from "./relayer";
 
 const MAX_TEXT = 20_000;
@@ -131,7 +131,7 @@ async function withModel<T>(read: () => Promise<T>): Promise<T> {
 }
 
 export async function extractInvoice(session: Address, body: unknown) {
-  if (!meshConfigured()) throw new RelayError(503, "Invoice reading is not set up on this server.", "NOT_CONFIGURED");
+  if (!modelConfigured()) throw new RelayError(503, "Invoice reading is not set up on this server.", "NOT_CONFIGURED");
   const b = toObject(body);
   const org = toAddress(b.org, "org");
   if (!isBytes32(b.payeeRef)) throw new RelayError(400, "Choose the payee this invoice is from.", "BAD_INPUT");

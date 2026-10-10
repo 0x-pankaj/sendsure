@@ -2,7 +2,7 @@
 //
 //   1. every open claim is dry-run with the contract's own check() at one block
 //   2. rules decide first (check() result + red flags from the payee's history)
-//   3. if MESH_API_KEY is set, Claude (via MeshAPI) reviews them with read-only tools; its decision can
+//   3. if ANTHROPIC_API_KEY is set, Claude (Anthropic API) reviews them with read-only tools; its decision can
 //      only be MORE careful than the rules (hold or escalate), never less
 //   4. every decision is appended to the hash-chained log; its hash is the decisionHash for settle()
 //   5. the cash plan: if the claims to pay do not all fit in what the treasury can pay right now, the
@@ -28,7 +28,7 @@ import { planCash, type CashSnapshot } from "./cash";
 import { inBackground, notifyOrg } from "./notify";
 import { getDb, type Db } from "./db";
 import { appendDecision, head } from "./decisionLog";
-import { lastModel, meshConfigured, meshModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
+import { PROVIDER, lastModel, modelConfigured, primaryModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
 import { agentWallet } from "./orgRelay";
 import { sendAndWait, serverClient } from "./relayer";
 
@@ -175,7 +175,7 @@ export function combine(rules: Decision, model: Decision | undefined, cosigned: 
   return model.action === rules.action && model.reason ? { action: rules.action, reason: model.reason } : rules;
 }
 
-// ------------------------------------------------------------------ model (MeshAPI)
+// ------------------------------------------------------------------ model (Claude, Anthropic API)
 
 const SYSTEM = `You are SendSure's payables agent for one business. For each claim a payee signed for an invoice, decide: "pay" now, "escalate" to a human approver, or "hold".
 Facts you can rely on:
@@ -237,7 +237,7 @@ async function modelPlan(
   history: ClaimRecord[],
   treasury: { balance: bigint; allowance: bigint },
 ): Promise<ModelPlan | null> {
-  if (!meshConfigured() || !items.length) return null;
+  if (!modelConfigured() || !items.length) return null;
   const byId = new Map(items.map((i) => [i.row.claim_id.toLowerCase(), i]));
   const user = JSON.stringify({
     today: new Date().toISOString().slice(0, 10),
@@ -438,7 +438,7 @@ export async function runAgent(
   } catch (err) {
     modelError = String(err).slice(0, 300);
   }
-  const planner = model ? `rules + ${lastModel || meshModel()} via MeshAPI` : "rules";
+  const planner = model ? `rules + ${lastModel || primaryModel()} via ${PROVIDER}` : "rules";
   const executor = opts.execute ? agentWallet().account.address : null;
   await db.run(
     "INSERT INTO runs (run_id, org, planner, executor, started_at) VALUES (?, ?, ?, ?, ?)",

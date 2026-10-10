@@ -127,7 +127,7 @@ const run3 = await runAgent();
 const d3 = decisionFor(run3, b.claimId);
 check(b.outcome === "PAYABLE" && d3?.action !== "pay" && !d3?.tx, `run #3: INV-B passes the contract but the agent says ${d3?.action} (${d3?.reason})`);
 if (process.env.EXPECT_MODEL) {
-  check(String(run3.planner).includes("MeshAPI") && Boolean(d3?.model?.reason), `the model reviewed run #3 (${run3.planner}): ${d3?.model?.action}: ${d3?.model?.reason}`);
+  check(/claude/i.test(String(run3.planner)) && Boolean(d3?.model?.reason), `the model reviewed run #3 (${run3.planner}): ${d3?.model?.action}: ${d3?.model?.reason}`);
 }
 
 // 5. Replay the paid decision: no model, just the chain, the signature, check() at the recorded block,

@@ -271,7 +271,7 @@ async function pay(session: string) {
  * Scene 5: an inbox of tricky claims, all signed by the real payee: a duplicate under a new invoice
  * number, a large claim with no description of the work, and a "new wallet" request (a look-alike of
  * the payee's own address) carrying a hidden instruction to the AI. The agent reviews them with
- * Claude via MeshAPI; none is paid, and even a fooled agent could only pay the proven address.
+ * Claude; none is paid, and even a fooled agent could only pay the proven address.
  */
 async function inbox(session: string) {
   const org = demoOrg();

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
 import { formatUsdc } from "@sendsure/chain";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
+import { modelLabel } from "../lib/modelLabel";
 import { walletErrorText, type Signer } from "../lib/wallet";
 
 interface Evidenced {
@@ -105,7 +106,7 @@ export function Evidence({ p }: { p: InvoiceProposal }) {
         </ul>
       )}
       <p className="hint">
-        Read by {p.extraction.model ?? "Claude"} via MeshAPI from {p.source === "image" ? "a photo" : "the pasted text"}.
+        Read by {modelLabel(p.extraction.model)} from {p.source === "image" ? "a photo" : "the pasted text"}.
       </p>
     </div>
   );
@@ -205,7 +206,7 @@ export function AddInvoice(props: { org: Address; signer: Signer; vendors: { nam
     <div className="card" style={{ maxWidth: 900, marginTop: 14 }}>
       <h3 style={{ marginTop: 0 }}>6. Add an invoice</h3>
       <p className="hint">
-        Paste an invoice or upload a photo of it. Claude (via MeshAPI) reads it and shows where each value came from. The payee
+        Paste an invoice or upload a photo of it. Claude reads it and shows where each value came from. The payee
         then checks it and signs the claim themselves; nothing is paid on the AI&apos;s word.
       </p>
       <label htmlFor="inv-payee">From</label>

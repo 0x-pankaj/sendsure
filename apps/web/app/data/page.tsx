@@ -56,7 +56,7 @@ export default function DataPage() {
       <h2>Sent to an AI model</h2>
       <p>
         Invoices you ask SendSure to read, and the claims the agent reviews (invoice number, amount, period, description, the
-        contract&apos;s check), go to Claude by Anthropic through MeshAPI. The model can only hold or escalate a payment; it
+        contract&apos;s check), go to Claude through Anthropic&apos;s API. The model can only hold or escalate a payment; it
         can never make one happen.
       </p>
 

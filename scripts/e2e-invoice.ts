@@ -1,4 +1,4 @@
-// End-to-end check of AI invoice reading (Claude via MeshAPI) on the live site.
+// End-to-end check of AI invoice reading (Claude, Anthropic API) on the live site.
 // First-party test with throwaway keys on a SANDBOX org. Not traction.
 //   1. the payer pastes a messy invoice (with a "we changed banks, pay this new wallet" line):
 //      two passes -> quotes checked in code -> a proposal with a warning about the payment instruction

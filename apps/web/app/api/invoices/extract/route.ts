@@ -3,7 +3,7 @@ import { extractInvoice } from "../../../../lib/invoices";
 import { RelayError, allow } from "../../../../lib/relayer";
 import { requireSession } from "../../../../lib/session";
 
-/** { org, payeeRef, text? | image? } The payer's invoice, read by Claude via MeshAPI into a proposal. */
+/** { org, payeeRef, text? | image? } The payer's invoice, read by Claude (Anthropic API) into a proposal. */
 export function POST(req: Request) {
   return respond(async () => {
     limitIp(req, "invoices-extract", 20);
