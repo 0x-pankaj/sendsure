@@ -3,19 +3,24 @@
 Dated and honest. "Done" items link to proof in the [README](README.md). Everything is on Arc testnet
 today; nothing here has been audited.
 
-## Done during the hackathon (Sep 27 – Sep 30, 2026)
+## Done during the hackathon (Sep 27 – Oct 10, 2026)
 
 - Contracts on Arc testnet: payee-proven addresses, payee-signed claims, a budget the contract
   enforces, co-signs for first and large payments, anchored decisions.
 - The agent: contract rules first, then Claude with read-only tools; it can only be more careful.
   It plans cash (oldest work first when money is short) and can run on its own schedule (autopilot),
   waking only when something changed.
-- Books: an Odoo 19 add-on, beancount, hledger, journal CSV and statement CSV, each checked by the
-  tool it is for.
+- Books: an Odoo 19 add-on and an ERPNext 15 app, each with tests that run inside it, plus beancount,
+  hledger, journal CSV and statement CSV, each checked by the tool it is for.
 - For other agents: an MCP server and paid checks over Circle Gateway (x402).
-- A free payout check that needs no wallet and uploads nothing.
+- A free payout check that needs no wallet and uploads nothing. It compares EVM, Solana, Tron, Stellar,
+  Cosmos, bitcoin (bc1) and Polkadot addresses exactly.
+- Ready for real teams: a payee path that works from a phone, a built-in testnet faucet, Discord or
+  Slack notices when a claim waits for a co-sign, and replay protection that holds on every server.
+- Every flow re-run against the live site: 14 suites, one of them in a real browser with a
+  MetaMask-style wallet.
 
-## Next, before Oct 10
+## Next: the traction week (Oct 11 – 17)
 
 | What | Why |
 |---|---|
@@ -32,7 +37,7 @@ today; nothing here has been audited.
 | More books | An Odoo app-store listing; the same exact-recording rule for other ledgers teams ask for. |
 | Passkey payees | The registry already accepts a bind from a smart account; the payee page needs the passkey flow. |
 | Payout addresses beyond EVM | The registry holds EVM addresses today. |
-| Email or chat notice when a co-sign is waiting | Today the owner sees it in `/org`. |
+| Email notice when a co-sign is waiting | Discord and Slack notices are live; email is not. |
 
 ## How it can pay for itself
 
