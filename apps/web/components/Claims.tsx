@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Address, Hex } from "viem";
 import { explorerTx, formatUsdc, usdc, type Claim } from "@sendsure/chain";
 import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
+import { submitClaimWithPasskey } from "../lib/passkey";
 import { sendCosign, signClaim, walletErrorText, type Signer } from "../lib/wallet";
 import { PayeeInvoices, type InvoiceProposal } from "./Invoices";
 
@@ -159,13 +160,16 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
         validUntil: BigInt(prep.validUntil),
       };
       setBusy("sign");
-      const signature = await signClaim(signer, org, claim);
+      // A passkey wallet authorises the claim by sending it on Arc from the proven address; others sign it.
+      const onchain = signer.kind === "passkey";
+      const signature = onchain ? undefined : await signClaim(signer, org, claim);
+      if (signer.kind === "passkey") await submitClaimWithPasskey(signer, org, claim);
       setBusy("send");
       const res = await fetch("/api/claims", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(
-          { org, claim, invoiceRef: prep.invoiceRef, description, signature, proposalId: proposalId ?? undefined },
+          { org, claim, invoiceRef: prep.invoiceRef, description, signature, onchain, proposalId: proposalId ?? undefined },
           (_k, v) => (typeof v === "bigint" ? v.toString() : v),
         ),
       });
@@ -243,7 +247,13 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
       />
       <div className="row" style={{ marginTop: 10 }}>
         <button className="btn" disabled={busy !== ""} onClick={send}>
-          {busy === "sign" ? "Check your wallet…" : busy ? "Sending…" : "Sign and send claim"}
+          {busy === "sign"
+            ? signer.kind === "passkey"
+              ? "Confirm with your passkey…"
+              : "Check your wallet…"
+            : busy
+              ? "Sending…"
+              : "Sign and send claim"}
         </button>
       </div>
       {result && (

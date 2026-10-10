@@ -14,6 +14,7 @@
     "cf:deploy": "NEXT_PUBLIC_COMMIT_SHA=$(git rev-parse --short HEAD) opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@circle-fin/modular-wallets-core": "1.0.16",
     "@circle-fin/x402-batching": "3.5.0",
     "@sendsure/chain": "workspace:*",
     "@sendsure/core": "workspace:*",

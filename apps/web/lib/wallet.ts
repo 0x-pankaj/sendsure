@@ -22,6 +22,7 @@ import {
   type Claim,
   type PermitMessage,
 } from "@sendsure/chain";
+import { signTextWithPasskey, type PasskeySigner } from "./passkey";
 
 declare global {
   interface Window {
@@ -29,9 +30,16 @@ declare global {
   }
 }
 
-/** Who signs: a browser wallet (MetaMask, Rabby, ...) or a throwaway test wallet kept in this tab. */
+/**
+ * Who signs: a browser wallet (MetaMask, Rabby, ...), a throwaway test wallet kept in this tab, or a payee's
+ * passkey wallet (lib/passkey.ts), which acts on-chain instead of signing typed data.
+ */
 export type Signer =
-  { kind: "browser"; address: Address; client: WalletClient } | { kind: "test"; address: Address; account: LocalAccount };
+  | { kind: "browser"; address: Address; client: WalletClient }
+  | { kind: "test"; address: Address; account: LocalAccount }
+  | PasskeySigner;
+
+const NOT_FOR_PASSKEY = "A passkey wallet confirms this on Arc instead of signing it.";
 
 export const hasBrowserWallet = () => typeof window !== "undefined" && Boolean(window.ethereum);
 
@@ -77,12 +85,12 @@ export function newTestWallet(): Signer {
 }
 
 export async function isOnArc(s: Signer): Promise<boolean> {
-  return s.kind === "test" || (await s.client.getChainId()) === arcTestnet.id;
+  return s.kind !== "browser" || (await s.client.getChainId()) === arcTestnet.id;
 }
 
 /** Switch the wallet to Arc testnet, adding the network first if the wallet does not know it. */
 export async function switchToArc(s: Signer): Promise<void> {
-  if (s.kind === "test") return;
+  if (s.kind !== "browser") return;
   try {
     await s.client.switchChain({ id: arcTestnet.id });
   } catch (err) {
@@ -94,27 +102,32 @@ export async function switchToArc(s: Signer): Promise<void> {
 
 export async function signBind(s: Signer, message: BindMessage): Promise<Hex> {
   const typed = bindTypedData(message);
+  if (s.kind === "passkey") throw new Error(NOT_FOR_PASSKEY);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 
-/** A plain-text message (the wallet shows it word for word). */
+/** A plain-text message (the wallet shows it word for word). A passkey wallet signs it as a smart account (ERC-1271). */
 export async function signText(s: Signer, message: string): Promise<Hex> {
+  if (s.kind === "passkey") return signTextWithPasskey(s, message);
   return s.kind === "test" ? s.account.signMessage({ message }) : s.client.signMessage({ account: s.address, message });
 }
 
 export async function signPermit(s: Signer, message: PermitMessage): Promise<Hex> {
   const typed = permitTypedData(message);
+  if (s.kind === "passkey") throw new Error(NOT_FOR_PASSKEY);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 
 /** The payee signs one claim for one invoice (EIP-712, the payer org's Mandate domain). */
 export async function signClaim(s: Signer, org: Address, claim: Claim): Promise<Hex> {
   const typed = { domain: mandateDomain(org), types: claimTypes, primaryType: "Claim", message: claim } as const;
+  if (s.kind === "passkey") throw new Error(NOT_FOR_PASSKEY);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 
 export async function signChange(s: Signer, message: ChangeMessage): Promise<Hex> {
   const typed = changeTypedData(message);
+  if (s.kind === "passkey") throw new Error(NOT_FOR_PASSKEY);
   return s.kind === "test" ? s.account.signTypedData(typed) : s.client.signTypedData({ account: s.address, ...typed });
 }
 
@@ -141,5 +154,6 @@ export async function sendCosign(s: Signer, org: Address, claimHex: Hex): Promis
   if (s.kind === "test") {
     return createWalletClient({ account: s.account, chain: arcTestnet, transport: http() }).writeContract(call);
   }
+  if (s.kind === "passkey") throw new Error("Co-sign with the wallet that approves payments for this org.");
   return s.client.writeContract({ ...call, account: s.address });
 }

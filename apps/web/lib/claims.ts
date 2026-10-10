@@ -125,7 +125,11 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
   const c = toObject(b.claim);
   if (!isBytes32(c.payeeRef) || !isBytes32(c.refHash))
     throw new RelayError(400, "payeeRef and refHash must be 32 bytes.", "BAD_INPUT");
-  if (!isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
+  // A payee whose wallet cannot sign (a passkey smart account) authorises the claim by sending it on Arc from the
+  // proven address (Mandate.submitClaim); the contract then takes it without a signature.
+  const onchain = b.onchain === true;
+  if (!onchain && !isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
+  const signature: Hex = onchain ? "0x" : (b.signature as Hex);
   const claim: Claim = {
     payeeRef: c.payeeRef,
     token: toAddress(c.token, "token"),
@@ -175,15 +179,20 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     proposal = { id: p.id };
   }
   const claimId = claimIdOf(org, claim);
-  const signer = await recoverAddress({ hash: claimId, signature: b.signature }).catch(() => null);
-  if (signer !== payee.payout) throw new RelayError(400, REASON_TEXT.BAD_SIGNATURE, "BAD_SIGNATURE");
+  if (onchain) {
+    if (!(await submittedByPayee(org, claimId, payee.payout)))
+      throw new RelayError(400, "This claim was not sent on Arc from your proven address. Send it again.", "NOT_SUBMITTED");
+  } else {
+    const signer = await recoverAddress({ hash: claimId, signature }).catch(() => null);
+    if (signer !== payee.payout) throw new RelayError(400, REASON_TEXT.BAD_SIGNATURE, "BAD_SIGNATURE");
+  }
 
   // The contract's own dry run: the same rules settle() applies.
   const [outcomeIndex, reasonIndex] = await serverClient.readContract({
     address: org,
     abi: mandateAbi,
     functionName: "check",
-    args: [encodeClaim(claim), b.signature],
+    args: [encodeClaim(claim), signature],
   });
   const outcome = OUTCOMES[outcomeIndex] ?? "REFUSED";
   const reason = REASONS[reasonIndex] ?? "NONE";
@@ -209,7 +218,7 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
       Number(claim.periodEnd),
       claim.nonce.toString(),
       Number(claim.validUntil),
-      b.signature,
+      signature,
       description,
       proposal ? "invoice" : "payee",
       outcome,
@@ -231,6 +240,19 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     ),
   );
   return { claimId, outcome, reason, reasonText: REASON_TEXT[reason], stored: true };
+}
+
+/** The claim was sent on Arc by the payee's proven address. Read twice if the node is a block behind. */
+export async function submittedByPayee(org: Address, claimId: Hex, payout: Address, blockNumber?: bigint): Promise<boolean> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const by = await serverClient
+      .readContract({ address: org, abi: mandateAbi, functionName: "submittedBy", args: [claimId], blockNumber })
+      .catch(() => null);
+    if (by && getAddress(by) === getAddress(payout)) return true;
+    if (blockNumber !== undefined) return false;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  return false;
 }
 
 // ------------------------------------------------------------------ list

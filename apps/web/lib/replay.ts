@@ -5,6 +5,7 @@
 //   - if it was paid, the on-chain event carries this decision's hash
 //   - an on-chain anchor covers it, with the same head
 import { getAddress, parseEventLogs, recoverAddress, type Address, type Hex } from "viem";
+import { submittedByPayee } from "./claims";
 import { OUTCOMES, REASONS, claimIdOf, encodeClaim, mandateAbi, type Claim } from "@sendsure/chain";
 import { getDb } from "./db";
 import { GENESIS, chainHash } from "./decisionLog";
@@ -55,8 +56,13 @@ export async function replayDecision(org: Address, seq: number) {
   };
   const claimId = claimIdOf(org, claim);
   const record = JSON.parse(d.record) as { claim?: { payout?: string } };
-  const signer = await recoverAddress({ hash: claimId, signature: c.payee_sig as Hex }).catch(() => null);
-  const signatureOk = claimId === d.claim_id && Boolean(signer) && signer === getAddress(record.claim?.payout ?? "0x0");
+  const payout = getAddress(record.claim?.payout ?? "0x0000000000000000000000000000000000000000");
+  // A passkey payee authorised the claim by sending it on Arc (no signature): check that instead, at the decision's block.
+  const signatureOk =
+    claimId === d.claim_id &&
+    (c.payee_sig === "0x"
+      ? await submittedByPayee(org, claimId, payout, BigInt(d.block_number))
+      : (await recoverAddress({ hash: claimId, signature: c.payee_sig as Hex }).catch(() => null)) === payout);
 
   const [o, r] = await serverClient.readContract({
     address: org,

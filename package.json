@@ -25,7 +25,8 @@
     "e2e:erpnext": "tsx scripts/e2e-erpnext.ts",
     "e2e:autopilot": "tsx scripts/e2e-autopilot.ts",
     "e2e:faucet": "tsx scripts/e2e-faucet.ts",
-    "e2e:wallet": "tsx scripts/e2e-wallet.ts"
+    "e2e:wallet": "tsx scripts/e2e-wallet.ts",
+    "e2e:onchain-claim": "tsx scripts/e2e-onchain-claim.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

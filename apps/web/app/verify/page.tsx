@@ -24,7 +24,9 @@ import {
   type PendingChange,
 } from "@sendsure/chain";
 import { PayeeClaims } from "../../components/Claims";
+import { PasskeyWallet } from "../../components/PasskeyWallet";
 import { publicClient } from "../../lib/arc";
+import { bindWithPasskey, passkeyWallet, passkeysAvailable, savedPasskeyWallet } from "../../lib/passkey";
 import {
   connectBrowserWallet,
   hasBrowserWallet,
@@ -52,7 +54,7 @@ type Loaded =
   | { kind: "error"; text: string }
   | { kind: "ready"; org: OrgView; payee: PayeeView; pending: PendingChange | null };
 
-type Busy = "" | "connect" | "switch" | "sign" | "relay" | "self";
+type Busy = "" | "connect" | "passkey" | "switch" | "sign" | "relay" | "self";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const same = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
@@ -125,6 +127,15 @@ export default function VerifyPage() {
     else if (invite) void refresh(invite);
   }, [invite, refresh]);
 
+  // A passkey wallet used before in this browser comes back without a prompt, if it is the address this payer pays.
+  const boundPayout = loaded.kind === "ready" && loaded.payee.state !== "OPEN" ? loaded.payee.payout : undefined;
+  useEffect(() => {
+    if (signer || !boundPayout) return;
+    void savedPasskeyWallet().then((s) => {
+      if (s && same(s.address, boundPayout)) setSigner((old) => old ?? s);
+    });
+  }, [signer, boundPayout]);
+
   // A browser wallet can switch network or account at any time; follow it.
   useEffect(() => {
     const provider = window.ethereum;
@@ -143,11 +154,16 @@ export default function VerifyPage() {
     };
   }, [signer, changing]);
 
-  async function connect(kind: Signer["kind"]) {
+  async function connect(kind: Signer["kind"] | "passkey-new") {
     setError("");
-    setBusy("connect");
+    setBusy(kind === "passkey" || kind === "passkey-new" ? "passkey" : "connect");
     try {
-      const s = kind === "browser" ? await connectBrowserWallet() : testWallet();
+      const s =
+        kind === "browser"
+          ? await connectBrowserWallet()
+          : kind === "passkey" || kind === "passkey-new"
+            ? await passkeyWallet(kind === "passkey-new")
+            : testWallet();
       setSigner(s);
       setOnArc(await isOnArc(s));
     } catch (err) {
@@ -175,6 +191,19 @@ export default function VerifyPage() {
     if (!signer || !invite) return;
     setError("");
     setRelayFailed(false);
+    if (signer.kind === "passkey") {
+      setBusy("relay");
+      try {
+        const hash = await bindWithPasskey(signer, invite.org, invite.payeeRef);
+        setTx({ hash, status: "success" });
+        await refresh(invite, (p) => p.state !== "OPEN");
+      } catch (err) {
+        setError(walletErrorText(err));
+      } finally {
+        setBusy("");
+      }
+      return;
+    }
     setBusy("sign");
     try {
       const message: BindMessage = {
@@ -262,6 +291,7 @@ export default function VerifyPage() {
                   <p>
                     Connected: <span className="mono">{signer.address}</span>
                     {signer.kind === "test" && " (a test wallet made in this browser tab)"}
+                    {signer.kind === "passkey" && " (your passkey wallet: only your passkey can use it)"}
                   </p>
                 ) : (
                   <>
@@ -305,6 +335,23 @@ export default function VerifyPage() {
                         </p>
                       </div>
                     )}
+                    {passkeysAvailable() && (
+                      <div className="notice ok" style={{ marginTop: 10 }}>
+                        <p>
+                          <b>No wallet app?</b> Get paid with a passkey: Face ID, your fingerprint or your phone&apos;s PIN.
+                          SendSure makes you a wallet that only your passkey can use (a Circle smart account), and the gas is
+                          paid for you.
+                        </p>
+                        <div className="row" style={{ marginTop: 8 }}>
+                          <button className="btn" disabled={busy !== ""} onClick={() => connect("passkey-new")}>
+                            {busy === "passkey" ? "Follow your phone's prompt…" : "Create a passkey wallet"}
+                          </button>
+                          <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("passkey")}>
+                            I already have one
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <p className="hint">
                       {sandboxOrg
                         ? "This is a test org. The test wallet is for trying SendSure only; for real payouts, use your own wallet."
@@ -327,14 +374,29 @@ export default function VerifyPage() {
 
               <li className={!signer || !onArc ? "off" : ""}>
                 <h3>3. Sign to confirm this address</h3>
-                <p className="hint">
-                  Your wallet shows a <b>Bind</b> request from <b>SendSure PayeeRegistry</b>: <i>org</i> is {payer}&apos;s
-                  SendSure contract, <i>payout</i> is your address, and <i>nonce</i> is a one-time number.
-                </p>
-                <p className="privacy">Signing is free. It does not move money and does not let anyone use your wallet.</p>
+                {signer?.kind === "passkey" ? (
+                  <p className="hint">
+                    Your passkey confirms it: your wallet registers itself with {payer}&apos;s SendSure contract on Arc. It costs you
+                    nothing; Circle Gas Station pays the gas.
+                  </p>
+                ) : (
+                  <>
+                    <p className="hint">
+                      Your wallet shows a <b>Bind</b> request from <b>SendSure PayeeRegistry</b>: <i>org</i> is {payer}&apos;s
+                      SendSure contract, <i>payout</i> is your address, and <i>nonce</i> is a one-time number.
+                    </p>
+                    <p className="privacy">Signing is free. It does not move money and does not let anyone use your wallet.</p>
+                  </>
+                )}
                 <div className="row" style={{ marginTop: 12 }}>
                   <button className="btn" disabled={!signer || !onArc || busy !== ""} onClick={confirm}>
-                    {busy === "sign" ? "Check your wallet…" : busy === "relay" ? "Recording on Arc testnet…" : "Sign and confirm"}
+                    {busy === "sign"
+                      ? "Check your wallet…"
+                      : busy === "relay"
+                        ? signer?.kind === "passkey"
+                          ? "Confirm with your passkey, then recording on Arc…"
+                          : "Recording on Arc testnet…"
+                        : "Sign and confirm"}
                   </button>
                   {relayFailed && signer?.kind === "browser" && (
                     <button className="linkish" disabled={busy !== ""} onClick={sendItYourself}>
@@ -355,6 +417,7 @@ export default function VerifyPage() {
               pending={loaded.pending}
             >
               {signer &&
+                signer.kind !== "passkey" &&
                 same(signer.address, loaded.payee.payout) &&
                 loaded.payee.tier === "PROVEN" &&
                 !loaded.payee.changePending && (
@@ -381,6 +444,11 @@ export default function VerifyPage() {
                 <button className="btn" disabled={busy !== ""} onClick={() => connect("browser")}>
                   {busy === "connect" ? "Waiting for your wallet…" : "Connect wallet"}
                 </button>
+                {passkeysAvailable() && (
+                  <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("passkey")}>
+                    {busy === "passkey" ? "Follow your phone's prompt…" : "Use my passkey wallet"}
+                  </button>
+                )}
                 <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
                   Use the test wallet from this tab
                 </button>
@@ -392,7 +460,10 @@ export default function VerifyPage() {
             signer &&
             same(signer.address, loaded.payee.payout) &&
             !loaded.payee.changePending && (
-              <PayeeClaims org={invite.org} payeeRef={invite.payeeRef} signer={signer} payer={payer} />
+              <>
+                <PayeeClaims org={invite.org} payeeRef={invite.payeeRef} signer={signer} payer={payer} />
+                {signer.kind === "passkey" && <PasskeyWallet signer={signer} />}
+              </>
             )}
 
           {error && (
@@ -406,7 +477,7 @@ export default function VerifyPage() {
               <a className="mono" href={explorerTx(tx.hash)}>
                 {short(tx.hash)}
               </a>
-              . The gas was paid by the SendSure relayer.
+              . The gas was paid {signer?.kind === "passkey" ? "by Circle Gas Station" : "by the SendSure relayer"}.
             </p>
           )}
         </>
