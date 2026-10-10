@@ -42,6 +42,29 @@ interface Bucket {
   anchors: number;
 }
 
+export interface AgentQuality {
+  decisions: number;
+  /** Decisions the model reviewed (it is asked only when there is something to decide). */
+  reviewed: number;
+  agreed: number;
+  /** The model held or escalated what the rules would have paid or escalated: its view was used. */
+  moreCareful: number;
+  /** The model would have paid what the rules held back: overruled, by design. */
+  overruled: number;
+}
+const noQuality = (): AgentQuality => ({ decisions: 0, reviewed: 0, agreed: 0, moreCareful: 0, overruled: 0 });
+const RANK: Record<string, number> = { pay: 0, escalate: 1, hold: 2, close: 3 };
+
+/** Adds `n` decisions where the rules said `rules` and the model said `model` (null: not asked). */
+export function addQuality(q: AgentQuality, rules: string | null, model: string | null, n: number): void {
+  q.decisions += n;
+  if (!model || !rules || !(model in RANK) || !(rules in RANK)) return;
+  q.reviewed += n;
+  if (RANK[model] === RANK[rules]) q.agreed += n;
+  else if (RANK[model]! > RANK[rules]!) q.moreCareful += n;
+  else q.overruled += n;
+}
+
 export async function stats() {
   const db = await getDb();
   const ours = firstParty();
@@ -115,12 +138,24 @@ export async function stats() {
     agentRuns[t].runs += r.n;
     agentRuns[t].byAutopilot += r.auto ?? 0;
   }
+  // How the model's view compared with the rules', from every logged decision. The model can only make a
+  // decision more careful: when it wanted to pay what the rules held back, the rules won.
+  const views = await db.all<{ org: string; rules: string | null; model: string | null; n: number }>(
+    `SELECT org, json_extract(record, '$.rules.action') AS rules, json_extract(record, '$.model.action') AS model, count(*) AS n
+     FROM decisions GROUP BY org, rules, model`,
+  );
+  const agentQuality: Record<Tier, AgentQuality> = { external: noQuality(), "first-party": noQuality(), sandbox: noQuality() };
+  for (const v of views) {
+    const t = tierByOrg.get(v.org.toLowerCase());
+    if (t) addQuality(agentQuality[t], v.rules, v.model, v.n);
+  }
   const out = Object.fromEntries(
     Object.entries(buckets).map(([k, { paid, ...b }]) => [k, { ...b, paidUsdc: formatUsdc(paid) }]),
   ) as Record<Tier, Bucket>;
   return {
     tiers: out,
     agentRuns,
+    agentQuality,
     usage: await usageTotals().catch(() => ({})),
     paidCalls: {
       external: { calls: paidCalls.external.calls, usdc: formatUsdc(paidCalls.external.usdc), payers: paidCalls.external.payers.size },

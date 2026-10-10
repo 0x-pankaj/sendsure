@@ -17,6 +17,7 @@ interface Bucket {
 interface Stats {
   tiers: Record<Tier, Bucket>;
   agentRuns?: Record<Tier, { runs: number; byAutopilot: number }>;
+  agentQuality?: Record<Tier, { decisions: number; reviewed: number; agreed: number; moreCareful: number; overruled: number }>;
   usage?: Record<string, number>;
   recentPayments: { tx: string; block: number; org: string; payout: string; amountUsdc: string; tier: Tier }[];
   indexer: { block?: number; updatedAt?: number; error?: string };
@@ -122,6 +123,56 @@ export default function Dashboard() {
               <b>{data.usage.check_run ?? 0}</b> · invite links opened <b>{data.usage.invite_open ?? 0}</b> · /try walkthroughs
               started <b>{data.usage.try_start ?? 0}</b> · ledgers downloaded <b>{data.usage.books_download ?? 0}</b>.
             </p>
+          )}
+          {data.usage && (data.usage.review_runs ?? 0) > 0 && (
+            <p className="hint" style={{ maxWidth: 900 }}>
+              Shadow reviews of real payout runs on <a href="/check">/check</a> (nothing paid, nothing stored): <b>{data.usage.review_runs}</b>{" "}
+              run(s), <b>{data.usage.review_lines ?? 0}</b> lines, <b>{data.usage.review_stricter ?? 0}</b> made stricter by Claude than by the
+              rules. People agreed with the agent on <b>{data.usage.review_agree ?? 0}</b> of{" "}
+              <b>{(data.usage.review_agree ?? 0) + (data.usage.review_disagree ?? 0)}</b> lines they marked.
+            </p>
+          )}
+          {data.agentQuality && (
+            <>
+              <h2>How the agent decided</h2>
+              <p className="hint" style={{ maxWidth: 900 }}>
+                From every decision in the agents&apos; hash-chained logs. The rules decide first; Claude reviews what is left to
+                decide and can only make a decision more careful. When it would have paid something the rules held back, the
+                rules won.
+              </p>
+              <div className="table-wrap" style={{ maxWidth: 900 }}>
+                <table style={{ minWidth: 560 }}>
+                  <thead>
+                    <tr>
+                      <th></th>
+                      {TIERS.map((t) => (
+                        <th key={t.key}>{t.title}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ["decisions", "Decisions logged"],
+                        ["reviewed", "Reviewed by Claude"],
+                        ["agreed", "… Claude agreed with the rules"],
+                        ["moreCareful", "… Claude was more careful (held or escalated)"],
+                        ["overruled", "… Claude would have paid; the rules held it"],
+                      ] as const
+                    ).map(([k, label]) => (
+                      <tr key={k}>
+                        <td>{label}</td>
+                        {TIERS.map((t) => (
+                          <td key={t.key} className={t.key === "external" ? "" : "hint"}>
+                            {data.agentQuality![t.key][k]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
           {data.paidCalls && (
             <>

@@ -46,3 +46,16 @@ describe("autopilot: a failed check is retried soon, then backs off", () => {
     expect([1, 2, 3, 4, 5, 6, 20].map((n) => retryDelay(n) / 60)).toEqual([2, 4, 8, 16, 30, 30, 30]);
   });
 });
+
+describe("dashboard: how the model's view compared with the rules", () => {
+  it("counts agreement, a more careful model, and a model the rules overruled", async () => {
+    const { addQuality } = await import("../lib/stats");
+    const q = { decisions: 0, reviewed: 0, agreed: 0, moreCareful: 0, overruled: 0 };
+    addQuality(q, "pay", null, 4); // not asked
+    addQuality(q, "pay", "pay", 3);
+    addQuality(q, "pay", "escalate", 2);
+    addQuality(q, "escalate", "hold", 1);
+    addQuality(q, "escalate", "pay", 1);
+    expect(q).toEqual({ decisions: 11, reviewed: 7, agreed: 3, moreCareful: 3, overruled: 1 });
+  });
+});
