@@ -303,7 +303,7 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
       const text = walletErrorText(err);
       setError(
         /insufficient funds|gas/i.test(text)
-          ? "Your wallet needs a little testnet USDC for gas: faucet.circle.com (Arc testnet)."
+          ? "Your wallet needs a little testnet USDC for gas. Use \"Get 2 test USDC from SendSure\" at the top of this page, or faucet.circle.com (Arc testnet)."
           : text,
       );
     } finally {

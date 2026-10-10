@@ -16,6 +16,7 @@ const LABEL: Record<string, string> = {
   relayer: "Relayer (pays gas for payee signatures; no contract role)",
   serverAgent: "Server agent (opens invites; settles when asked)",
   circleAgentWallet: "Circle agent wallet (settles and anchors via the Circle CLI)",
+  faucet: "Testnet faucet (2 test USDC once per new wallet, from /org)",
 };
 
 export default function StatusPage() {

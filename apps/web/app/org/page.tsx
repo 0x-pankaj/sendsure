@@ -24,6 +24,7 @@ import { Books } from "../../components/Books";
 import { AddInvoice } from "../../components/Invoices";
 import { Integrations } from "../../components/Integrations";
 import { Notify } from "../../components/Notify";
+import { FaucetButton } from "../../components/Faucet";
 import { GetSetUp } from "../../components/GetSetUp";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
@@ -469,8 +470,10 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
         {loadError && <p className="notice">{loadError}</p>}
         {view && view.treasuryBalance < view.caps.claimMax && (
           <p className="notice warn">
-            Your wallet holds {formatUsdc(view.treasuryBalance)} USDC. Get testnet USDC at{" "}
-            <a href="https://faucet.circle.com">faucet.circle.com</a> (pick Arc testnet) before you pay anyone.
+            Your wallet holds {formatUsdc(view.treasuryBalance)} USDC: that is what SendSure can pay from (testnet USDC, no
+            value).
+            <FaucetButton signer={signer} onDone={() => setTimeout(() => void refresh(), 2000)} /> Or get more at{" "}
+            <a href="https://faucet.circle.com">faucet.circle.com</a> (pick Arc testnet).
           </p>
         )}
         <p className="hint">

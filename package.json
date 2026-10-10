@@ -23,7 +23,9 @@
     "e2e:x402": "tsx scripts/e2e-x402.ts",
     "e2e:odoo": "tsx scripts/e2e-odoo.ts",
     "e2e:erpnext": "tsx scripts/e2e-erpnext.ts",
-    "e2e:autopilot": "tsx scripts/e2e-autopilot.ts"
+    "e2e:autopilot": "tsx scripts/e2e-autopilot.ts",
+    "e2e:faucet": "tsx scripts/e2e-faucet.ts",
+    "e2e:wallet": "tsx scripts/e2e-wallet.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

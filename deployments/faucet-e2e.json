@@ -1,0 +1,29 @@
+{
+  "note": "Testnet faucet on the live site with a throwaway wallet. Not traction.",
+  "ranAtUnix": 1791655058,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "wallet": "0xea0ee8d76bDF69F34AC2D1E3B6D679D0786aa549",
+  "drip": "https://explorer.testnet.arc.io/tx/0x7b63961bb8945541e0a468c9303d2e73912328e62f9b751c2b7364e76598dd19",
+  "checks": {
+    "passed": 4,
+    "total": 4,
+    "list": [
+      {
+        "ok": true,
+        "what": "a new wallet holds 0 USDC and may ask the faucet"
+      },
+      {
+        "ok": true,
+        "what": "without signing in, the faucet refuses (401)"
+      },
+      {
+        "ok": true,
+        "what": "one drip: the wallet now holds 2 test USDC (https://explorer.testnet.arc.io/tx/0x7b63961bb8945541e0a468c9303d2e73912328e62f9b751c2b7364e76598dd19)"
+      },
+      {
+        "ok": true,
+        "what": "a second drip to the same wallet is refused: This wallet already got test USDC from SendSure. For more, use faucet.circle.com (pick Arc testnet)."
+      }
+    ]
+  }
+}

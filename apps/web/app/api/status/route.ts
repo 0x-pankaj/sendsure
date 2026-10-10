@@ -2,6 +2,7 @@ import { formatEther, type Address } from "viem";
 import { SENDSURE_AGENTS, deployment } from "@sendsure/chain";
 import { getDb } from "../../../lib/db";
 import { limitIp, respond } from "../../../lib/http";
+import { faucetAddress } from "../../../lib/faucet";
 import { serverClient } from "../../../lib/relayer";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export function GET(req: Request) {
         relayer: { address: relayer, usdc: await balance(relayer) },
         serverAgent: { address: SENDSURE_AGENTS.serverAgent, usdc: await balance(SENDSURE_AGENTS.serverAgent) },
         circleAgentWallet: { address: SENDSURE_AGENTS.circleAgentWallet, usdc: await balance(SENDSURE_AGENTS.circleAgentWallet) },
+        ...(faucetAddress() ? { faucet: { address: faucetAddress()!, usdc: await balance(faucetAddress()!) } } : {}),
       },
       contracts: { payeeRegistry: deployment.payeeRegistry, mandateFactory: deployment.mandateFactory, usdc: deployment.usdc },
       commit: process.env.NEXT_PUBLIC_COMMIT_SHA ?? null,

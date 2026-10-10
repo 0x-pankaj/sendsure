@@ -74,7 +74,13 @@ export function allow(key: string, max: number, windowMs: number, now = Date.now
 }
 
 export function clientIp(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+  // On Cloudflare, cf-connecting-ip is set by Cloudflare itself; X-Forwarded-For can start with whatever the caller sent.
+  return (
+    req.headers.get("cf-connecting-ip")?.trim() ||
+    req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "local"
+  );
 }
 
 export const LIMITS = {
