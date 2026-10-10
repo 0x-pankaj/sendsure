@@ -8,10 +8,11 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
-- **Oct 10: building is finished.** From Oct 11 to the deadline (Sat Oct 17, extended) the work is traction
-  only. Waiting on Pankaj: top up MeshAPI (Claude's review and invoice reading are off until then; the agent
-  runs on its rules and says so), submit the form (answers and the traction plan are in his private
-  `the-pick/` folder), then re-render the submission video with `sendsure-video/make-submission.sh`.
+- **Oct 11: Pankaj asked to keep building until ~Oct 15** (submission work in the last two days): platform
+  working perfectly, Odoo perfect, and what competing teams have that we lack (T34+). Claude now goes through
+  the Anthropic API directly (`ANTHROPIC_API_KEY`, Worker secret); the MeshAPI code is kept, commented out.
+  Form answers and the traction plan are in his private `the-pick/` folder; re-render the submission video
+  with `sendsure-video/make-submission.sh` before submitting.
 - **Before outreach (Sep 29):** done by Claude: gas keys topped up (relayer and server agent ~9.5 USDC; `/status`
   shows LOW under 2), contact link on every page (`NEXT_PUBLIC_CONTACT_URL`, GitHub Issues until Pankaj picks an
   email/Telegram), `/data` (what is stored where), Pankaj's MetaMask `0xF84a…a194` in `FIRST_PARTY_ADDRESSES`
@@ -127,6 +128,8 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T31 | Odoo hardening after a code review: cancel/reset/delete withdraws the bill from SendSure (`POST /api/v1/bills/withdraw`; refused once paid), no Register Payment while in flight, per-bill savepoints in the cron, manager "Record SendSure payment" for needs-review (states exactly what Odoo rounds away), safe list sending, Arc tx field writable only by SendSure's own recording, payments with a tx cannot be reset, trust checked on create, stray/archived/relinked wallets untrusted, API methods `@api.private` + accounting-users only, method mode `unique`, USC rate kept at USD for non-USD companies, cron `noupdate` | C | ✅ Oct 3: 28 Odoo tests; live 27/27 | ✅ |
 | T32 | Ready for real users on testnet (Oct 10): built-in testnet faucet in `/org` (2 test USDC once per signed-in wallet; 3 per network a day; 60 a day in total; `lib/faucet.ts`, migration 0010, faucet key with no contract role, balance on `/status`), rate limits keyed on `cf-connecting-ip` (X-Forwarded-For could be spoofed) | C | ✅ live; `pnpm e2e:faucet` 4/4 | ✅ |
 | T33 | Final for submission (Oct 10): owner signatures for create-org and invites are claimed in D1 (`used_signatures`, migration 0011) before the relayer acts, so a replay is refused on every Worker instance and a replayed invites signature can't re-open a revoked invite; invoice reading answers 503 `MODEL_UNAVAILABLE` when the model provider is down or out of credit; the chain test reads the smoke test's Settled event by block (the public RPC no longer finds old transactions by hash) | C | ✅ live; `pnpm e2e:org` 10/10; all 14 live suites re-run Oct 10 (agent and invoice model checks wait for MeshAPI credit) | ✅ |
+| T34 | Claude through the Anthropic API directly (MeshAPI code commented out, `toAnthropic`/`fromAnthropic` in `lib/llm.ts`, 6 tests); autopilot keeps why a check failed (migration 0012), shows it on `/org`, retries in 2 minutes backing off to 30 | C | ✅ live Oct 11: agent 13/13, invoice 12/12, try 10/10, autopilot 9/9 with Claude Opus 5.5 | ✅ |
+| T35 | Odoo: "Email the invite" (Odoo's composer, template with the vendor's own link), the invite link with a copy button, "Co-sign in SendSure" / "Open in SendSure" on bills, bill-list filters and group-by on SendSure status | C | ✅ 30 Odoo tests; live `pnpm e2e:odoo` 27/27 | ✅ |
 
 ### Traction (every day, 2 hours)
 | ID | Task | Owner | Done when | Status |
@@ -162,7 +165,7 @@ hosted Odoo (show a video + docker compose instead) · ERPNext issue · more CSV
 
 ## Locked decisions
 - **Name:** SendSure.
-- **AI:** all model calls go through **MeshAPI** (`https://api.meshapi.ai/v1`, OpenAI-compatible; Claude models as `anthropic/…`). Said by Pankaj, Sep 29.
+- **AI:** model calls go to Claude through the **Anthropic API** directly (`lib/llm.ts`; Opus 5.5, Sonnet 5.5 fallback). Said by Pankaj, Oct 11: comment the MeshAPI code out, do not remove it. (Sep 29–Oct 10 it was MeshAPI, `https://api.meshapi.ai/v1`.)
 - **Hosting:** **Cloudflare Workers** (OpenNext) on Pankaj's account. If Workers limits ever bite, split the API into a
   Hono Worker and serve the pages statically (Pankaj, Sep 29).
 - **Database:** **Cloudflare D1** `sendsure` (ENAM, id `4b2134c8-7d8c-4200-b611-8f521767ca3d`) on Pankaj's account; SQL in `apps/web/migrations`, applied with `npx wrangler d1 migrations apply sendsure --remote`. Local development and tests run the same SQL on node:sqlite. Said by Pankaj, Sep 29.

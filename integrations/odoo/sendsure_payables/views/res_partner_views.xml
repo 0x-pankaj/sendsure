@@ -12,16 +12,21 @@
                         <field name="sendsure_state" invisible="not sendsure_payee_ref"/>
                         <field name="sendsure_address" invisible="not sendsure_address"/>
                         <field name="sendsure_checked_at" invisible="not sendsure_checked_at"/>
+                        <field name="sendsure_invite_url" widget="CopyClipboardChar"
+                               invisible="not sendsure_invite_url or sendsure_state not in (False, 'not_invited', 'invited')"/>
                     </group>
                     <group>
                         <button name="action_sendsure_refresh" type="object" string="Check with SendSure"
                                 class="btn-secondary" invisible="not sendsure_payee_ref" colspan="2"/>
+                        <button name="action_sendsure_email_invite" type="object" string="Email the invite"
+                                class="btn-secondary" groups="account.group_account_invoice" colspan="2"
+                                invisible="not sendsure_invite_url or sendsure_state not in (False, 'not_invited', 'invited')"/>
                     </group>
+                    <div class="text-muted" name="sendsure_help" colspan="2" style="white-space: normal;">
+                        The vendor proves their payout address by signing with it. Odoo lets a wallet be trusted only if it
+                        is that proven address, and SendSure pays only there.
+                    </div>
                 </group>
-                <p class="text-muted" name="sendsure_help">
-                    The vendor proves their payout address by signing with it. Odoo lets a wallet be trusted only if it
-                    is that proven address, and SendSure pays only there.
-                </p>
             </xpath>
         </field>
     </record>

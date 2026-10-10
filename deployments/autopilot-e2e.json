@@ -1,13 +1,13 @@
 {
   "note": "Autopilot and the cash plan on a SANDBOX org with throwaway keys. Every run was started by the Worker's cron. Not traction.",
-  "ranAtUnix": 1791657276,
+  "ranAtUnix": 1791662763,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x5aFC8147761835A7610633042Ad4D85551F05e40",
-  "cosign": "https://explorer.testnet.arc.io/tx/0xc97c16a0d4d5c5e28d66a811c9e285967f61a2ad68adabab03a9b7b8429e87b7",
+  "org": "0x2E894F1016cbE780b49748B1d715c830dB3Bebf1",
+  "cosign": "https://explorer.testnet.arc.io/tx/0xc619efbb5ad6501d66af2dbf0e0fea929b5f41c497b0eebbf598603daf09c573",
   "runs": [
     {
       "trigger": "autopilot",
-      "summary": "1 claim(s): 1 escalate.",
+      "summary": "The only claim (INV-A, 0.2 USDC) goes to a human approver because it is the first payment to a new or changed payout address. The treasury can pay 0.7 USDC right now, which covers it once someone co-signs.",
       "cash": {
         "balance": "700000",
         "allowance": "10000000",
@@ -19,11 +19,11 @@
     },
     {
       "trigger": "autopilot",
-      "summary": "1 claim(s): 1 pay.",
+      "summary": "One claim of 0.2 USDC was approved for payment. The treasury has 0.698109 USDC available, which covers it.",
       "cash": {
-        "balance": "698110",
+        "balance": "698109",
         "allowance": "10000000",
-        "available": "698110",
+        "available": "698109",
         "payable": "200000",
         "waitingCosign": "0",
         "shortBy": "0"
@@ -31,23 +31,23 @@
     },
     {
       "trigger": "autopilot",
-      "summary": "2 claim(s): 1 hold, 1 pay. 1 claim(s) wait for funds: 0.065671 USDC short, oldest work paid first.",
+      "summary": "Both invoices are approved, but they total 0.56 USDC and only 0.494 USDC is available. SendSure pays the oldest work first, so the August logo invoice (INV-D) should be paid now and INV-C will wait until you add funds. 1 claim(s) wait for funds: 0.065672 USDC short, oldest work paid first.",
       "cash": {
-        "balance": "494329",
+        "balance": "494328",
         "allowance": "9800000",
-        "available": "494329",
+        "available": "494328",
         "payable": "560000",
         "waitingCosign": "0",
-        "shortBy": "65671"
+        "shortBy": "65672"
       }
     },
     {
       "trigger": "autopilot",
-      "summary": "1 claim(s): 1 pay.",
+      "summary": "I approved one claim for 0.31 USDC: INV-C from a payee with verified payment details. The treasury can cover it now (0.444328 USDC available).",
       "cash": {
-        "balance": "444329",
+        "balance": "444328",
         "allowance": "9550000",
-        "available": "444329",
+        "available": "444328",
         "payable": "310000",
         "waitingCosign": "0",
         "shortBy": "0"
@@ -55,9 +55,9 @@
     }
   ],
   "payments": [
-    "https://explorer.testnet.arc.io/tx/0xab16ee7335501a6e7b5f4dbe2752816c16a69b90c349006d506a759d50897adb",
-    "https://explorer.testnet.arc.io/tx/0xcfe0878b18e5279bbee6d9a36f0c42f7ed6880b2115ecdb846cc9911faa80db4",
-    "https://explorer.testnet.arc.io/tx/0xb8790d09d334f7cbdd0d4d01b65c23c7620e61b8a853e410007f871a7ca80fec"
+    "https://explorer.testnet.arc.io/tx/0x52036d5ca918ad33dc44c01f4149736438d7656534d1c413486bf94daa27c238",
+    "https://explorer.testnet.arc.io/tx/0x710a670efe2a668399fa5ede2202edc2478aeabcd3d3c7724246fd8e5c536d75",
+    "https://explorer.testnet.arc.io/tx/0x93a7d4c129819e9a86ed25e164c519a1bed243feeabdcb4f419090b004ae1db1"
   ],
   "checks": {
     "passed": 9,
@@ -69,7 +69,7 @@
       },
       {
         "ok": true,
-        "what": "the agent ran by itself (autopilot) and asks for a co-sign: First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it."
+        "what": "the agent ran by itself (autopilot) and asks for a co-sign: This is the first payment to a new or changed payout address, so a person has to co-sign before it can be paid. Please check the address with the payee through a contact method you already trust."
       },
       {
         "ok": true,
@@ -81,15 +81,15 @@
       },
       {
         "ok": true,
-        "what": "treasury holds 0.494329 USDC; 0.56 USDC of co-signed claims is due"
+        "what": "treasury holds 0.494328 USDC; 0.56 USDC of co-signed claims is due"
       },
       {
         "ok": true,
-        "what": "cash plan: the older work (INV-D) is paid, INV-C waits: Waiting for funds: your wallet can pay 0.494329 USDC right now and 0.56 USDC is due. The oldest work is paid first. Add 0.065671 USDC (or raise the budget allowance) and the agent pays this on its next run."
+        "what": "cash plan: the older work (INV-D) is paid, INV-C waits: Waiting for funds: your wallet can pay 0.494328 USDC right now and 0.56 USDC is due. The oldest work is paid first. Add 0.065672 USDC (or raise the budget allowance) and the agent pays this on its next run."
       },
       {
         "ok": true,
-        "what": "the run recorded what it saw: can pay 0.494329, short by 0.065671 USDC"
+        "what": "the run recorded what it saw: can pay 0.494328, short by 0.065672 USDC"
       },
       {
         "ok": true,

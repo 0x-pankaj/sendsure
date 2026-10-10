@@ -374,3 +374,24 @@ class TestSendSure(AccountTestInvoicingCommon):
         self._trusted_bill()
         self.vendor.sendsure_payee_ref = '0x' + 'ef' * 32
         self.assertFalse(self.vendor.bank_ids.filtered('allow_out_payment'))
+
+    def test_the_invite_link_can_be_emailed_from_the_vendor(self):
+        self.env['ir.config_parameter'].sudo().set_param('sendsure.org', ORG)
+        self.vendor.invalidate_recordset(['sendsure_invite_url'])
+        url = self.vendor.sendsure_invite_url
+        self.assertTrue(url.startswith(self.env['sendsure.client'].base_url() + '/verify?org=%s&ref=%s&name=' % (ORG, REF)))
+        self.vendor.email = False
+        with self.assertRaises(UserError):
+            self.vendor.action_sendsure_email_invite()
+        self.vendor.email = 'maria@lopez.design'
+        action = self.vendor.action_sendsure_email_invite()
+        self.assertEqual(action['res_model'], 'mail.compose.message')
+        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        # A person reads and sends it; the link in it is the vendor's own invite.
+        self.assertIn(REF, composer.body)
+        self.assertIn(ORG, composer.body)
+        self.assertIn(self.vendor, composer.partner_ids)
+
+    def test_a_bill_waiting_for_a_cosign_links_to_sendsure(self):
+        action = self._bill().action_sendsure_open()
+        self.assertEqual(action['url'], self.env['sendsure.client'].base_url() + '/org')

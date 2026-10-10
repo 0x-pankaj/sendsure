@@ -186,6 +186,10 @@ class AccountMove(models.Model):
         self._sendsure_sync()
         return True
 
+    def action_sendsure_open(self):
+        """Co-signing stays with the org's owner or approver, in SendSure, with their own wallet."""
+        return {'type': 'ir.actions.act_url', 'url': '%s/org' % self.env['sendsure.client'].base_url(), 'target': 'new'}
+
     def _sendsure_sync(self):
         """Each bill on its own: one bill that cannot be recorded never blocks the others."""
         bills = self.filtered('sendsure_external_id')

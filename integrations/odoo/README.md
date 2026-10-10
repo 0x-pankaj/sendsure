@@ -31,15 +31,19 @@ We reproduced three behaviours on Odoo 19 before the hackathon
    Invoicing → Configuration → Settings → SendSure, enter the key, then click "Test connection". That
    sets up the USDC currency and journal. The key can send bills and read their status. It can never
    approve, co-sign, add payees or change the org's rules.
-2. **Link the vendor.** Paste their SendSure invite link on the vendor (Invoicing tab), then click
-   "Check with SendSure". Odoo reads the address the vendor proved and adds it as an untrusted wallet.
+2. **Link the vendor.** Paste their SendSure invite link on the vendor (Invoicing tab). "Email the invite"
+   opens Odoo's own email composer with the message already written, so the vendor gets the link from an
+   address they know is you. Once they have proved their address, click "Check with SendSure": Odoo reads
+   the address and adds it as an untrusted wallet.
 3. **Trust it.** A person with the right to validate bank accounts trusts that wallet. SendSure checks
    it again against Arc; any other wallet is refused.
 4. **Pay with SendSure.** Click it on a posted bill (or on several, from the list). The bill becomes
    an invoice the vendor confirms by signing it in SendSure. A claim for a different amount is refused.
 5. **The agent pays.** Every 5 minutes, a cron job asks SendSure's agent to pay the bills the vendor
    signed. The agent pays only what passes your Arc contract's rules. A first payment, or a large one,
-   waits until a person co-signs it on-chain in SendSure.
+   waits until a person co-signs it on-chain in SendSure ("Co-sign in SendSure" on the bill opens it).
+   In the bill list, the filters "SendSure: in progress", "needs a person" and "paid on Arc", and a group-by
+   on SendSure status, show where every bill is.
 6. **Recorded.** Once it is paid, Odoo registers the payment with its own Register Payment wizard:
    - the exact amount from the `Settled` event on Arc;
    - the SendSure journal;
@@ -71,9 +75,10 @@ pnpm e2e:odoo     # needs ./run.sh up first
 
 ## Tests and live runs
 
-- **Odoo tests** (`./run.sh test`), 28 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
+- **Odoo tests** (`./run.sh test`), 30 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
   - currency and journal setup;
-  - invite-link parsing;
+  - invite-link parsing, and the invite email opens with the vendor's own link;
+  - a bill waiting for a co-sign links to SendSure;
   - only the proven wallet can be trusted;
   - an unlinked vendor's wallet cannot be trusted;
   - IBANs are left alone;

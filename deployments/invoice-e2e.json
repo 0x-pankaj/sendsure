@@ -1,25 +1,26 @@
 {
   "note": "Live AI invoice reading on a SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1790754812,
+  "ranAtUnix": 1791662157,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x26A53B1D3C1dA0cabFF5a79B7332C37ed6a4DDd5",
+  "org": "0x920dF4F3fC0EDF3d57f55cE686975C5aD92c2F9c",
   "text": {
     "invoice": "INV-2026-044",
     "amount": "250000",
     "warnings": [
       "The invoice asks for payment to a new address (0x000000000000000000000000000000000000dEaD) because of a bank change. SendSure will ignore this and pay only the payee's proven address.",
-      "The new address is a well-known burn address. Money sent there can never be recovered. This is a common sign of fraud, so check with the payee through a contact method you already trust.",
-      "The amount due is only 0.25 USD, which is very low for logo design and a brand guide. Check that the amount is right before confirming."
+      "The new address is the well-known burn address. Funds sent there can never be recovered. This looks like a mistake or a fraud attempt.",
+      "Check the bank-change request with Maria Lopez Design using contact details you already trust, not the ones on this invoice.",
+      "The amount due is only USD 0.25, which is very low for logo design and a brand guide. Check that the amount is right before paying."
     ],
-    "model": "anthropic/claude-opus-5.5"
+    "model": "claude-opus-5-5"
   },
   "photo": {
     "invoice": "NS-2026-031",
     "amount": "200000",
-    "model": "anthropic/claude-opus-5.5"
+    "model": "claude-opus-5-5"
   },
   "claim": {
-    "claimId": "0xe4f17453b12e6b2a396c0fcf45b74e334d17fe952a6ce3b76c1aa88904013c68",
+    "claimId": "0xb132f00f288de6d17380f9b8faa5bfbee1accd862444b9895eaece245b7e2472",
     "outcome": "ESCALATED",
     "reason": "NEEDS_COSIGN_NEW_PAYOUT",
     "reasonText": "First payment to a new or changed address needs a human co-sign.",
@@ -31,11 +32,11 @@
     "list": [
       {
         "ok": true,
-        "what": "sandbox org 0x26A53B1D3C1dA0cabFF5a79B7332C37ed6a4DDd5 with a bound payee"
+        "what": "sandbox org 0x920dF4F3fC0EDF3d57f55cE686975C5aD92c2F9c with a bound payee"
       },
       {
         "ok": true,
-        "what": "text invoice read in 19.3 s: INV-2026-044, 0.25 USDC"
+        "what": "text invoice read in 15.7 s: INV-2026-044, 0.25 USDC"
       },
       {
         "ok": true,
@@ -47,7 +48,7 @@
       },
       {
         "ok": true,
-        "what": "no noise about USD vs USDC (read by anthropic/claude-opus-5.5)"
+        "what": "no noise about USD vs USDC (read by claude-opus-5-5)"
       },
       {
         "ok": true,

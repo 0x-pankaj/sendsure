@@ -1,9 +1,10 @@
 import logging
+from urllib.parse import urlencode
 
 from markupsafe import Markup, escape
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
 from .sendsure_client import PAYEE_REF, SendSureError, is_evm_address
@@ -31,6 +32,43 @@ class ResPartner(models.Model):
     sendsure_address = fields.Char("Proven payout address", readonly=True, copy=False,
                                    help="The address the vendor proved in SendSure, read from Arc.")
     sendsure_checked_at = fields.Datetime("Checked with SendSure", readonly=True, copy=False)
+    sendsure_invite_url = fields.Char(
+        "Invite link", compute='_compute_sendsure_invite_url',
+        help="The link the vendor opens to prove their payout address. Send it from a channel they already know is you.")
+
+    @api.depends('sendsure_payee_ref')
+    def _compute_sendsure_invite_url(self):
+        org = self.env['ir.config_parameter'].sudo().get_param('sendsure.org')
+        base = self.env['sendsure.client'].base_url()
+        for partner in self:
+            partner.sendsure_invite_url = org and partner.sendsure_payee_ref and '%s/verify?%s' % (base, urlencode({
+                'org': org, 'ref': partner.sendsure_payee_ref, 'name': partner.env.company.name}))
+
+    def action_sendsure_email_invite(self):
+        """Odoo's own email composer, with the invite already written: a person reads it and sends it."""
+        self.ensure_one()
+        if not self.sendsure_invite_url:
+            raise UserError(_("Paste %(vendor)s's SendSure invite link first, and connect SendSure in the settings "
+                              "(Test connection).", vendor=self.display_name))
+        if not self.email:
+            raise UserError(_("Add %(vendor)s's email address first.", vendor=self.display_name))
+        template = self.env.ref('sendsure_payables.mail_template_sendsure_invite')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Email the SendSure invite"),
+            'res_model': 'mail.compose.message',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'new',
+            'context': {
+                'default_model': 'res.partner',
+                'default_res_ids': self.ids,
+                'default_partner_ids': self.ids,
+                'default_template_id': template.id,
+                'default_composition_mode': 'comment',
+                'default_email_layout_xmlid': 'mail.mail_notification_light',
+            },
+        }
 
     @api.model
     def _sendsure_parse_ref(self, value):

@@ -12,6 +12,12 @@
                 <button name="action_sendsure_refresh" type="object" string="Refresh SendSure"
                         groups="account.group_account_invoice"
                         invisible="not sendsure_external_id or sendsure_state in ('paid', 'needs_review')"/>
+                <button name="action_sendsure_open" type="object" string="Co-sign in SendSure"
+                        groups="account.group_account_invoice" class="btn-primary"
+                        invisible="sendsure_state != 'needs_cosign'"/>
+                <button name="action_sendsure_open" type="object" string="Open in SendSure"
+                        groups="account.group_account_invoice"
+                        invisible="sendsure_state != 'held'"/>
                 <button name="action_sendsure_record_review" type="object" string="Record SendSure payment"
                         groups="account.group_account_manager" class="btn-warning"
                         invisible="sendsure_state != 'needs_review'"
@@ -49,6 +55,23 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='status_in_payment']" position="after">
                 <field name="sendsure_state" optional="show" string="SendSure"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_invoice_filter_sendsure" model="ir.ui.view">
+        <field name="name">account.move.search.sendsure</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sendsure_in_progress" string="SendSure: in progress"
+                        domain="[('sendsure_state', 'in', ['waiting_for_payee', 'signed', 'needs_cosign', 'held', 'paid_unconfirmed'])]"/>
+                <filter name="sendsure_needs_action" string="SendSure: needs a person"
+                        domain="[('sendsure_state', 'in', ['needs_cosign', 'held', 'needs_review', 'rejected_by_payee', 'refused'])]"/>
+                <filter name="sendsure_paid" string="SendSure: paid on Arc" domain="[('sendsure_state', '=', 'paid')]"/>
+                <filter name="group_sendsure_state" string="SendSure status" context="{'group_by': 'sendsure_state'}"/>
             </xpath>
         </field>
     </record>

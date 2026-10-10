@@ -74,7 +74,7 @@ flowchart LR
    payer's Odoo or ERPNext sends the bill. The server salts the invoice number (`refHash`), runs the
    contract's own `check()` and stores the signed claim.
 3. **The agent decides.** Rules first (the `check()` result plus red flags from the payee's history),
-   then Claude (Opus 5.5 via MeshAPI, one key with Sonnet 5 as fallback) reviews with read-only
+   then Claude (Opus 5.5 through the Anthropic API, Sonnet 5.5 as the fallback) reviews with read-only
    tools. The model can only make a decision more careful. Every decision is hash-chained; its hash
    goes into the payment; the log head is anchored on-chain.
    - **Cash plan.** The contract checks each claim alone. When the claims to pay do not fit together
@@ -145,7 +145,7 @@ We reproduced each of these on stock software before writing the apps, and each 
 | Payout check | Changed / new / look-alike / duplicate / amount-jump detection, in the browser. | [`packages/core/src/payoutCheck.ts`](packages/core/src/payoutCheck.ts) |
 | Relayer | Checks each signature offline, simulates, then submits; per-address limits count only verified requests. | [`apps/web/lib/relayer.ts`](apps/web/lib/relayer.ts), [`orgRelay.ts`](apps/web/lib/orgRelay.ts) |
 | Claims | Salted invoice refs, the contract's dry run before storing, one open claim per invoice. | [`apps/web/lib/claims.ts`](apps/web/lib/claims.ts) |
-| Agent | Rules, red flags, the MeshAPI tool loop, settle and anchor. | [`apps/web/lib/agent.ts`](apps/web/lib/agent.ts), [`llm.ts`](apps/web/lib/llm.ts) |
+| Agent | Rules, red flags, the Claude tool loop, settle and anchor. | [`apps/web/lib/agent.ts`](apps/web/lib/agent.ts), [`llm.ts`](apps/web/lib/llm.ts) |
 | Cash plan | Fits the claims to pay into what the treasury can pay now: oldest work first, the rest waits with the amount short. Pure code, no model. | [`apps/web/lib/cash.ts`](apps/web/lib/cash.ts) |
 | Autopilot | Owner opt-in. The cron runs the agent only when a claim's on-chain state, a co-sign or the funds changed; at most one run per org every two minutes. | [`apps/web/lib/autopilot.ts`](apps/web/lib/autopilot.ts), [`worker.ts`](apps/web/worker.ts) |
 | Invoice reading | Two passes: every field with a verbatim quote (checked in code), then a validated claim proposal; payment instructions in an invoice are flagged, never used. | [`apps/web/lib/invoices.ts`](apps/web/lib/invoices.ts) |
@@ -181,7 +181,7 @@ We reproduced each of these on stock software before writing the apps, and each 
 | Agent (Circle agent wallet, SendSure server agent) | Call `settle()`, which pays only if every rule passes; anchor the log; open invites. | Change caps, payees or addresses; pay an unproven address or an unsigned claim; skip a required co-sign. |
 | Payee | Prove their address; sign claims; change address with both keys and a waiting period. | Get paid outside the caps, the allowance or a required co-sign. |
 | Relayer key | Pay gas for signatures that it checked. | Anything else: it has no role in any contract. |
-| The model (Claude via MeshAPI) | Hold or escalate a claim, with reasons. | Pay, add payees, change amounts, or overrule a person's co-sign. |
+| The model (Claude, Anthropic API) | Hold or escalate a claim, with reasons. | Pay, add payees, change amounts, or overrule a person's co-sign. |
 | Autopilot (the scheduler) | Decide when the agent runs, for orgs whose owner turned it on. | Anything the agent cannot: it only starts the same run a person would. |
 | A books system's key (Odoo, ERPNext) | Send bills, read their status, ask the agent to run. | Approve, co-sign, add payees or change the org's rules. |
 
@@ -228,7 +228,7 @@ The books apps handle whole invoices in USD. What comes next, with dates: [ROADM
 |---|---|---|
 | Contracts | 47 (30 Mandate, 14 registry, 3 invariants) | `forge test` in [`contracts/`](contracts/) |
 | TypeScript | 84 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 44) | `pnpm test` |
-| Odoo add-on | 28, inside Odoo 19 | `integrations/odoo/run.sh test` |
+| Odoo add-on | 30, inside Odoo 19 | `integrations/odoo/run.sh test` |
 | ERPNext app | 25, inside ERPNext 15, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` |
 
 Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction). Each record
@@ -251,11 +251,11 @@ lists every check it made under `checks`.
 | [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
 | [faucet](deployments/faucet-e2e.json) | 4/4 | A new wallet with 0 USDC gets 2 test USDC from the built-in faucet once, after signing in; a second drip to the same wallet is refused. |
 
-**The model provider was out of credit on Oct 10.** Since then the agent decides on its rules alone and
-says so on every run ("The AI review was skipped this time; the rules decided alone"), and invoice
-reading answers 503 with what to do instead. Nothing else changes: the contract, the co-sign rules and
-the cash plan are the same. The agent and invoice records above are the last runs with the model; their
-model checks pass again once the MeshAPI account is topped up.
+**The model, since Oct 11:** Claude through the Anthropic API directly (until Oct 10 it went through
+MeshAPI; that code is kept, commented out, in [`lib/llm.ts`](apps/web/lib/llm.ts)). The agent, invoice,
+try and autopilot records above are runs with Claude Opus 5.5 on Oct 11. If the model is ever
+unreachable, the agent decides on its rules alone and says so on the run, and invoice reading answers
+503 with what to do instead; the contract, the co-sign rules and the cash plan never depend on it.
 
 The books of the agent run: [beancount](deployments/books-e2e.beancount) (`bean-check`),
 [hledger](deployments/books-e2e.journal) (`hledger check --strict`), [journal CSV](deployments/books-e2e.journal.csv)
