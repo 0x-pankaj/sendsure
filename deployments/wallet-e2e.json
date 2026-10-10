@@ -1,11 +1,11 @@
 {
   "note": "Live site in a real browser with a MetaMask-like injected wallet; payer is our deployer key (first-party), payee a fresh key. Not traction.",
-  "ranAtUnix": 1791656628,
+  "ranAtUnix": 1791664799,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x517c4B748688776bA1Bf22fEF35e66efA6CeBe1F",
-  "payee": "0x987c591a8C7feB7D0491b46542EAb3F547F01B17",
-  "cosign": "https://explorer.testnet.arc.io/tx/0xfccfccb6c699236941aaf788e0cb54350e70349b26c048391ae33ee718827824",
-  "payment": "https://explorer.testnet.arc.io/tx/0xe6f8d29b7910a52cd0a34b46efae42868610e980c11f9a5db252bff0c79deeef",
+  "org": "0x3ca62Ffe249DDC42fEb8b31939d9297981405C86",
+  "payee": "0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x20e95d1bbdd7056106df54a65f1b17d343323f65ed8e55fd9f8bf1fef295441e",
+  "payment": "https://explorer.testnet.arc.io/tx/0x37ccc2be96c68d7ad0c1ae9697a80172ce3a0704aa2186992caccb9ea516979e",
   "screenshots": "deployments/wallet-e2e/",
   "checks": {
     "passed": 14,
@@ -21,7 +21,7 @@
       },
       {
         "ok": true,
-        "what": "org 0x517c4B748688776bA1Bf22fEF35e66efA6CeBe1F created from the page, owned by the payer's wallet, production tier (first-party)"
+        "what": "org 0x3ca62Ffe249DDC42fEb8b31939d9297981405C86 created from the page, owned by the payer's wallet, production tier (first-party)"
       },
       {
         "ok": true,
@@ -29,7 +29,7 @@
       },
       {
         "ok": true,
-        "what": "invite created; link https://sendsure.0xpankaj.workers.dev/verify?org=0x517c4B748…"
+        "what": "invite created; link https://sendsure.0xpankaj.workers.dev/verify?org=0x3ca62Ffe2…"
       },
       {
         "ok": true,
@@ -37,7 +37,7 @@
       },
       {
         "ok": true,
-        "what": "payee proved 0x987c591a8C7feB7D0491b46542EAb3F547F01B17 by signing in the wallet (relayer paid the gas)"
+        "what": "payee proved 0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766 by signing in the wallet (relayer paid the gas)"
       },
       {
         "ok": true,
@@ -53,11 +53,11 @@
       },
       {
         "ok": true,
-        "what": "payer co-signed on-chain from the wallet: https://explorer.testnet.arc.io/tx/0xfccfccb6c699236941aaf788e0cb54350e70349b26c048391ae33ee718827824"
+        "what": "payer co-signed on-chain from the wallet: https://explorer.testnet.arc.io/tx/0x20e95d1bbdd7056106df54a65f1b17d343323f65ed8e55fd9f8bf1fef295441e"
       },
       {
         "ok": true,
-        "what": "agent run #2 paid: payee received 0.2 USDC (https://explorer.testnet.arc.io/tx/0xe6f8d29b7910a52cd0a34b46efae42868610e980c11f9a5db252bff0c79deeef)"
+        "what": "agent run #2 paid: payee received 0.2 USDC (https://explorer.testnet.arc.io/tx/0x37ccc2be96c68d7ad0c1ae9697a80172ce3a0704aa2186992caccb9ea516979e)"
       },
       {
         "ok": true,

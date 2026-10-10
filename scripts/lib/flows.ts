@@ -37,8 +37,11 @@ export interface SandboxOrg {
   payeeToken: string;
 }
 
-/** A SANDBOX org (throwaway owner = treasury = approver), funded, with a 10 USDC budget and one bound payee. */
-export async function setupSandboxOrg(base: string, fundUsdc: string): Promise<SandboxOrg> {
+/**
+ * A SANDBOX org (throwaway owner = treasury = approver), funded, with a 10 USDC budget and one bound payee.
+ * `bind: false` leaves the invite open (for a payee who binds in the browser); `payee` is then unused.
+ */
+export async function setupSandboxOrg(base: string, fundUsdc: string, opts: { bind?: boolean } = {}): Promise<SandboxOrg> {
   const owner = privateKeyToAccount(generatePrivateKey());
   const rules: OrgRules = {
     owner: owner.address,
@@ -81,6 +84,7 @@ export async function setupSandboxOrg(base: string, fundUsdc: string): Promise<S
     },
   });
   const payee = privateKeyToAccount(generatePrivateKey());
+  if (opts.bind === false) return { base, org, owner, payee, payeeRef, ownerToken: await signInAs(base, owner), payeeToken: "" };
   const bm = bindMessage(org, payeeRef, payee.address);
   const bound = await postRelay(base, "bind", { ...bm, signature: await payee.signTypedData(bindTypedData(bm)) });
   if (bound.status !== 200) throw new Error(`payee not bound: ${JSON.stringify(bound.body)}`);
