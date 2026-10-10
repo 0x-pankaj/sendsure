@@ -115,6 +115,21 @@ const day = (s: string): number | null => {
   return Number.isFinite(t) ? Math.floor(t / 1000) : null;
 };
 
+/** Reading with the model; if the model provider is down or out of credit, say so plainly instead of a 500. */
+async function withModel<T>(read: () => Promise<T>): Promise<T> {
+  try {
+    return await read();
+  } catch (err) {
+    if (err instanceof RelayError) throw err;
+    console.error("invoice reading: model unavailable", String(err).slice(0, 300));
+    throw new RelayError(
+      503,
+      "Reading invoices with AI is unavailable right now. Your payee can still sign this invoice as a claim on their own SendSure page (their invite link), or try again later.",
+      "MODEL_UNAVAILABLE",
+    );
+  }
+}
+
 export async function extractInvoice(session: Address, body: unknown) {
   if (!meshConfigured()) throw new RelayError(503, "Invoice reading is not set up on this server.", "NOT_CONFIGURED");
   const b = toObject(body);
@@ -138,14 +153,15 @@ export async function extractInvoice(session: Address, body: unknown) {
       { type: "image_url", image_url: { url: image } },
     ];
     text =
-      (await callTool<{ text: string }>({ system: SYSTEM_READ, content: parts, tool: TRANSCRIBE, maxTokens: 4000 })).text ?? "";
+      (await withModel(() => callTool<{ text: string }>({ system: SYSTEM_READ, content: parts, tool: TRANSCRIBE, maxTokens: 4000 })))
+        .text ?? "";
     source = "image";
   }
   if (!text) throw new RelayError(400, "The invoice has no readable text.", "BAD_INPUT");
   if (text.length > MAX_TEXT) throw new RelayError(400, "The invoice text is too long (20,000 characters at most).", "BAD_INPUT");
 
   // Pass 1: fields with verbatim quotes, then checked in code.
-  const evidence = await callTool<Evidence>({ system: SYSTEM_READ, content: `Invoice:\n${text}`, tool: EVIDENCE });
+  const evidence = await withModel(() => callTool<Evidence>({ system: SYSTEM_READ, content: `Invoice:\n${text}`, tool: EVIDENCE }));
   const haystack = norm(text);
   const found = (q?: string) => Boolean(q && q.trim() && haystack.includes(norm(q)));
   const checked = {
@@ -158,11 +174,13 @@ export async function extractInvoice(session: Address, body: unknown) {
   };
 
   // Pass 2: a strict proposal, validated again in code.
-  const proposal = await callTool<Proposal>({
-    system: SYSTEM_PROPOSE,
-    content: JSON.stringify({ fields: evidence, quoteFoundInInvoice: checked, source }),
-    tool: PROPOSE,
-  });
+  const proposal = await withModel(() =>
+    callTool<Proposal>({
+      system: SYSTEM_PROPOSE,
+      content: JSON.stringify({ fields: evidence, quoteFoundInInvoice: checked, source }),
+      tool: PROPOSE,
+    }),
+  );
   // Payment-instruction warnings first (they are the fraud signal), then the rest; at most five.
   const risky = (w: string) => /wallet|address|bank|payment detail|pay (it|this) to/i.test(w);
   const warnings = [...(proposal.warnings ?? [])]

@@ -49,6 +49,7 @@ import {
   type RelayKind,
   type RelayResult,
 } from "./relayer";
+import { claimSignature, releaseSignature } from "./signatures";
 
 const factory = deployment.mandateFactory as Address;
 const errorsOnly = <T extends readonly { type: string }[]>(abi: T) => abi.filter((x) => x.type === "error");
@@ -124,6 +125,9 @@ export async function verifyCreateOrg(req: CreateOrgRequest): Promise<void> {
 export async function submitCreateOrg(req: CreateOrgRequest): Promise<RelayResult> {
   const { rules } = req;
   const wallet = relayer();
+  // One org per signature, on every Worker instance: a replayed signature never creates a second org.
+  if (!(await claimSignature(req.signature, "create-org", req.validUntil)))
+    throw new RelayError(409, "This org was already created with this signature.", "NonceUsed");
   try {
     const params = initParams({
       ...rules,
@@ -144,8 +148,10 @@ export async function submitCreateOrg(req: CreateOrgRequest): Promise<RelayResul
       const [created] = parseEventLogs({ abi: mandateFactoryAbi, logs: receipt.logs, eventName: "MandateCreated" });
       result.org = created?.args.org;
     }
+    if (result.status !== "success") await releaseSignature(req.signature);
     return result;
   } catch (err) {
+    await releaseSignature(req.signature);
     throw toRelayError(err);
   }
 }
@@ -238,7 +244,6 @@ const agent = agentWallet;
 
 export const MAX_INVITES_PER_BATCH = 50;
 const INVITE_TTL_SECONDS = 15 * 60;
-const usedInviteSignatures = new Set<string>();
 
 export interface InvitesRequest {
   org: Address;
@@ -263,8 +268,6 @@ export function parseInvites(body: unknown, nowSec = Math.floor(Date.now() / 100
 }
 
 export async function verifyInvites(req: InvitesRequest): Promise<void> {
-  if (usedInviteSignatures.has(req.signature.toLowerCase()))
-    throw new RelayError(409, "These invites were already sent.", "NonceUsed");
   const owner = await serverClient.readContract({ address: req.org, abi: mandateAbi, functionName: "owner" }).catch(() => null);
   if (!owner) throw new RelayError(400, "That is not a SendSure org.", "NotOrg");
   const message = openInvitesMessage(req.org, inviteBatchHash(req.payeeRefs), req.payeeRefs.length, req.validUntil);
@@ -274,23 +277,35 @@ export async function verifyInvites(req: InvitesRequest): Promise<void> {
 
 /**
  * Opens the invites that are not open yet. Idempotent: an invite already open, confirmed or frozen is
- * left alone, so a retry after a lost response succeeds instead of failing.
+ * left alone, so a retry after a lost response succeeds instead of failing. But a signature that was already
+ * used can never open anything again: replaying it within its 15 minutes cannot re-open an invite the owner
+ * has since revoked.
  */
 export async function submitInvites(req: InvitesRequest): Promise<RelayResult | NothingToSend> {
   const wallet = agent();
   try {
     const states = await Promise.all(req.payeeRefs.map((ref) => readPayee(serverClient, req.org, ref)));
     const toOpen = req.payeeRefs.filter((_, i) => states[i]!.state === "NONE" || states[i]!.state === "REVOKED");
-    usedInviteSignatures.add(req.signature.toLowerCase());
-    if (!toOpen.length) return { status: "success", opened: 0, alreadyOpen: req.payeeRefs.length };
-    const { request } = await serverClient.simulateContract({
-      account: wallet.account,
-      address: req.org,
-      abi: mandateAbiWithErrors,
-      functionName: "openSlots",
-      args: [toOpen],
-    });
-    const sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    if (!toOpen.length) {
+      await claimSignature(req.signature, "invites", req.validUntil);
+      return { status: "success", opened: 0, alreadyOpen: req.payeeRefs.length };
+    }
+    if (!(await claimSignature(req.signature, "invites", req.validUntil)))
+      throw new RelayError(409, "These invites were already sent. Sign again to open them again.", "NonceUsed");
+    let sent: RelayResult;
+    try {
+      const { request } = await serverClient.simulateContract({
+        account: wallet.account,
+        address: req.org,
+        abi: mandateAbiWithErrors,
+        functionName: "openSlots",
+        args: [toOpen],
+      });
+      sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    } catch (err) {
+      await releaseSignature(req.signature); // nothing was opened: the owner can retry with the same signature
+      throw err;
+    }
     return { ...sent, opened: toOpen.length, alreadyOpen: req.payeeRefs.length - toOpen.length };
   } catch (err) {
     throw toRelayError(err);

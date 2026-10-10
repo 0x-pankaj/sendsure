@@ -4,12 +4,13 @@
 //   2. the owner signs its rules as plain text: the relayer creates the org (tier SANDBOX)
 //   3. the owner signs a USDC permit: the org gets a capped allowance, no gas paid by the owner
 //   4. a stranger cannot open invites for the org; the owner can (the SendSure agent submits)
-//   5. replaying the owner's invites signature is refused
+//   5. replaying the owner's invites signature changes nothing; after the owner revokes an invite, the same
+//      signature cannot re-open it
 //   6. a payee binds one of the invites through the relayer
 //   pnpm tsx scripts/e2e-org.ts [--base http://localhost:3000]
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createPublicClient, http, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, http, parseEther, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   DEFAULT_CAPS,
@@ -17,6 +18,7 @@ import {
   DEFAULT_PERIOD_SECONDS,
   ORG_TIER,
   arcTestnet,
+  mandateAbi,
   bindTypedData,
   createOrgMessage,
   deployment,
@@ -32,9 +34,10 @@ import {
   usdcPermitAbi,
   type OrgRules,
 } from "@sendsure/chain";
-import { arg } from "./lib/env";
+import { arg, loadEnv, need } from "./lib/env";
 import { bindMessage, check, failed, postRelay, withChecks } from "./lib/relay";
 
+loadEnv();
 const base = arg("base", "http://localhost:3000")!;
 const client = createPublicClient({ chain: arcTestnet, transport: http() });
 const now = () => BigInt(Math.floor(Date.now() / 1000));
@@ -42,7 +45,7 @@ const now = () => BigInt(Math.floor(Date.now() / 1000));
 async function post(path: string, payload: Record<string, unknown>) {
   const body = JSON.stringify(payload, (_k, v) => (typeof v === "bigint" ? v.toString() : v));
   const res = await fetch(`${base}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body });
-  return { status: res.status, body: (await res.json()) as { txHash?: Hex; status?: string; org?: Address; error?: string; code?: string } };
+  return { status: res.status, body: (await res.json()) as { txHash?: Hex; status?: string; org?: Address; error?: string; code?: string; opened?: number } };
 }
 
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -89,9 +92,18 @@ const r4 = await post("/api/org/invites", inviteBody(ownerInviteSig));
 const states = await Promise.all(refs.map((ref) => readPayee(client, org, ref)));
 check(r4.status === 200 && states.every((p) => p.state === "OPEN"), `owner's 2 invites opened by the SendSure agent (${r4.status})`);
 
-// 5. Replay.
+// 5. Replay: harmless while nothing changed; refused once it would re-open a revoked invite.
 const r5 = await post("/api/org/invites", inviteBody(ownerInviteSig));
-check(r5.status === 409, `invites replay refused (${r5.status} ${r5.body.code})`);
+check(r5.status === 200 && r5.body.opened === 0, `replaying the invites signature changes nothing (${r5.status}, opened ${r5.body.opened})`);
+const funder = createWalletClient({ account: privateKeyToAccount(need("DEPLOYER_PRIVATE_KEY") as Hex), chain: arcTestnet, transport: http() });
+await client.waitForTransactionReceipt({ hash: await funder.sendTransaction({ to: owner.address, value: parseEther("0.05") }) });
+const ownerWallet = createWalletClient({ account: owner, chain: arcTestnet, transport: http() });
+await client.waitForTransactionReceipt({
+  hash: await ownerWallet.writeContract({ address: org, abi: mandateAbi, functionName: "revokePayee", args: [refs[1]!] }),
+});
+const r5b = await post("/api/org/invites", inviteBody(ownerInviteSig));
+const revoked = await readPayee(client, org, refs[1]!);
+check(r5b.status === 409 && revoked.state === "REVOKED", `after the owner revoked an invite, the old signature cannot re-open it (${r5b.status} ${r5b.body.code}; ${revoked.state})`);
 
 // 6. A payee binds the first invite.
 const payee = privateKeyToAccount(generatePrivateKey());
