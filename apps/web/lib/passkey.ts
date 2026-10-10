@@ -5,7 +5,7 @@
 // itself with PayeeRegistry.bind() and authorises each claim by sending Mandate.submitClaim() from the
 // proven address, so settle() needs no signature for it. The Circle SDK is loaded only when a payee
 // chooses this, so nobody else downloads it.
-import { createPublicClient, encodeFunctionData, erc20Abi, zeroHash, type Address, type Hex } from "viem";
+import { createPublicClient, encodeFunctionData, erc20Abi, getAddress, zeroHash, type Address, type Hex } from "viem";
 import { createBundlerClient, toWebAuthnAccount, type BundlerClient, type SmartAccount } from "viem/account-abstraction";
 import { arcTestnet, deployment, encodeClaim, mandateAbi, payeeRegistryAbi, type Claim } from "@sendsure/chain";
 
@@ -33,7 +33,8 @@ async function fromCredential(credential: unknown): Promise<PasskeySigner> {
     client: client as never,
     owner: toWebAuthnAccount({ credential: credential as never }) as never,
   })) as unknown as SmartAccount;
-  return { kind: "passkey", address: account.address, account, bundler };
+  // The SDK reports the address in lowercase; everything else (sign-in messages, comparisons) uses the checksum form.
+  return { kind: "passkey", address: getAddress(account.address), account, bundler };
 }
 
 /** `create`: a new passkey and a new wallet. Otherwise the phone offers the passkeys it already has for SendSure. */

@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import { getAddress, type Address } from "viem";
 import { signInMessage } from "./signin";
 import { signText, type Signer } from "./wallet";
 
@@ -23,7 +23,8 @@ export async function sessionToken(s: Signer, fresh = false): Promise<string> {
   }
   const issuedAt = new Date().toISOString();
   const nonce = randomHex(16);
-  const signature = await signText(s, signInMessage(s.address, issuedAt, nonce));
+  // The server rebuilds the message with the checksummed address, so sign exactly that text.
+  const signature = await signText(s, signInMessage(getAddress(s.address), issuedAt, nonce));
   const res = await fetch("/api/session", {
     method: "POST",
     headers: { "content-type": "application/json" },

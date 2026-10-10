@@ -18,7 +18,7 @@ const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
 const USDC = deployment.usdc as Address;
 const OUT = resolve(import.meta.dirname, "../deployments/passkey-e2e");
 mkdirSync(OUT, { recursive: true });
-const s = await setupSandboxOrg(base, "0.5", { bind: false });
+const s = await setupSandboxOrg(base, "0.3", { bind: false });
 check(true, `sandbox org ${s.org} with an open invite and a 10 USDC budget`);
 
 const browser = await chromium.launch();
@@ -53,8 +53,16 @@ try {
   // A claim, authorised by sending it on Arc from the passkey wallet.
   await page.locator("#inv").fill("INV-PK-1");
   await page.locator("#amt").fill("0.2");
+  page.on("response", async (r) => {
+    if (r.status() >= 400) console.log("[http]", r.status(), r.url().replace(/\?.*/, ""), (await r.text().catch(() => "")).slice(0, 300));
+  });
   await page.getByRole("button", { name: "Sign and send claim" }).click();
-  await text(/co-sign|ESCALATED|Waiting/, 180_000);
+  try {
+    await text(/co-sign|ESCALATED|Waiting for/, 180_000);
+  } catch {
+    await page.screenshot({ path: `${OUT}/3-claim-stuck.png` });
+    throw new Error(`claim step: ${(await page.locator(".notice").allInnerTexts()).join(" | ").slice(0, 400)}`);
+  }
   const claims = await api(base, `/api/claims?org=${s.org}`, { token: s.ownerToken });
   const row = (claims.body.claims as { claim_id: Hex; invoice_ref: string }[]).find((c) => c.invoice_ref === "INV-PK-1");
   check(Boolean(row), `the claim reached SendSure with no signature (sent on Arc by the passkey wallet)`);
