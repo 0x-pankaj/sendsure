@@ -5,6 +5,7 @@ import { checkPayout, checkedRowsToRecords, parsePayoutCsv, toCsv, type Action, 
 import { EXAMPLE_CURRENT, EXAMPLE_LAST } from "../../lib/examples";
 import { Help } from "../../components/Help";
 import { GetSetUp } from "../../components/GetSetUp";
+import { modelLabel } from "../../lib/modelLabel";
 import { ping } from "../../lib/ping";
 
 const ORDER = { STOP: 0, REVIEW: 1, PAY: 2 } as const;
@@ -72,7 +73,7 @@ export default function CheckPage() {
       const res = await fetch("/api/check/review", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(result.parsed),
+        body: JSON.stringify({ ...result.parsed, example: current === EXAMPLE_CURRENT }),
       });
       const body = (await res.json().catch(() => ({}))) as Review & { error?: string };
       if (!res.ok) throw new Error(body.error ?? `The server answered ${res.status}.`);
@@ -89,7 +90,11 @@ export default function CheckPage() {
     const res = await fetch("/api/check/feedback", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ agree: values.filter((v) => v === "agree").length, disagree: values.filter((v) => v === "disagree").length }),
+      body: JSON.stringify({
+        agree: values.filter((v) => v === "agree").length,
+        disagree: values.filter((v) => v === "disagree").length,
+        example: current === EXAMPLE_CURRENT,
+      }),
     }).catch(() => null);
     if (res?.ok) setFeedbackSent(true);
   }
@@ -177,7 +182,7 @@ export default function CheckPage() {
               <p style={{ marginTop: 10 }}>
                 <b>{review.summary}</b>{" "}
                 <span className="hint">
-                  ({review.lines.filter((l) => l.stricter).length} line(s) made stricter than the rules · read by {review.model})
+                  ({review.lines.filter((l) => l.stricter).length} line(s) made stricter than the rules · read by {modelLabel(review.model)})
                 </span>
               </p>
             )}

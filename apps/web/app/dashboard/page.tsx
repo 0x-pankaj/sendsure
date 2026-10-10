@@ -126,7 +126,8 @@ export default function Dashboard() {
           )}
           {data.usage && (data.usage.review_runs ?? 0) > 0 && (
             <p className="hint" style={{ maxWidth: 900 }}>
-              Shadow reviews of real payout runs on <a href="/check">/check</a> (nothing paid, nothing stored): <b>{data.usage.review_runs}</b>{" "}
+              Shadow reviews of payout runs on <a href="/check">/check</a> (nothing paid, nothing stored; the built-in example is
+              never counted, our own test runs may be): <b>{data.usage.review_runs}</b>{" "}
               run(s), <b>{data.usage.review_lines ?? 0}</b> lines, <b>{data.usage.review_stricter ?? 0}</b> made stricter by Claude than by the
               rules. People agreed with the agent on <b>{data.usage.review_agree ?? 0}</b> of{" "}
               <b>{(data.usage.review_agree ?? 0) + (data.usage.review_disagree ?? 0)}</b> lines they marked.

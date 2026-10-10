@@ -102,7 +102,9 @@ export async function reviewPayout(body: unknown) {
       stricter: final !== r.action,
     };
   });
-  await countReview({ runs: 1, lines: out.length, stricter: out.filter((o) => o.stricter).length }).catch(() => undefined);
+  // The built-in example is a demo, not a real run: it is reviewed but never counted.
+  if (b.example !== true)
+    await countReview({ runs: 1, lines: out.length, stricter: out.filter((o) => o.stricter).length }).catch(() => undefined);
   return { model: lastModel, summary: String(model.summary ?? "").slice(0, 600), lines: out };
 }
 
@@ -129,6 +131,6 @@ export async function reviewFeedback(body: unknown) {
   const disagree = count(b.disagree);
   if (agree < 0 || disagree < 0 || agree + disagree === 0 || agree + disagree > MAX_REVIEW_ROWS)
     throw new RelayError(400, "Send how many lines you agreed and disagreed with.", "BAD_INPUT");
-  await countReview({ agree, disagree });
+  if (b.example !== true) await countReview({ agree, disagree });
   return { ok: true };
 }
