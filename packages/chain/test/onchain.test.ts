@@ -95,8 +95,10 @@ describe.skipIf(process.env.OFFLINE)("matches the contracts live on Arc testnet"
 
   it("the Settled event of the smoke test carries the same claimId and payeeRef", async () => {
     const settle = smoke.steps.find((s: { step: string }) => s.step === "agent wallet settle #2");
-    const receipt = await client.getTransactionReceipt({ hash: settle.tx as Hex });
-    const settled = receipt.logs.find((l) => l.address.toLowerCase() === org.toLowerCase() && l.topics.length === 4);
+    // Read by block, not by hash: the public RPC no longer finds transactions this old by their hash,
+    // but still serves the block's logs. 64,484,968 is the block of that settle transaction.
+    const logs = await client.getLogs({ address: org, fromBlock: 64_484_968n, toBlock: 64_484_968n });
+    const settled = logs.find((l) => l.transactionHash === settle.tx && l.topics.length === 4);
     expect(settled?.topics[2]).toBe(claimIdOf(org, smokeClaim));
     expect(settled?.topics[3]).toBe(smokeClaim.payeeRef);
   });

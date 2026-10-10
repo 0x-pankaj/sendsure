@@ -1,12 +1,12 @@
 {
   "note": "First-party end-to-end test with throwaway keys; org tier SANDBOX. Not traction.",
-  "ranAtUnix": 1790754090,
+  "ranAtUnix": 1791657401,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x7e397cA171830661cd6F0aD49816C51e09eD09d9",
-  "owner": "0x9ED7a8473944fA2E39C945a845c22E8De6Ca2E90",
+  "org": "0x962E17153d70980CEeCE0eCC1afC48bB8E2b69E0",
+  "owner": "0x4d11Fd52756543E4b675fE2Aef40495a46C2A7d3",
   "checks": {
-    "passed": 9,
-    "total": 9,
+    "passed": 10,
+    "total": 10,
     "list": [
       {
         "ok": true,
@@ -14,7 +14,7 @@
       },
       {
         "ok": true,
-        "what": "org created (200 0x7e397cA171830661cd6F0aD49816C51e09eD09d9)"
+        "what": "org created (200 0x962E17153d70980CEeCE0eCC1afC48bB8E2b69E0)"
       },
       {
         "ok": true,
@@ -38,7 +38,11 @@
       },
       {
         "ok": true,
-        "what": "invites replay refused (409 NonceUsed)"
+        "what": "replaying the invites signature changes nothing (200, opened 0)"
+      },
+      {
+        "ok": true,
+        "what": "after the owner revoked an invite, the old signature cannot re-open it (409 NonceUsed; REVOKED)"
       },
       {
         "ok": true,
@@ -47,9 +51,9 @@
     ]
   },
   "links": {
-    "createOrg": "https://explorer.testnet.arc.io/tx/0xdc50b30d28d7b3dae4f3cd03c9910a18d00042bf75f46b18bcc4c683d6c26ce9",
-    "budget": "https://explorer.testnet.arc.io/tx/0x1dc6ca5d8d507c06159d68cdc62a5576e593c7844b925b7cf89e191082036031",
-    "invites": "https://explorer.testnet.arc.io/tx/0x67a53a1adc25367a0c21a1d4442dae12758670a86e68ca0a561c1e86a751c2a0",
-    "bind": "https://explorer.testnet.arc.io/tx/0xda24c9ea2d28b4b5e5a98b63bfff47987d7c2dcce1cb09936c6a75a79961d242"
+    "createOrg": "https://explorer.testnet.arc.io/tx/0x2896571c06bfe988190132e246b74ac70998c845f6ed7254b17790479c02e817",
+    "budget": "https://explorer.testnet.arc.io/tx/0xac316ee5eeeb10c46728a0c292db3699bce4aa16a2107b8164c33acf9d049e3a",
+    "invites": "https://explorer.testnet.arc.io/tx/0x3f7fb13cb51082bd07516a02143e8a8192267844c5c53447f06db6f94fcda611",
+    "bind": "https://explorer.testnet.arc.io/tx/0x83dde4d030541b96f5b57937ae955399cb193ec5a845752a8e549ee679f4a5e9"
   }
 }

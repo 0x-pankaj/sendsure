@@ -8,6 +8,10 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
+- **Oct 10: building is finished.** From Oct 11 to the deadline (Sat Oct 17, extended) the work is traction
+  only. Waiting on Pankaj: top up MeshAPI (Claude's review and invoice reading are off until then; the agent
+  runs on its rules and says so), submit the form (answers and the traction plan are in his private
+  `the-pick/` folder), then re-render the submission video with `sendsure-video/make-submission.sh`.
 - **Before outreach (Sep 29):** done by Claude: gas keys topped up (relayer and server agent ~9.5 USDC; `/status`
   shows LOW under 2), contact link on every page (`NEXT_PUBLIC_CONTACT_URL`, GitHub Issues until Pankaj picks an
   email/Telegram), `/data` (what is stored where), Pankaj's MetaMask `0xF84a…a194` in `FIRST_PARTY_ADDRESSES`
@@ -122,6 +126,7 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 | T30 | Browser-wallet e2e (`scripts/e2e-wallet.ts`, Playwright + a MetaMask-style injected wallet) on the live site: payer and payee flows, network add/switch, permit, co-sign tx, payment, receipt, org recovery on a new browser. Found and fixed: claims list now opens after an agent run (co-sign button was hidden behind "Show claims"); stale "run the agent" hint on paid claims | C | ✅ Oct 3: 14/14 ([record](deployments/wallet-e2e.json)) | ✅ |
 | T31 | Odoo hardening after a code review: cancel/reset/delete withdraws the bill from SendSure (`POST /api/v1/bills/withdraw`; refused once paid), no Register Payment while in flight, per-bill savepoints in the cron, manager "Record SendSure payment" for needs-review (states exactly what Odoo rounds away), safe list sending, Arc tx field writable only by SendSure's own recording, payments with a tx cannot be reset, trust checked on create, stray/archived/relinked wallets untrusted, API methods `@api.private` + accounting-users only, method mode `unique`, USC rate kept at USD for non-USD companies, cron `noupdate` | C | ✅ Oct 3: 28 Odoo tests; live 27/27 | ✅ |
 | T32 | Ready for real users on testnet (Oct 10): built-in testnet faucet in `/org` (2 test USDC once per signed-in wallet; 3 per network a day; 60 a day in total; `lib/faucet.ts`, migration 0010, faucet key with no contract role, balance on `/status`), rate limits keyed on `cf-connecting-ip` (X-Forwarded-For could be spoofed) | C | ✅ live; `pnpm e2e:faucet` 4/4 | ✅ |
+| T33 | Final for submission (Oct 10): owner signatures for create-org and invites are claimed in D1 (`used_signatures`, migration 0011) before the relayer acts, so a replay is refused on every Worker instance and a replayed invites signature can't re-open a revoked invite; invoice reading answers 503 `MODEL_UNAVAILABLE` when the model provider is down or out of credit; the chain test reads the smoke test's Settled event by block (the public RPC no longer finds old transactions by hash) | C | ✅ live; `pnpm e2e:org` 10/10; all 14 live suites re-run Oct 10 (agent and invoice model checks wait for MeshAPI credit) | ✅ |
 
 ### Traction (every day, 2 hours)
 | ID | Task | Owner | Done when | Status |

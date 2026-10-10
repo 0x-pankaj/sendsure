@@ -1,9 +1,9 @@
 {
   "note": "Testnet faucet on the live site with a throwaway wallet. Not traction.",
-  "ranAtUnix": 1791655058,
+  "ranAtUnix": 1791656711,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "wallet": "0xea0ee8d76bDF69F34AC2D1E3B6D679D0786aa549",
-  "drip": "https://explorer.testnet.arc.io/tx/0x7b63961bb8945541e0a468c9303d2e73912328e62f9b751c2b7364e76598dd19",
+  "wallet": "0x8d44D0E3A3B1455D7680e9Cf84B9868287547e08",
+  "drip": "https://explorer.testnet.arc.io/tx/0xb03e953e299bd940c5349c2270667d2b9e07b5bb8fc0d1c16e2525db2f655fff",
   "checks": {
     "passed": 4,
     "total": 4,
@@ -18,7 +18,7 @@
       },
       {
         "ok": true,
-        "what": "one drip: the wallet now holds 2 test USDC (https://explorer.testnet.arc.io/tx/0x7b63961bb8945541e0a468c9303d2e73912328e62f9b751c2b7364e76598dd19)"
+        "what": "one drip: the wallet now holds 2 test USDC (https://explorer.testnet.arc.io/tx/0xb03e953e299bd940c5349c2270667d2b9e07b5bb8fc0d1c16e2525db2f655fff)"
       },
       {
         "ok": true,

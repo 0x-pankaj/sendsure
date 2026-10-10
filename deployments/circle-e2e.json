@@ -1,26 +1,26 @@
 {
   "note": "First-party end-to-end test: the Circle agent wallet (Circle CLI) settles a SANDBOX org's claim. Throwaway keys, not traction.",
-  "ranAtUnix": 1790789184,
+  "ranAtUnix": 1791655731,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0xd678F5B826BcfF6d28aE0d0a6E8e5E036fBFaA0B",
+  "org": "0x3db6eF23FcaBe86c3e2f5662723fA5b1ccBb2C19",
   "circleAgentWallet": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
-  "payee": "0x6Cb6124B3197ec8a5FC5719481f2D64fB6F51E89",
-  "cosign": "https://explorer.testnet.arc.io/tx/0x7deb602b2ffff14b1e8f37262b7510bc5c60677fac0aff687fd280186432443b",
-  "settle": "https://explorer.testnet.arc.io/tx/0xd27d313129b444ee3e027a5d9a66446782f9a8482fd3b9d71b431ecb3edcf636",
-  "decisionHash": "0xc521638ec105e127d6a0238025a3a4a379b8ea2f61813ebfe8d178b2aa9f267e",
-  "anchor": "https://explorer.testnet.arc.io/tx/0x43914e5ded9ed554700b4467eeac2bfa1a41d1431940306b314c8988473acc01",
+  "payee": "0xC1d7c351c379beffBB92666A242477F18A6A0fc7",
+  "cosign": "https://explorer.testnet.arc.io/tx/0x0f73c888870025f783f11506d81ffabd0ebddd85fad5ae37fd92e241b43b2be6",
+  "settle": "https://explorer.testnet.arc.io/tx/0xc79afa8df2b38cbd8e64a36b3368914832279c81c0566f810eda546049653855",
+  "decisionHash": "0xf2032f7ccef044de017c94e680b0efebe011f8b536e446ff896ed1bd361247c3",
+  "anchor": "https://explorer.testnet.arc.io/tx/0x69806ddc2c5b86719701646479c96d20aca57ce2976a6fa6ba9c240b23bb0598",
   "replay": {
     "chainIntact": true,
     "signatureOk": true,
     "checkAtBlock": {
-      "block": 64811668,
+      "block": 66517387,
       "outcome": "PAYABLE",
       "reason": "NONE",
       "matches": true
     },
     "anchored": {
       "anchorSeq": 1,
-      "tx": "0x43914e5ded9ed554700b4467eeac2bfa1a41d1431940306b314c8988473acc01",
+      "tx": "0x69806ddc2c5b86719701646479c96d20aca57ce2976a6fa6ba9c240b23bb0598",
       "coversThrough": 1,
       "matches": true
     }
@@ -31,7 +31,7 @@
     "list": [
       {
         "ok": true,
-        "what": "sandbox org 0xd678F5B826BcfF6d28aE0d0a6E8e5E036fBFaA0B with a bound payee"
+        "what": "sandbox org 0x3db6eF23FcaBe86c3e2f5662723fA5b1ccBb2C19 with a bound payee"
       },
       {
         "ok": true,
@@ -39,7 +39,7 @@
       },
       {
         "ok": true,
-        "what": "owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0x7deb602b2ffff14b1e8f37262b7510bc5c60677fac0aff687fd280186432443b"
+        "what": "owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0x0f73c888870025f783f11506d81ffabd0ebddd85fad5ae37fd92e241b43b2be6"
       },
       {
         "ok": true,
@@ -47,7 +47,7 @@
       },
       {
         "ok": true,
-        "what": "Circle agent wallet sent settle(): Settled https://explorer.testnet.arc.io/tx/0xd27d313129b444ee3e027a5d9a66446782f9a8482fd3b9d71b431ecb3edcf636"
+        "what": "Circle agent wallet sent settle(): Settled https://explorer.testnet.arc.io/tx/0xc79afa8df2b38cbd8e64a36b3368914832279c81c0566f810eda546049653855"
       },
       {
         "ok": true,
@@ -59,7 +59,7 @@
       },
       {
         "ok": true,
-        "what": "Circle agent wallet anchored the log: #1 https://explorer.testnet.arc.io/tx/0x43914e5ded9ed554700b4467eeac2bfa1a41d1431940306b314c8988473acc01"
+        "what": "Circle agent wallet anchored the log: #1 https://explorer.testnet.arc.io/tx/0x69806ddc2c5b86719701646479c96d20aca57ce2976a6fa6ba9c240b23bb0598"
       },
       {
         "ok": true,

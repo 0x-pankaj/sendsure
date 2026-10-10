@@ -8,7 +8,7 @@ the last decimal.
 
 **Live on Arc testnet:** https://sendsure.0xpankaj.workers.dev · [Roadmap](ROADMAP.md) · [What we store](https://sendsure.0xpankaj.workers.dev/data)
 
-Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), Sep 27 – Oct 10, 2026, on
+Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), which opened Sep 27, 2026, on
 Arc testnet (chain 5042002). Testnet only; not audited. The contracts, the payments and the Odoo and
 ERPNext records are all real Arc testnet transactions. Activity from our own tests runs on *sandbox*
 orgs and is never counted as traction; our own team's org is labelled *first-party*. The
@@ -27,16 +27,16 @@ check it made, so the counts can be recounted.
 
 ## Traction so far
 
-Honest numbers on Oct 1 (live, always current: [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard), [`/api/stats`](https://sendsure.0xpankaj.workers.dev/api/stats)):
+Honest numbers on Oct 11 (live, always current: [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard), [`/api/stats`](https://sendsure.0xpankaj.workers.dev/api/stats)):
 
 | Tier | Orgs | Payments | Notes |
 |---|---|---|---|
-| External (outside teams) | 0 | 0 | Outreach started Sep 30. |
-| First-party (our own team, a real wallet) | 1 | 0 | Set up through the real MetaMask flow. |
-| Sandbox (our tests, never counted) | 51 | 35 (7.91 USDC) | Throwaway keys; every run record is in [`deployments/`](deployments/). |
+| External (outside teams) | 0 | 0 | Outreach started Sep 30; the traction week runs Oct 11–17. |
+| First-party (our own wallets) | 5 | 3 (0.6 USDC) | Through the real site and a real wallet: our MetaMask run, the video's run, and the browser-wallet test's runs. |
+| Sandbox (our tests, never counted) | 67 | 51 (10.77 USDC) | Throwaway keys; every run record is in [`deployments/`](deployments/). |
 
-Paid agent calls over Circle Gateway (x402): 10, all first-party. Agent runs on sandbox orgs: 73, of
-which 4 started by autopilot.
+Paid agent calls over Circle Gateway (x402): 12, all first-party. Agent runs on sandbox orgs: 110, of
+which 8 started by autopilot.
 
 ## The problem
 
@@ -227,7 +227,7 @@ The books apps handle whole invoices in USD. What comes next, with dates: [ROADM
 | Where | Count | Command |
 |---|---|---|
 | Contracts | 47 (30 Mandate, 14 registry, 3 invariants) | `forge test` in [`contracts/`](contracts/) |
-| TypeScript | 78 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 38) | `pnpm test` |
+| TypeScript | 84 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 44) | `pnpm test` |
 | Odoo add-on | 28, inside Odoo 19 | `integrations/odoo/run.sh test` |
 | ERPNext app | 25, inside ERPNext 15, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` |
 
@@ -238,7 +238,7 @@ lists every check it made under `checks`.
 |---|---|---|
 | [bind](deployments/relay-e2e.json) | 4/4 | A fresh wallet proves its address through the relayer; a forged signature and a replay are refused. |
 | [change](deployments/relay-e2e-change.json) | 7/7 | An attacker's change and re-bind are refused; a both-key change waits out the cooldown; the payer can cancel. |
-| [org](deployments/org-e2e.json) | 9/9 | An org is created and budgeted by signature only; invites open; a payee binds. |
+| [org](deployments/org-e2e.json) | 10/10 | An org is created and budgeted by signature only; invites open; replaying the invites signature opens nothing, and after a revoke it cannot re-open the invite (checked on every Worker instance); a payee binds. |
 | [claim](deployments/claim-e2e.json) | 11/11 | A signed claim is stored after the contract's dry run; a claim signed by another key, the same invoice sent twice and a mismatched invoice number are refused; a stranger cannot read the org's claims. |
 | [agent](deployments/agent-e2e.json) | 13/13 | Escalate, co-sign, pay, hold a "new wallet" claim with the model's reasons, replay a decision, and books that pass `bean-check` and `hledger`. |
 | [autopilot](deployments/autopilot-e2e.json) | 9/9 | Nobody pressed run: the agent woke for a new claim, a co-sign and a top-up, stayed asleep while nothing changed, and with 0.56 USDC due and 0.49 in the treasury paid the older work and held the rest. |
@@ -249,6 +249,13 @@ lists every check it made under `checks`.
 | [odoo](deployments/odoo-e2e.json) | 27/27 | A real Odoo 19 bill paid on Arc and recorded back exactly, once; a sent bill cannot also be paid by hand, and cancelling it withdraws it from SendSure. |
 | [erpnext](deployments/erpnext-e2e.json) | 29/29 | A real ERPNext 15 purchase invoice paid on Arc and recorded back exactly, once. |
 | [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
+| [faucet](deployments/faucet-e2e.json) | 4/4 | A new wallet with 0 USDC gets 2 test USDC from the built-in faucet once, after signing in; a second drip to the same wallet is refused. |
+
+**The model provider was out of credit on Oct 10.** Since then the agent decides on its rules alone and
+says so on every run ("The AI review was skipped this time; the rules decided alone"), and invoice
+reading answers 503 with what to do instead. Nothing else changes: the contract, the co-sign rules and
+the cash plan are the same. The agent and invoice records above are the last runs with the model; their
+model checks pass again once the MeshAPI account is topped up.
 
 The books of the agent run: [beancount](deployments/books-e2e.beancount) (`bean-check`),
 [hledger](deployments/books-e2e.journal) (`hledger check --strict`), [journal CSV](deployments/books-e2e.journal.csv)
