@@ -1,0 +1,42 @@
+{
+  "note": "Live site, real browser, virtual passkey authenticator; SANDBOX org with throwaway keys. Not traction.",
+  "ranAtUnix": 1791668114,
+  "base": "https://sendsure.0xpankaj.workers.dev",
+  "org": "0xCbEaf84d481e301134d341967d5C929266f26422",
+  "passkeyWallet": "0x43AaF9Ddf2f0C223d8D10FF9457Dc7EfAe9f191e",
+  "payment": "0xbedb4a000e09bdca877aaac8a697478d0303b16a8e60f06c7d398b48c36dbb94",
+  "checks": {
+    "passed": 7,
+    "total": 7,
+    "list": [
+      {
+        "ok": true,
+        "what": "sandbox org 0xCbEaf84d481e301134d341967d5C929266f26422 with an open invite and a 10 USDC budget"
+      },
+      {
+        "ok": true,
+        "what": "a payee with no wallet app is offered a passkey wallet"
+      },
+      {
+        "ok": true,
+        "what": "passkey wallet created: 0x43AaF9Ddf2f0C223d8D10FF9457Dc7EfAe9f191e (a Circle smart account)"
+      },
+      {
+        "ok": true,
+        "what": "bound on Arc to the passkey wallet, gas paid by Circle Gas Station (BOUND)"
+      },
+      {
+        "ok": true,
+        "what": "the claim reached SendSure with no signature (sent on Arc by the passkey wallet)"
+      },
+      {
+        "ok": true,
+        "what": "the agent paid the passkey wallet: 0.2 USDC (Settled)"
+      },
+      {
+        "ok": true,
+        "what": "the payee sent 0.1 USDC out with the passkey; 0.1 USDC left"
+      }
+    ]
+  }
+}

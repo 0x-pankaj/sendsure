@@ -60,16 +60,10 @@ export function PasskeyWallet({ signer }: { signer: PasskeySigner }) {
         you to a new phone. Send your USDC to another wallet or an exchange address when you like; check the address first,
         because a transfer cannot be undone.
       </p>
-      <div className="grid" style={{ gridTemplateColumns: "2fr 1fr", gap: 10 }}>
-        <div>
-          <label htmlFor="pk-to">Send to</label>
-          <input id="pk-to" className="mono" placeholder="0x…" value={to} onChange={(e) => setTo(e.target.value)} />
-        </div>
-        <div>
-          <label htmlFor="pk-amount">Amount (USDC)</label>
-          <input id="pk-amount" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </div>
-      </div>
+      <label htmlFor="pk-to">Send to</label>
+      <input id="pk-to" className="mono" placeholder="0x…" value={to} onChange={(e) => setTo(e.target.value)} />
+      <label htmlFor="pk-amount">Amount (USDC)</label>
+      <input id="pk-amount" inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
       <div className="row" style={{ marginTop: 10 }}>
         <button className="btn secondary" disabled={busy || !balance} onClick={() => void send()}>
           {busy ? "Confirm with your passkey…" : "Send USDC"}

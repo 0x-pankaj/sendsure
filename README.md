@@ -71,8 +71,8 @@ flowchart LR
    the address later needs the old key *and* the new key, then a cooldown the payer can cancel.
    A payee with no wallet app can use a **passkey wallet** instead (a Circle Modular Wallets smart
    account, gas from Circle Gas Station): it binds itself with `bind()` and authorises each claim by
-   sending `submitClaim()` from the proven address, so no signature is needed. This is on as soon as the
-   site has a Circle client key; the server side is proven by the [on-chain claim run](deployments/onchain-claim-e2e.json).
+   sending `submitClaim()` from the proven address, so no signature is needed. Proven live in a real
+   browser by the [passkey run](deployments/passkey-e2e.json) (screenshots in [`deployments/passkey-e2e/`](deployments/passkey-e2e/)).
 2. **The payee signs a claim for each invoice.** Or the payer uploads the invoice (text or a photo)
    and Claude reads it, quoting where each value came from; the payee checks it and signs. Or the
    payer's Odoo or ERPNext sends the bill. The server salts the invoice number (`refHash`), runs the
@@ -173,7 +173,7 @@ We reproduced each of these on stock software before writing the apps, and each 
 | USDC on Arc | Payouts are USDC; gas is USDC; budgets are EIP-2612 `permit`s, so payers never need gas to onboard. | [org run](deployments/org-e2e.json) (budget by permit); permit domain checked against the token in [`org.test.ts`](packages/chain/test/org.test.ts) |
 | USDC blocklist | Blocklisted addresses cannot bind or be paid; a blocklisted treasury cannot pay. | `isBlacklisted` in the contracts; `test_BlocklistedAddressCannotBind` |
 | Arc testnet | Contracts deployed and source-verified; archive state lets replay re-run `check()` at the recorded block. | [`deployments/arc-testnet.json`](deployments/arc-testnet.json) |
-| Circle Modular Wallets + Gas Station | Payees with no wallet app get a passkey smart account on Arc; it binds and sends its claims on-chain with gas sponsored, and the payee moves their USDC out with the same passkey. | [`lib/passkey.ts`](apps/web/lib/passkey.ts); server path in the [on-chain claim run](deployments/onchain-claim-e2e.json); live once the site has a Circle client key |
+| Circle Modular Wallets + Gas Station | Payees with no wallet app get a passkey smart account on Arc; it binds and sends its claims on-chain with gas sponsored, and the payee moves their USDC out with the same passkey. | [passkey run](deployments/passkey-e2e.json) 7/7: a passkey wallet created in a real browser, bound with gas from Gas Station, a claim sent on-chain, paid, and USDC sent out; [`lib/passkey.ts`](apps/web/lib/passkey.ts) |
 | Circle Wallets (developer-controlled) | Next: the hosted agent settles through a Circle wallet so no laptop is needed. | not yet ([roadmap](ROADMAP.md)) |
 
 ## Who can move money
@@ -254,6 +254,7 @@ lists every check it made under `checks`.
 | [odoo](deployments/odoo-e2e.json) | 27/27 | A real Odoo 19 bill paid on Arc and recorded back exactly, once; a sent bill cannot also be paid by hand, and cancelling it withdraws it from SendSure. |
 | [erpnext](deployments/erpnext-e2e.json) | 29/29 | A real ERPNext 15 purchase invoice paid on Arc and recorded back exactly, once. |
 | [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
+| [passkey](deployments/passkey-e2e.json) | 7/7 | A contractor with no wallet app, in a real browser on a phone-sized screen: a passkey wallet (Circle Modular Wallets) is created, binds itself with gas from Circle Gas Station, sends a claim on-chain, is paid by the agent, and sends USDC out with the same passkey. Screenshots in [`deployments/passkey-e2e/`](deployments/passkey-e2e/). |
 | [onchain-claim](deployments/onchain-claim-e2e.json) | 8/8 | A claim with no signature, sent on Arc by the payee's own account (`submitClaim`): refused until it is on-chain, then stored, co-signed, paid and replayed; another address cannot submit one for that payee. |
 | [faucet](deployments/faucet-e2e.json) | 4/4 | A new wallet with 0 USDC gets 2 test USDC from the built-in faucet once, after signing in; a second drip to the same wallet is refused. |
 
