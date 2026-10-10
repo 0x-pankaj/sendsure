@@ -69,6 +69,10 @@ flowchart LR
 1. **The payee proves their address, once.** The payer sends an invite link. The payee signs an
    EIP-712 `Bind` with the wallet they want to be paid to; SendSure's relayer submits it. Changing
    the address later needs the old key *and* the new key, then a cooldown the payer can cancel.
+   A payee with no wallet app can use a **passkey wallet** instead (a Circle Modular Wallets smart
+   account, gas from Circle Gas Station): it binds itself with `bind()` and authorises each claim by
+   sending `submitClaim()` from the proven address, so no signature is needed. This is on as soon as the
+   site has a Circle client key; the server side is proven by the [on-chain claim run](deployments/onchain-claim-e2e.json).
 2. **The payee signs a claim for each invoice.** Or the payer uploads the invoice (text or a photo)
    and Claude reads it, quoting where each value came from; the payee checks it and signs. Or the
    payer's Odoo or ERPNext sends the bill. The server salts the invoice number (`refHash`), runs the
@@ -128,7 +132,7 @@ We reproduced each of these on stock software before writing the apps, and each 
 | How | What you see |
 |---|---|
 | [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet | In two minutes: a payee proves their address, a look-alike is caught, an attacker's claim is refused on-chain, a "pay my new wallet" change is refused, a real payment is escalated, co-signed and paid, then an inbox of tricky claims (a duplicate under a new number, an undescribed claim, a hidden instruction to the AI) that Claude holds with reasons. Receipt and books included. |
-| [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. |
+| [`/check?example`](https://sendsure.0xpankaj.workers.dev/check?example) | The free payout check: compares your payout CSV with the last one you paid (changed, new, look-alike, duplicate, amount jumps). It runs in your browser; nothing is uploaded. Then, if you ask, a **shadow review**: the agent runs the same rules and Claude reads every line for what rules miss (the same invoice twice, an amount out of line with the payee's history); it can only make a line stricter, nothing is paid or stored, and you mark where you agree. |
 | [`/org`](https://sendsure.0xpankaj.workers.dev/org) | Set up a team: create the org, set a budget, invite payees, run the agent or turn on autopilot, co-sign, connect your books, download the ledger. You only sign; SendSure pays the gas. |
 | [`/books`](https://sendsure.0xpankaj.workers.dev/books) | Odoo and ERPNext screenshots, what each does alone versus with SendSure, and the demo org's ledger in every format. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
@@ -169,6 +173,7 @@ We reproduced each of these on stock software before writing the apps, and each 
 | USDC on Arc | Payouts are USDC; gas is USDC; budgets are EIP-2612 `permit`s, so payers never need gas to onboard. | [org run](deployments/org-e2e.json) (budget by permit); permit domain checked against the token in [`org.test.ts`](packages/chain/test/org.test.ts) |
 | USDC blocklist | Blocklisted addresses cannot bind or be paid; a blocklisted treasury cannot pay. | `isBlacklisted` in the contracts; `test_BlocklistedAddressCannotBind` |
 | Arc testnet | Contracts deployed and source-verified; archive state lets replay re-run `check()` at the recorded block. | [`deployments/arc-testnet.json`](deployments/arc-testnet.json) |
+| Circle Modular Wallets + Gas Station | Payees with no wallet app get a passkey smart account on Arc; it binds and sends its claims on-chain with gas sponsored, and the payee moves their USDC out with the same passkey. | [`lib/passkey.ts`](apps/web/lib/passkey.ts); server path in the [on-chain claim run](deployments/onchain-claim-e2e.json); live once the site has a Circle client key |
 | Circle Wallets (developer-controlled) | Next: the hosted agent settles through a Circle wallet so no laptop is needed. | not yet ([roadmap](ROADMAP.md)) |
 
 ## Who can move money
@@ -249,6 +254,7 @@ lists every check it made under `checks`.
 | [odoo](deployments/odoo-e2e.json) | 27/27 | A real Odoo 19 bill paid on Arc and recorded back exactly, once; a sent bill cannot also be paid by hand, and cancelling it withdraws it from SendSure. |
 | [erpnext](deployments/erpnext-e2e.json) | 29/29 | A real ERPNext 15 purchase invoice paid on Arc and recorded back exactly, once. |
 | [wallet](deployments/wallet-e2e.json) | 14/14 | The live site in a real browser with a MetaMask-style injected wallet: the payer connects on Ethereum and is switched to Arc, creates an org, signs a budget and an invite; the payee opens the invite on a phone, proves their address and signs a claim; the payer runs the agent, co-signs on-chain, and the agent pays. Screenshots in [`deployments/wallet-e2e/`](deployments/wallet-e2e/). |
+| [onchain-claim](deployments/onchain-claim-e2e.json) | 8/8 | A claim with no signature, sent on Arc by the payee's own account (`submitClaim`): refused until it is on-chain, then stored, co-signed, paid and replayed; another address cannot submit one for that payee. |
 | [faucet](deployments/faucet-e2e.json) | 4/4 | A new wallet with 0 USDC gets 2 test USDC from the built-in faucet once, after signing in; a second drip to the same wallet is refused. |
 
 **The model, since Oct 11:** Claude through the Anthropic API directly (until Oct 10 it went through
