@@ -1,35 +1,35 @@
 {
   "note": "First-party end-to-end test: ERPNext 15 (Docker) with the sendsure_erpnext app, against the live SendSure, SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1791656460,
+  "ranAtUnix": 1791665903,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "erpnext": "15.121.6 (Frappe 15.121.2, sendsure_erpnext 15.0.1)",
-  "org": "0xd4c57759dD95299C00A38B212aF32Dbc58192c1A",
-  "payee": "0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619",
+  "org": "0x37E715eC516f03354a6A8DC94441daE0E00Ce44b",
+  "payee": "0x669BE7780a6a72b683c170783a133e145eA874c6",
   "invoice": {
-    "name": "ACC-PINV-2026-00004",
-    "invoiceRef": "INV-ERPNEXT-MV2PXNCS",
+    "name": "ACC-PINV-2026-00005",
+    "invoiceRef": "INV-ERPNEXT-MV2VJZL2",
     "amountUsd": "0.25",
     "status": "Paid",
     "sendsure": "Paid on Arc",
-    "externalId": "erpnext:8b9371249a66:ACC-PINV-2026-00004"
+    "externalId": "erpnext:8b9371249a66:ACC-PINV-2026-00005"
   },
   "refused": {
-    "typedAddressClerk": "0x1130C648B7238C2779b34Aa7296873C89cb95763 is not an address Maria Lopez Design mv2pxncs proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
-    "typedAddressAdministrator": "0x1130C648B7238C2779b34Aa7296873C89cb95763 is not an address Maria Lopez Design mv2pxncs proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
+    "typedAddressClerk": "0xeC8A0A09060aD94d2F5a55804486266e7dad42BD is not an address Maria Lopez Design mv2vjzl2 proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
+    "typedAddressAdministrator": "0xeC8A0A09060aD94d2F5a55804486266e7dad42BD is not an address Maria Lopez Design mv2vjzl2 proved in SendSure. The proven payout address is read from SendSure (\"Check with SendSure\"); it cannot be typed in. Someone may be trying to redirect this supplier's payments.",
     "clerkApprove": "Only an Accounts Manager can approve a supplier's payout address.",
-    "sendBeforeApproval": "Approve Maria Lopez Design mv2pxncs's proven payout address 0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619 first (the supplier's SendSure tab, \"Approve this payout address\"; needs an Accounts Manager).",
+    "sendBeforeApproval": "Approve Maria Lopez Design mv2vjzl2's proven payout address 0x669BE7780a6a72b683c170783a133e145eA874c6 first (the supplier's SendSure tab, \"Approve this payout address\"; needs an Accounts Manager).",
     "wrongAmountClaim": "PROPOSAL_MISMATCH",
     "manualUsdcPayment": "Payments with USDC on Arc (SendSure) are recorded by SendSure from the chain, with their transaction. To pay this supplier, use \"Pay with SendSure\" on the purchase invoice."
   },
-  "cosign": "https://explorer.testnet.arc.io/tx/0xad5f9cea1e5501b7e901c49eb57ca33ab60e7beb8e1d0b9a77893adc8ca4f507",
-  "settle": "https://explorer.testnet.arc.io/tx/0xc3ab1ce0685176833f227d88addb88e8af9fc012dc00ed48b2537d22591da049",
+  "cosign": "https://explorer.testnet.arc.io/tx/0xedc441b79ce170da9af68eee5d348bc7f5dfce555caa7e62e68aadfad20e4206",
+  "settle": "https://explorer.testnet.arc.io/tx/0xced0b19e875674c8e90414702ac87baecdd3515b22436cdf22aa25db586282c8",
   "erpnextPayment": {
-    "name": "ACC-PAY-2026-00003",
+    "name": "ACC-PAY-2026-00004",
     "amount": "0.250000",
     "currency": "USDC",
     "account": "USDC on Arc (SendSure) - SSD",
     "modeOfPayment": "USDC on Arc (SendSure)",
-    "reference": "0xc3ab1ce0685176833f227d88addb88e8af9fc012dc00ed48b2537d22591da049",
+    "reference": "0xced0b19e875674c8e90414702ac87baecdd3515b22436cdf22aa25db586282c8",
     "postingDate": "2026-10-10"
   },
   "ledger": [
@@ -49,14 +49,14 @@
     }
   ],
   "settlement": {
-    "tx": "0xc3ab1ce0685176833f227d88addb88e8af9fc012dc00ed48b2537d22591da049",
-    "block": 66518853,
-    "paidAt": "2026-10-10T18:20:40.000Z",
+    "tx": "0xced0b19e875674c8e90414702ac87baecdd3515b22436cdf22aa25db586282c8",
+    "block": 66537500,
+    "paidAt": "2026-10-10T20:57:59.000Z",
     "amount": "250000",
     "amountUsdc": "0.25",
-    "payout": "0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619",
+    "payout": "0x669BE7780a6a72b683c170783a133e145eA874c6",
     "token": "0x3600000000000000000000000000000000000000",
-    "decisionHash": "0x64a16ca65ec81c6be8f21a6cc03ab44c3c428b2783fb7346ffc587f11c49eda9"
+    "decisionHash": "0x3162027c97cc4b0a32e933da8e0217a821c2884c7b440ebf6993b40b1ef90617"
   },
   "checks": {
     "passed": 29,
@@ -68,7 +68,7 @@
       },
       {
         "ok": true,
-        "what": "sandbox org 0xd4c57759dD95299C00A38B212aF32Dbc58192c1A with a payee who proved 0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619"
+        "what": "sandbox org 0x37E715eC516f03354a6A8DC94441daE0E00Ce44b with a payee who proved 0x669BE7780a6a72b683c170783a133e145eA874c6"
       },
       {
         "ok": true,
@@ -80,7 +80,7 @@
       },
       {
         "ok": true,
-        "what": "ERPNext connected to org 0xd4c57759dD95299C00A38B212aF32Dbc58192c1A (sandbox)"
+        "what": "ERPNext connected to org 0x37E715eC516f03354a6A8DC94441daE0E00Ce44b (sandbox)"
       },
       {
         "ok": true,
@@ -92,7 +92,7 @@
       },
       {
         "ok": true,
-        "what": "supplier linked by invite link: \"Proved their address\", proven 0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619"
+        "what": "supplier linked by invite link: \"Proved their address\", proven 0x669BE7780a6a72b683c170783a133e145eA874c6"
       },
       {
         "ok": true,
@@ -100,7 +100,7 @@
       },
       {
         "ok": true,
-        "what": "nobody can type another address onto the supplier, not even the administrator: \"0x1130C648B7238C2779b34Aa7296873C89cb95763 is not an address Maria Lopez Design mv2pxncs p…\""
+        "what": "nobody can type another address onto the supplier, not even the administrator: \"0xeC8A0A09060aD94d2F5a55804486266e7dad42BD is not an address Maria Lopez Design mv2vjzl2 p…\""
       },
       {
         "ok": true,
@@ -116,11 +116,11 @@
       },
       {
         "ok": true,
-        "what": "invoice ACC-PINV-2026-00004 sent by the AP clerk: \"Waiting for the supplier to sign\""
+        "what": "invoice ACC-PINV-2026-00005 sent by the AP clerk: \"Waiting for the supplier to sign\""
       },
       {
         "ok": true,
-        "what": "the supplier sees it once in SendSure: INV-ERPNEXT-MV2PXNCS, 0.25 USDC"
+        "what": "the supplier sees it once in SendSure: INV-ERPNEXT-MV2VJZL2, 0.25 USDC"
       },
       {
         "ok": true,
@@ -136,15 +136,15 @@
       },
       {
         "ok": true,
-        "what": "ERPNext's scheduled job asked the agent to run: \"Needs a co-sign in SendSure\" (First payment to a new or changed address needs a human co-sign. Co-sign it in SendSure to pay it.)"
+        "what": "ERPNext's scheduled job asked the agent to run: \"Needs a co-sign in SendSure\" (This is the first payment to this payee's address, so the contract requires a person to co-sign before it can be paid. Nothing else looks wrong with the claim.)"
       },
       {
         "ok": true,
-        "what": "the owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0xad5f9cea1e5501b7e901c49eb57ca33ab60e7beb8e1d0b9a77893adc8ca4f507"
+        "what": "the owner co-signed on-chain: https://explorer.testnet.arc.io/tx/0xedc441b79ce170da9af68eee5d348bc7f5dfce555caa7e62e68aadfad20e4206"
       },
       {
         "ok": true,
-        "what": "the next run of the job: the agent paid it on Arc, https://explorer.testnet.arc.io/tx/0xc3ab1ce0685176833f227d88addb88e8af9fc012dc00ed48b2537d22591da049"
+        "what": "the next run of the job: the agent paid it on Arc, https://explorer.testnet.arc.io/tx/0xced0b19e875674c8e90414702ac87baecdd3515b22436cdf22aa25db586282c8"
       },
       {
         "ok": true,
@@ -152,7 +152,7 @@
       },
       {
         "ok": true,
-        "what": "recorded as Payment Entry ACC-PAY-2026-00003: 0.250000 USDC, reference \"0xc3ab1ce0685176833f…\""
+        "what": "recorded as Payment Entry ACC-PAY-2026-00004: 0.250000 USDC, reference \"0xced0b19e875674c8e9…\""
       },
       {
         "ok": true,
@@ -176,7 +176,7 @@
       },
       {
         "ok": true,
-        "what": "SendSure's view matches: Settled event carries 250000 (0.25 USDC) to 0xd6bC1A67073DF2b1A6F94AA3d2edAf7971299619"
+        "what": "SendSure's view matches: Settled event carries 250000 (0.25 USDC) to 0x669BE7780a6a72b683c170783a133e145eA874c6"
       }
     ]
   }

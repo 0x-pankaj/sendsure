@@ -1,6 +1,6 @@
 {
   "note": "First-party end-to-end test: our own Circle agent wallet buys SendSure's paid checks with x402 over Circle Gateway on Arc testnet. Not traction.",
-  "ranAtUnix": 1791656110,
+  "ranAtUnix": 1791665037,
   "base": "https://sendsure.0xpankaj.workers.dev",
   "buyer": "0x9f977c4eFFF254A9284e69a0AE2b03E4aB851c07",
   "buyerGatewaySigner": "0x1222c4c16376961881cdcfffd6d737137f425dc3",
@@ -56,20 +56,20 @@
   },
   "verifyPayee": {
     "request": {
-      "org": "0xf5320255eeb4f02cd7cb2966ace2a76ed4b0e339",
-      "address": "0x83C6268FC80121ca4D4adb5bd40ff60b394Ba823"
+      "org": "0x3ca62ffe249ddc42feb8b31939d9297981405c86",
+      "address": "0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766"
     },
     "response": {
-      "org": "0xf5320255eEB4f02cd7Cb2966aCe2a76ED4b0E339",
-      "address": "0x83C6268FC80121ca4D4adb5bd40ff60b394Ba823",
+      "org": "0x3ca62Ffe249DDC42fEb8b31939d9297981405C86",
+      "address": "0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766",
       "verified": true,
       "state": "BOUND",
       "proof": "PROVEN",
       "since": {
-        "tx": "0x3dcd15bda81248cdaa9fef7f1d71c7576d2f05c56be29039ee6741b3a5f38f26",
-        "block": 66517630
+        "tx": "0x55c22d21dfa5f555d681e7119544d76a29b3b2df348353a16a79e502640b78c3",
+        "block": 66535234
       },
-      "orgTier": "sandbox"
+      "orgTier": "production"
     },
     "payment": {
       "amount": "$0.001 USDC",
@@ -78,7 +78,7 @@
       "seller": "0x1B66e68D3F61D84B5498013b0981537DBef28b73",
       "receipt": {
         "success": true,
-        "transaction": "baacc333-6387-4cde-b1dc-df7511b85513",
+        "transaction": "731d354c-9dd2-4fe0-991c-3bf6c9df3c8b",
         "network": "eip155:5042002",
         "payer": "0x1222c4c16376961881cdcfffd6d737137f425dc3"
       }
@@ -109,29 +109,29 @@
       {
         "line": 2,
         "payee": "Alice",
-        "address": "0x7BbF6101B937479d9b0ba076b0830E4F2DF57eD7",
+        "address": "0xCc5dafb4fAeaAd6b2ad4Aa2b999208aa2a6d1935",
         "amount": 120,
         "action": "REVIEW",
         "status": "CHANGED",
         "flags": [],
-        "explanation": "Different from the address you paid last time (0x83C6268FC80121ca4D4adb5bd40ff60b394Ba823). Confirm it with the payee through a channel you already trust, or ask them to prove it on SendSure."
+        "explanation": "Different from the address you paid last time (0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766). Confirm it with the payee through a channel you already trust, or ask them to prove it on SendSure."
       },
       {
         "line": 3,
         "payee": "Bob",
-        "address": "0x83c66101B937479D9b0ba076B0830e4F2Df5a823",
+        "address": "0x2597AFB4FAeAAD6b2AD4aa2B999208Aa2A6dd766",
         "amount": 80,
         "action": "STOP",
         "status": "LOOKALIKE",
         "flags": [],
-        "explanation": "Looks like 0x83C6268FC80121ca4D4adb5bd40ff60b394Ba823 (same start and end, different middle). This is how address poisoning works. Do not pay until the payee confirms."
+        "explanation": "Looks like 0x2597D39c760A9dD060F81AaC6ADaD6F76d28d766 (same start and end, different middle). This is how address poisoning works. Do not pay until the payee confirms."
       }
     ],
     "payment": "$0.005 USDC"
   },
   "dashboardFirstPartyPaidCalls": {
-    "calls": 12,
-    "usdc": "0.036",
+    "calls": 14,
+    "usdc": "0.042",
     "payers": 1
   },
   "checks": {
@@ -164,7 +164,7 @@
       },
       {
         "ok": true,
-        "what": "Gateway settled the payment (baacc333-6387-4cde-b1dc-df7511b85513)"
+        "what": "Gateway settled the payment (731d354c-9dd2-4fe0-991c-3bf6c9df3c8b)"
       },
       {
         "ok": true,
@@ -180,7 +180,7 @@
       },
       {
         "ok": true,
-        "what": "dashboard counts 12 first-party paid calls (+2)"
+        "what": "dashboard counts 14 first-party paid calls (+2)"
       }
     ]
   }

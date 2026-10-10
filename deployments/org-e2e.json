@@ -1,9 +1,9 @@
 {
   "note": "First-party end-to-end test with throwaway keys; org tier SANDBOX. Not traction.",
-  "ranAtUnix": 1791657401,
+  "ranAtUnix": 1791664993,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x962E17153d70980CEeCE0eCC1afC48bB8E2b69E0",
-  "owner": "0x4d11Fd52756543E4b675fE2Aef40495a46C2A7d3",
+  "org": "0x943Fded3E2d84dd2923273f5Ae9842Db0C2340b1",
+  "owner": "0xb508c2506fF5331DDe3e85F9eCe0E0a9f14e1B26",
   "checks": {
     "passed": 10,
     "total": 10,
@@ -14,7 +14,7 @@
       },
       {
         "ok": true,
-        "what": "org created (200 0x962E17153d70980CEeCE0eCC1afC48bB8E2b69E0)"
+        "what": "org created (200 0x943Fded3E2d84dd2923273f5Ae9842Db0C2340b1)"
       },
       {
         "ok": true,
@@ -51,9 +51,9 @@
     ]
   },
   "links": {
-    "createOrg": "https://explorer.testnet.arc.io/tx/0x2896571c06bfe988190132e246b74ac70998c845f6ed7254b17790479c02e817",
-    "budget": "https://explorer.testnet.arc.io/tx/0xac316ee5eeeb10c46728a0c292db3699bce4aa16a2107b8164c33acf9d049e3a",
-    "invites": "https://explorer.testnet.arc.io/tx/0x3f7fb13cb51082bd07516a02143e8a8192267844c5c53447f06db6f94fcda611",
-    "bind": "https://explorer.testnet.arc.io/tx/0x83dde4d030541b96f5b57937ae955399cb193ec5a845752a8e549ee679f4a5e9"
+    "createOrg": "https://explorer.testnet.arc.io/tx/0x9df4cf590d225be9befd4fea294a1af0cf7273c725bb61923c2563822201ab94",
+    "budget": "https://explorer.testnet.arc.io/tx/0xdb471ea8202ad9e0f103f810de77c557a3667b0188e844756461fd2db91c4d80",
+    "invites": "https://explorer.testnet.arc.io/tx/0x3de6e622ef0632dbac745ffd0a8eb749568e0c565114597c61ff0e0bf5bbfdaf",
+    "bind": "https://explorer.testnet.arc.io/tx/0x8c8550fe2373f1f6c3751cdda49961500374f35be73dd82860527b7938b1313a"
   }
 }

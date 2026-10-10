@@ -1,12 +1,12 @@
 {
   "note": "First-party end-to-end test on the SANDBOX org with a throwaway key. Not traction.",
-  "ranAtUnix": 1791655098,
+  "ranAtUnix": 1791664939,
   "relayerBase": "https://sendsure.0xpankaj.workers.dev",
   "org": "0x8C50103bE05877E41Fea5b3181c94E8123328e81",
-  "payeeRef": "0x614b5a2c0f7500fbb1eeebc8468a3b15427c9d62e40c959a94c38ee5f9e44f48",
-  "payout": "0xf9421d3903e7149A8a561167Bf04c64B28bfFA98",
-  "openSlotTx": "0xa929a6dfb8101b2eb45b45f87f9bbc75f5202e50aa05789980018eead633d902",
-  "bindTx": "0x7b78e3b05a14c241beef659265a9d9eb2aeaf866eac658d5f39d5f5badf3ae44",
+  "payeeRef": "0xa412358eb3a75cac6581295aea7e31c42b4f390211c1167b92e7598e037bb46a",
+  "payout": "0xec45C7316495558eba78116EE090E5127f2a3029",
+  "openSlotTx": "0x002055a3bff088001d062eaba3c3da8df766661609861e126319f7fab5f512df",
+  "bindTx": "0x91a805a3f481e2aaf7628776c98b80091af652453823bc1642de4c37b5ecc40b",
   "checks": {
     "passed": 4,
     "total": 4,
@@ -21,7 +21,7 @@
       },
       {
         "ok": true,
-        "what": "registry: BOUND PROVEN 0xf9421d3903e7149A8a561167Bf04c64B28bfFA98"
+        "what": "registry: BOUND PROVEN 0xec45C7316495558eba78116EE090E5127f2a3029"
       },
       {
         "ok": true,
@@ -30,8 +30,8 @@
     ]
   },
   "links": {
-    "openSlot": "https://explorer.testnet.arc.io/tx/0xa929a6dfb8101b2eb45b45f87f9bbc75f5202e50aa05789980018eead633d902",
-    "bind": "https://explorer.testnet.arc.io/tx/0x7b78e3b05a14c241beef659265a9d9eb2aeaf866eac658d5f39d5f5badf3ae44",
-    "payout": "https://explorer.testnet.arc.io/address/0xf9421d3903e7149A8a561167Bf04c64B28bfFA98"
+    "openSlot": "https://explorer.testnet.arc.io/tx/0x002055a3bff088001d062eaba3c3da8df766661609861e126319f7fab5f512df",
+    "bind": "https://explorer.testnet.arc.io/tx/0x91a805a3f481e2aaf7628776c98b80091af652453823bc1642de4c37b5ecc40b",
+    "payout": "https://explorer.testnet.arc.io/address/0xec45C7316495558eba78116EE090E5127f2a3029"
   }
 }
