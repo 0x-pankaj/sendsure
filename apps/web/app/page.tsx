@@ -14,31 +14,43 @@ const REPO = "https://github.com/0x-pankaj/sendsure";
 export default function Home() {
   return (
     <>
-      <section className="hero">
+      {/* ------------------------------------------------------------ hero */}
+      <section className="hero bleed bleed-glow">
         <div>
           <p className="eyebrow">Payables agent · USDC on Arc</p>
           <h1>
             Pay only the <em>right person</em>.
           </h1>
           <p className="lede">
-            SendSure is a payables agent for teams that pay contractors and vendors in stablecoins. It pays only a payee who
-            proved their own address, only for a claim that payee signed, and only inside a budget an Arc contract enforces.
-            Then it writes each payment into the books you already keep.
+            SendSure pays your contractors and vendors in USDC, but only to an address they proved, only for an invoice they
+            signed, and only inside a budget an Arc contract enforces. Then every payment lands in your books, exact.
           </p>
-          <div className="row">
-            <a className="btn" href="/try">
-              Try it in two minutes, no wallet needed
-            </a>
-            <a className="btn secondary" href="/check">
-              Check your next payout (free)
-            </a>
-            <a className="btn secondary" href="/org">
+          <div className="cta">
+            <a className="btn lg" href="/org">
               Set up your team
             </a>
+            <a className="btn secondary lg" href="/check">
+              Check a payout, free
+            </a>
           </div>
+          <div className="reassure">
+            <span>Pays from your own wallet</span>
+            <span>Gas paid for you</span>
+            <span>Open source</span>
+          </div>
+          <p className="hint" style={{ marginTop: 14 }}>
+            Just looking? <a href="/try">Try it in two minutes, no wallet needed</a>.
+          </p>
         </div>
 
-        <div>
+        <div className="stage">
+          <div className="float a">
+            <span className="dot green">✓</span>
+            <span>
+              Address proven
+              <small>signed by the payee, once</small>
+            </span>
+          </div>
           <div className="ticket">
             <div className="head">
               <div>
@@ -47,7 +59,7 @@ export default function Home() {
                   to <span className="mono">{short(SAMPLE.payout)}</span>
                 </span>
               </div>
-              <span className="chip PAY">PAID ON ARC</span>
+              <span className="chip PAY">Paid on Arc</span>
             </div>
             <ul>
               <li>
@@ -91,7 +103,7 @@ export default function Home() {
               </li>
             </ul>
             <div className="foot">
-              <a href={`/receipt?tx=${SAMPLE.tx}`}>Open the receipt</a>
+              <a href={`/receipt?tx=${SAMPLE.tx}`}>Open the receipt →</a>
               <span>A real payment on Arc testnet, from our own tests.</span>
             </div>
           </div>
@@ -108,22 +120,45 @@ export default function Home() {
               </li>
             </ul>
           </div>
+          <div className="float b">
+            <span className="dot purple">AI</span>
+            <span>
+              Reviewed by Claude
+              <small>it can hold a payment, never make one</small>
+            </span>
+          </div>
         </div>
       </section>
 
-      <section className="section">
-        <h2>Where stablecoin payouts go wrong</h2>
+      {/* ------------------------------------------------------------ built on */}
+      <section className="trust" aria-label="Built on">
+        <div className="label">Built on and works with</div>
+        <div className="logos">
+          <span>Arc</span>
+          <span>USDC</span>
+          <span>Circle Gateway</span>
+          <span>Circle Wallets</span>
+          <span>Claude</span>
+          <span>Odoo</span>
+          <span>ERPNext</span>
+          <span>beancount</span>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ the problem */}
+      <section className="section center">
+        <h2>Stablecoin payables, without the wrong-wallet risk</h2>
         <p className="sub">
-          A payment to the wrong wallet balances perfectly in the books. Nothing catches it afterwards, so it has to be
-          caught before the money moves.
+          A payment to the wrong wallet balances perfectly in the books. Nothing catches it afterwards, so SendSure stops it
+          before the money moves.
         </p>
-        <div className="cards">
+        <div className="cards" style={{ textAlign: "left" }}>
           <div className="card">
             <span className="tag stop">Look-alike address</span>
             <h3>Copied from history</h3>
             <p>
-              An attacker sends dust from an address with the same first and last characters as your contractor&apos;s.
-              SendSure pays only the address the contractor proved by signing with it.
+              An attacker plants an address with the same first and last characters as your contractor&apos;s. SendSure pays
+              only the address the contractor proved by signing with it.
             </p>
           </div>
           <div className="card">
@@ -145,125 +180,282 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section">
-        <h2>How it works</h2>
-        <p className="sub">You only sign. SendSure pays the gas, and the money never leaves your own wallet until a payment is due.</p>
-        <div className="cards numbered">
-          <div className="card">
-            <h3>Each payee proves their address, once</h3>
-            <p>You send an invite link from your own email. The payee signs with their wallet, and that address is theirs on Arc.</p>
+      {/* ------------------------------------------------------------ features */}
+      <section className="feature">
+        <div className="panel mint" aria-hidden="true">
+          <div className="mini">
+            <div className="t">Confirm your payout address</div>
+            <div className="s">Pankaj Studio wants to pay you through SendSure.</div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <span className="pill">Create a passkey wallet</span>
+              <span className="s">Face ID · gas paid by Circle</span>
+            </div>
           </div>
-          <div className="card">
-            <h3>Payees sign a claim for every invoice</h3>
-            <p>
-              Or you upload the invoice and Claude reads it, showing the exact words each value came from. The payee checks it
-              and signs.
-            </p>
+          <div className="mini offset">
+            <div className="line">
+              <span className="t">0x43Aa…191e</span>
+              <span className="chip PAY">Proven</span>
+            </div>
+            <div className="line">
+              <span className="s">Change of address</span>
+              <span className="s">old key + new key + waiting period</span>
+            </div>
           </div>
-          <div className="card">
-            <h3>The agent checks every claim</h3>
-            <p>
-              It runs the contract&apos;s own dry run, then Claude reviews the run. Anything unusual is held with a plain
-              reason, and a person co-signs first payments and large ones.
-            </p>
-          </div>
-          <div className="card">
-            <h3>It pays, and your books match</h3>
-            <p>
-              USDC moves from your wallet through the contract. Each payment gets a public receipt and lands in your books,
-              exact to the last decimal.
-            </p>
+          <div className="mini">
+            <div className="line">
+              <span className="t">0x43Ab…191e</span>
+              <span className="chip STOP">Refused on-chain</span>
+            </div>
           </div>
         </div>
-      </section>
-
-      <section className="section">
-        <h2>Works with the books you already keep</h2>
-        <p className="sub">
-          A ledger checks that debits equal credits. It does not check who was paid, and some round a small difference away
-          without telling you. SendSure records the exact amount from the chain, with the Arc transaction, once.
-        </p>
-        <div className="split">
-          <div className="cards" style={{ gridTemplateColumns: "1fr" }}>
-            <div className="card">
-              <span className="tag">Add-on · live run 27/27</span>
-              <h3>Odoo 19</h3>
-              <p>
-                &ldquo;Pay with SendSure&rdquo; on a vendor bill. Odoo trusts only the wallet the vendor proved, and each
-                payment is recorded through Odoo&apos;s own Register Payment. Half a cent is never rounded away.
-              </p>
-            </div>
-            <div className="card">
-              <span className="tag">App · live run 29/29</span>
-              <h3>ERPNext 15</h3>
-              <p>
-                &ldquo;Pay with SendSure&rdquo; on a purchase invoice. The supplier&apos;s proven address is read from Arc and cannot
-                be typed in, and each payment is recorded as a Payment Entry with the transaction as its reference.
-              </p>
-            </div>
-            <div className="card">
-              <span className="tag">Checked by the tools themselves</span>
-              <h3>beancount and hledger</h3>
-              <p>
-                Plain-text books with every payment, its claim and its transaction, and the treasury balance asserted from
-                the chain. They pass <span className="mono">bean-check</span> and <span className="mono">hledger check</span>.
-              </p>
-            </div>
-            <div className="card">
-              <span className="tag">Any other ledger</span>
-              <h3>Journal and statement CSV</h3>
-              <p>A balanced general journal, and a bank-statement file with the Arc transaction as the reference.</p>
-              <a className="more" href="/books">
-                See every format and download a sample →
-              </a>
-            </div>
-          </div>
-          <a href="/books">
-            <img
-              className="shot"
-              src="/books/odoo-bill-paid-on-arc.jpg"
-              alt="An Odoo vendor bill paid with SendSure: the payment is recorded with the exact USDC amount and the Arc transaction"
-              width={1018}
-              height={762}
-              loading="lazy"
-            />
+        <div>
+          <p className="eyebrow">Verification of payee</p>
+          <h3>Every payee proves their own address</h3>
+          <p>Banks in the EU had to add payee verification in 2025. Stablecoin payouts had nothing like it. Now they do.</p>
+          <ul className="checks">
+            <li>
+              <span>
+                <b>Signed once</b> with their own wallet, or with a passkey if they have no wallet app.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Changing it</b> needs the old key, the new key and a waiting period you can cancel.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Look-alikes and forged claims</b> are refused by the contract on Arc, not by our server.
+              </span>
+            </li>
+          </ul>
+          <a className="btn secondary" href="/try">
+            See it in the two-minute demo
           </a>
         </div>
       </section>
 
+      <section className="feature flip">
+        <div className="panel lilac" aria-hidden="true">
+          <div className="mini">
+            <div className="line">
+              <span>
+                <span className="t">INV-041</span> <span className="s">0.25 USDC</span>
+              </span>
+              <span className="chip PAY">Pay</span>
+            </div>
+            <div className="line">
+              <span>
+                <span className="t">INV-042</span> <span className="s">&ldquo;pay my new wallet, urgent&rdquo;</span>
+              </span>
+              <span className="chip REVIEW">Ask a person</span>
+            </div>
+            <div className="line">
+              <span>
+                <span className="t">INV-043</span> <span className="s">same work billed twice</span>
+              </span>
+              <span className="chip STOP">Hold</span>
+            </div>
+          </div>
+          <div className="mini offset">
+            <div className="s">Rules first, then Claude Opus 5.5 with read-only tools</div>
+            <div className="t" style={{ marginTop: 4 }}>Every decision hash-chained and anchored on Arc</div>
+          </div>
+        </div>
+        <div>
+          <p className="eyebrow">The agent</p>
+          <h3>An agent that can say no. A contract that decides yes.</h3>
+          <p>It runs your payables every day and explains every decision in plain words.</p>
+          <ul className="checks">
+            <li>
+              <span>
+                <b>The contract&apos;s own check</b> runs first; Claude reviews anything unusual.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>It can hold a payment, never make one</b> the contract would refuse.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>First payments and large ones</b> wait for a person&apos;s co-sign, on-chain.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Cash short?</b> The oldest work is paid first. Autopilot runs it whenever something changes.
+              </span>
+            </li>
+          </ul>
+          <a className="btn secondary" href="/org">
+            Set up your team
+          </a>
+        </div>
+      </section>
+
+      <section className="feature">
+        <div className="panel sky" aria-hidden="true">
+          <div className="mini">
+            <div className="s">Odoo · BILL/2026/10/0004</div>
+            <div className="line">
+              <span className="t">Paid on Arc with SendSure</span>
+              <span className="chip PAY">0.250000 USDC</span>
+            </div>
+            <div className="line">
+              <span className="s">Memo</span>
+              <span className="mono s">SendSure 0x9dca0b31…</span>
+            </div>
+          </div>
+          <div className="mini offset">
+            <div className="line">
+              <span className="t">ERPNext · Payment Entry</span>
+              <span className="chip PAY">Paid</span>
+            </div>
+            <div className="line">
+              <span className="s">beancount · hledger · CSV</span>
+              <span className="s">bean-check ✓ · hledger --strict ✓</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p className="eyebrow">Books</p>
+          <h3>Payments land in the books you already keep</h3>
+          <p>
+            A ledger checks that debits equal credits, not who was paid, and some round a small difference away without
+            telling you. SendSure records the exact amount from the chain, with the transaction, once.
+          </p>
+          <ul className="checks">
+            <li>
+              <span>
+                <b>Odoo 19:</b> trusts only the vendor&apos;s proven wallet; payments come back through Register Payment.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>ERPNext 15:</b> a payment is recorded only if it matches the invoice exactly.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>beancount, hledger and CSV</b>, exact to six decimals, each checked by the tool it is for.
+              </span>
+            </li>
+          </ul>
+          <a className="btn secondary" href="/books">
+            See every format
+          </a>
+        </div>
+      </section>
+
+      <section className="feature flip">
+        <div className="panel sand" aria-hidden="true">
+          <div className="mini">
+            <div className="line">
+              <span className="t">Acme Design (new wallet!)</span>
+              <span className="chip STOP">Look-alike</span>
+            </div>
+            <div className="line">
+              <span className="t">Bob Writer</span>
+              <span className="chip REVIEW">Changed</span>
+            </div>
+            <div className="line">
+              <span className="t">Dan Video · INV-14</span>
+              <span className="chip STOP">Billed twice</span>
+            </div>
+            <div className="line">
+              <span className="t">Acme Design Ltd</span>
+              <span className="chip PAY">Same as last time</span>
+            </div>
+          </div>
+          <div className="mini offset">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <span className="s">Then, if you ask</span>
+              <span className="pill">Review with Claude</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p className="eyebrow">Free payout check</p>
+          <h3>Check any payout before you send it</h3>
+          <p>Address poisoning plants look-alike addresses in your history and waits for your next copy and paste. Check your list first.</p>
+          <ul className="checks">
+            <li>
+              <span>
+                <b>Free, in your browser.</b> Your file is never uploaded.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Look-alikes, changed wallets, duplicates</b> and amount jumps, against the last run you paid.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Claude can review the run</b> line by line, and only ever makes a line stricter.
+              </span>
+            </li>
+          </ul>
+          <a className="btn secondary" href="/check?example">
+            Try it with the example file
+          </a>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ how it works */}
       <section className="section">
-        <h2>Who it is for</h2>
-        <div className="cards">
+        <p className="eyebrow">How it works</p>
+        <h2>You only sign. SendSure does the rest.</h2>
+        <p className="sub">SendSure pays the gas, and the money never leaves your own wallet until a payment is due.</p>
+        <div className="cards numbered">
+          <div className="card">
+            <h3>Each payee proves their address, once</h3>
+            <p>You send an invite link from your own email. The payee signs with their wallet or a passkey, and that address is theirs on Arc.</p>
+          </div>
+          <div className="card">
+            <h3>Payees sign a claim for every invoice</h3>
+            <p>Or you upload the invoice and Claude reads it, showing the exact words each value came from. The payee checks it and signs.</p>
+          </div>
+          <div className="card">
+            <h3>The agent checks every claim</h3>
+            <p>The contract&apos;s own dry run, then Claude. Anything unusual is held with a plain reason; first and large payments need a person.</p>
+          </div>
+          <div className="card">
+            <h3>It pays, and your books match</h3>
+            <p>USDC moves from your wallet through the contract. Each payment gets a public receipt and lands in your books, exact.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ who it is for */}
+      <section className="section">
+        <p className="eyebrow">Who it is for</p>
+        <h2>For everyone around a payout</h2>
+        <div className="cards" style={{ marginTop: 28 }}>
           <div className="card">
             <h3>Teams that pay in USDC</h3>
-            <p>
-              Agencies, DAOs, grant programs and startups paying contractors or vendors. Set a budget once; approve only what
-              needs a person.
-            </p>
+            <p>Agencies, DAOs, grant programs and startups paying contractors or vendors. Set a budget once; approve only what needs a person.</p>
             <a className="more" href="/org">
               Set up your team →
             </a>
           </div>
           <div className="card">
             <h3>The people being paid</h3>
-            <p>Confirm your address once, in a minute, for free. After that nobody can redirect your payment with an email.</p>
+            <p>Confirm your address once, in a minute, for free, even without a wallet app. After that nobody can redirect your pay with an email.</p>
             <a className="more" href="/verify">
               For payees →
             </a>
           </div>
           <div className="card">
             <h3>Whoever keeps the books</h3>
-            <p>Every payment arrives with its invoice, its transaction and its receipt, in Odoo, in ERPNext or in the ledger format you use.</p>
+            <p>Every payment arrives with its invoice, its transaction and its receipt, in Odoo, in ERPNext or in your ledger format.</p>
             <a className="more" href="/books">
               Books →
             </a>
           </div>
           <div className="card">
             <h3>Other agents</h3>
-            <p>
-              An MCP server, and paid checks over Circle Gateway (x402): $0.001 to verify a payee, $0.005 to check a payout
-              file.
-            </p>
+            <p>An MCP server, and paid checks over Circle Gateway (x402): $0.001 to verify a payee, $0.005 to check a payout file.</p>
             <a className="more" href="/api/x402">
               Catalog →
             </a>
@@ -271,51 +463,74 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ------------------------------------------------------------ proof */}
       <section className="section">
-        <h2>Three rules the AI cannot skip</h2>
-        <p className="sub">The model can hold a payment or ask a person. It can never make the contract pay.</p>
-        <div className="cards">
+        <p className="eyebrow">Live on Arc testnet</p>
+        <h2>Checkable, end to end</h2>
+        <p className="sub">
+          Every number on the <a href="/dashboard">dashboard</a> is counted from chain events, with our own tests kept apart from
+          traction. Every claim in the repo links to a test or a live run.
+        </p>
+        <div className="stats">
+          <div className="stat">
+            <b>16</b>
+            <span>live test suites against this site</span>
+          </div>
+          <div className="stat">
+            <b>47</b>
+            <span>contract tests</span>
+          </div>
+          <div className="stat">
+            <b>30</b>
+            <span>tests inside Odoo 19</span>
+          </div>
+          <div className="stat">
+            <b>25</b>
+            <span>tests inside ERPNext 15</span>
+          </div>
+        </div>
+        <div className="split" style={{ marginTop: 22 }}>
           <div className="card">
-            <h3>The payee proved their address.</h3>
-            <p>They signed with it. Changing it needs the old key, the new key and a waiting period.</p>
+            <h3 style={{ marginTop: 0 }}>See for yourself</h3>
+            <ul className="checks" style={{ marginBottom: 0 }}>
+              <li>
+                <span>
+                  A <a href={`/receipt?tx=${SAMPLE.tx}`}>payment receipt</a>: proof of address, the signed claim, the anchored decision.
+                </span>
+              </li>
+              <li>
+                <span>
+                  PayeeRegistry <a className="mono" href={explorerAddress(deployment.payeeRegistry)}>{short(deployment.payeeRegistry)}</a> and
+                  MandateFactory <a className="mono" href={explorerAddress(deployment.mandateFactory)}>{short(deployment.mandateFactory)}</a>, source-verified.
+                </span>
+              </li>
+              <li>
+                <span>
+                  <a href={REPO}>Source and every test run</a> (MIT) · <a href="/status">system status</a> · testnet only, not audited.
+                </span>
+              </li>
+            </ul>
           </div>
           <div className="card">
-            <h3>The payee signed this claim.</h3>
-            <p>A forged invoice cannot carry their signature, and an invoice is never paid twice.</p>
-          </div>
-          <div className="card">
-            <h3>A contract enforces the budget.</h3>
-            <p>Limits start at zero. New payees and large amounts need a human co-sign on-chain.</p>
+            <h3 style={{ marginTop: 0 }}>For your agent</h3>
+            <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>Connect over MCP, or buy checks per call with USDC over Circle Gateway.</p>
+            <div className="mono-box">claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp</div>
           </div>
         </div>
       </section>
 
-      <section className="section band">
-        <h2 style={{ marginTop: 0 }}>Live on Arc testnet, and checkable</h2>
-        <ul>
-          <li>
-            <a href="/dashboard">Dashboard</a>: every number counted from chain events, with sandbox activity kept out of the
-            traction count.
-          </li>
-          <li>
-            A <a href={`/receipt?tx=${SAMPLE.tx}`}>payment receipt</a>: the payee&apos;s proof of address, their signed claim, and the
-            agent&apos;s anchored decision.
-          </li>
-          <li>
-            PayeeRegistry <a className="mono" href={explorerAddress(deployment.payeeRegistry)}>{deployment.payeeRegistry}</a> ·
-            MandateFactory <a className="mono" href={explorerAddress(deployment.mandateFactory)}>{deployment.mandateFactory}</a>
-          </li>
-          <li>
-            Built on Circle and Arc: USDC, contracts on Arc, a Circle agent wallet that can send the payments, and Circle
-            Gateway for paid checks.
-          </li>
-          <li>
-            For agents: <span className="mono">claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp</span>
-          </li>
-          <li>
-            <a href={REPO}>Source and test runs</a> (MIT). <a href="/status">System status</a>. Testnet only; not audited.
-          </li>
-        </ul>
+      {/* ------------------------------------------------------------ call to action */}
+      <section className="cta-band">
+        <h2>Check your next payout before you send it</h2>
+        <p>Free, in your browser, nothing uploaded. Or set up your team on Arc testnet in ten minutes; we can do it with you on a call.</p>
+        <div className="row">
+          <a className="btn lg" href="/check">
+            Check a payout
+          </a>
+          <a className="btn secondary lg" href="/org">
+            Set up your team
+          </a>
+        </div>
       </section>
     </>
   );
