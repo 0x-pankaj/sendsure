@@ -434,7 +434,7 @@ export default function DocsPage() {
             <h3>Odoo and ERPNext <a className="where" href="/books">/books</a></h3>
             <p>For teams whose bills live in their ERP.</p>
             <ol>
-              <li>Install the <a href={`${REPO}/tree/main/integrations/odoo`}>Odoo 19 add-on</a> or the <a href={`${REPO}/tree/main/integrations/erpnext`}>ERPNext 15 app</a>. A Docker setup is included: <code>./run.sh up</code>.</li>
+              <li>Install the <a href={`${REPO}/tree/main/integrations/odoo`}>Odoo 19 add-on</a> or the <a href={`${REPO}/tree/main/integrations/erpnext`}>ERPNext 15 app</a>. A Docker setup is included: <code>./run.sh up</code>. It needs an Odoo that can install add-ons (your own server or Odoo.sh; tested on Odoo 19 Community). Odoo Online cannot install outside add-ons: there, use SendSure on its own and download your books.</li>
               <li>On <a href="/org">/org</a>, click <b>Create a books key</b>. In Odoo, open Invoicing → Settings → SendSure, paste the key and click <b>Test connection</b>. It creates USDC and a &quot;USDC on Arc&quot; journal.</li>
               <li>On a vendor, paste their SendSure invite link and click <b>Email the invite</b>; Odoo writes the email for you.</li>
               <li>Once the vendor has proved their address, click <b>Check with SendSure</b>, then a manager trusts that wallet. No other wallet can be trusted, not even by the admin.</li>
