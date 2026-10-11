@@ -39,6 +39,8 @@ We reproduced three behaviours on Odoo 19 before the hackathon
    it again against Arc; any other wallet is refused.
 4. **Pay with SendSure.** Click it on a posted bill (or on several, from the list). The bill becomes
    an invoice the vendor confirms by signing it in SendSure. A claim for a different amount is refused.
+   SendSure keeps no contact details, so it cannot tell the vendor: "Email the vendor to sign" opens Odoo's
+   composer with the request written, the invoice number and amount, and the vendor's own link.
 5. **The agent pays.** Every 5 minutes, a cron job asks SendSure's agent to pay the bills the vendor
    signed. The agent pays only what passes your Arc contract's rules. A first payment, or a large one,
    waits until a person co-signs it on-chain in SendSure ("Co-sign in SendSure" on the bill opens it).
@@ -75,9 +77,9 @@ pnpm e2e:odoo     # needs ./run.sh up first
 
 ## Tests and live runs
 
-- **Odoo tests** (`./run.sh test`), 30 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
+- **Odoo tests** (`./run.sh test`), 31 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
   - currency and journal setup;
-  - invite-link parsing, and the invite email opens with the vendor's own link;
+  - invite-link parsing, and the invite email opens with the vendor's own link; so does the "sign this bill" email, with the exact invoice;
   - a bill waiting for a co-sign links to SendSure;
   - only the proven wallet can be trusted;
   - an unlinked vendor's wallet cannot be trusted;

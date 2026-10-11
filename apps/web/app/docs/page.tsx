@@ -104,7 +104,7 @@ const PARTS: [string, string, string][] = [
   ["Autopilot", "Every minute, checks whether anything changed (a new claim, a co-sign, new funds) and runs the agent only then.", "Payments happen on time without anyone pressing a button."],
   ["Decision log and anchors", "Every decision is hash-chained, the head is anchored on Arc, and each payment carries its decision's hash.", "Anyone can replay why a payment was made; edits to the log are detectable."],
   ["Invoice reader", "Claude reads a pasted invoice or a photo and quotes the exact words for each value. The quotes are checked in code.", "No retyping, and the AI cannot invent an amount without being caught."],
-  ["Odoo 19 add-on", "Pay with SendSure on a vendor bill; only the vendor's proven wallet can be trusted; payments come back through Register Payment; email the invite; co-sign links; filters.", "Teams keep working in Odoo, and their books stay exact."],
+  ["Odoo 19 add-on", "Pay with SendSure on a vendor bill; only the vendor's proven wallet can be trusted; payments come back through Register Payment; email the invite and each bill to sign; co-sign links; filters.", "Teams keep working in Odoo, and their books stay exact."],
   ["ERPNext 15 app", "The same for purchase invoices: proven address read-only, Accounts Manager approval, a Payment Entry only when the amount matches exactly.", "The same safety for ERPNext teams."],
   ["Ledger exports", "beancount, hledger, journal CSV and bank-statement CSV, exact to 6 decimals, with balances checked against the chain.", "Works with any accounting tool."],
   ["Free payout check", "Paste a payout CSV; it flags look-alikes, changed wallets, duplicates and amount jumps against the last run. Runs in your browser.", "Useful on day one, before anyone signs up."],
@@ -424,7 +424,7 @@ export default function DocsPage() {
               <li>Open the invite link your client sent you.</li>
               <li>Choose how to be paid: <b>Connect wallet</b>, or <b>Create a passkey wallet</b> if you have no wallet app. A passkey uses Face ID, a fingerprint or your phone&apos;s PIN.</li>
               <li>Click <b>Sign and confirm</b>. Your address is now proven, and the gas is paid for you.</li>
-              <li>For each invoice, enter the invoice number, amount and work period, then <b>Sign and send claim</b>. If your client already sent the invoice, check it and sign.</li>
+              <li>Keep the link. For each invoice, open it again: if your client sent the invoice (Odoo can email you when one is waiting), check it and sign; otherwise enter the invoice number, amount and work period, then <b>Sign and send claim</b>.</li>
               <li>You are paid when the agent runs. With a passkey wallet, the page shows your balance and lets you <b>Send USDC</b> to another wallet or an exchange.</li>
             </ol>
             <p className="hint">After this, nobody can redirect your payments with an email. Changing your address needs your old wallet too.</p>
@@ -438,7 +438,7 @@ export default function DocsPage() {
               <li>On <a href="/org">/org</a>, click <b>Create a books key</b>. In Odoo, open Invoicing → Settings → SendSure, paste the key and click <b>Test connection</b>. It creates USDC and a &quot;USDC on Arc&quot; journal.</li>
               <li>On a vendor, paste their SendSure invite link and click <b>Email the invite</b>; Odoo writes the email for you.</li>
               <li>Once the vendor has proved their address, click <b>Check with SendSure</b>, then a manager trusts that wallet. No other wallet can be trusted, not even by the admin.</li>
-              <li>On a posted bill, click <b>Pay with SendSure</b>. The vendor signs it, the agent pays it, and Odoo records it through Register Payment with the Arc transaction in the memo.</li>
+              <li>On a posted bill, click <b>Pay with SendSure</b>, then <b>Email the vendor to sign</b> (SendSure keeps no contact details, so it cannot tell them). The vendor signs it on their link, the agent pays it, and Odoo records it through Register Payment with the Arc transaction in the memo.</li>
               <li>Bills waiting for a person show <b>Co-sign in SendSure</b>. Filters show bills in progress, needing a person, or paid on Arc. Cancelling a bill withdraws it.</li>
             </ol>
           </div>

@@ -392,6 +392,23 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.assertIn(ORG, composer.body)
         self.assertIn(self.vendor, composer.partner_ids)
 
+    def test_a_bill_waiting_for_the_vendor_can_be_emailed_to_them(self):
+        self.env['ir.config_parameter'].sudo().set_param('sendsure.org', ORG)
+        self.vendor.invalidate_recordset(['sendsure_invite_url'])
+        bill = self._trusted_bill()
+        self.vendor.email = False
+        with self.assertRaises(UserError):
+            bill.action_sendsure_email_vendor()
+        self.vendor.email = 'maria@lopez.design'
+        action = bill.action_sendsure_email_vendor()
+        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        # SendSure cannot tell the vendor; a person sends this, with the vendor's own link and the exact invoice.
+        self.assertIn(REF, composer.body)
+        self.assertIn(ORG, composer.body)
+        self.assertIn('INV-2026-044', composer.body)
+        self.assertIn('INV-2026-044', composer.subject)
+        self.assertIn(self.vendor, composer.partner_ids)
+
     def test_a_bill_waiting_for_a_cosign_links_to_sendsure(self):
         action = self._bill().action_sendsure_open()
         self.assertEqual(action['url'], self.env['sendsure.client'].base_url() + '/org')

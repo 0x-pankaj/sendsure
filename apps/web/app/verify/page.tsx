@@ -583,6 +583,10 @@ function BindingState(props: {
         The first payment to a new address still needs a person at {payer} to approve it.
       </p>
       <p>
+        <b>Keep this link.</b> Each invoice {payer} sends for payment shows up here, for you to check and sign; they may
+        also email you when one is waiting.
+      </p>
+      <p>
         To change this address later, you sign with this wallet and the new one, and the change waits{" "}
         {formatDuration(org.changeCooldown)} before it counts.
       </p>

@@ -24,6 +24,41 @@
     <p>
         You sign once with that wallet. It costs nothing and sends nothing. From then on we can pay only that address, and
         changing it later needs both your old and your new wallet. For each invoice we pay, you confirm the amount the same way.
+        Keep this email: each invoice we send for payment shows up on the same link, for you to check and sign.
+    </p>
+    <p style="color: #6b7280;">
+        If you did not expect this email, reply to it before you open the link. It runs on Arc testnet today, with test USDC.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <record id="mail_template_sendsure_bill" model="mail.template">
+        <field name="name">SendSure: ask a vendor to sign a bill</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="subject">{{ object.company_id.name }}: please check and sign invoice {{ object.ref }} to be paid in USDC</field>
+        <field name="email_from">{{ user.email_formatted or object.company_id.email_formatted }}</field>
+        <field name="lang">{{ object.partner_id.lang }}</field>
+        <field name="description">Sent from a vendor bill sent with SendSure: the vendor's own link, where they check the bill and sign it.</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p>Hello <t t-out="object.partner_id.name or ''">Maria</t>,</p>
+    <p>
+        We are paying your invoice <strong t-out="object.ref or ''">INV-2026-041</strong> for
+        <strong t-out="format_amount(object.amount_residual, object.currency_id) or ''">$ 1.50</strong> in USDC with SendSure.
+        Before we can pay it, please check the amount and sign it:
+    </p>
+    <p style="margin: 16px 0px;">
+        <a t-att-href="object.partner_id.commercial_partner_id.sendsure_invite_url"
+           style="background-color: #1f7a5a; padding: 10px 16px; color: #ffffff; text-decoration: none; border-radius: 6px;">
+            Check and sign the invoice
+        </a>
+    </p>
+    <p>
+        It is the same link you used to confirm your payout address. Signing costs nothing and sends nothing. Once it is
+        signed, we pay it to the address you proved, and the payment shows on the same page. If something is wrong, choose
+        "Not mine / wrong" there and tell us.
     </p>
     <p style="color: #6b7280;">
         If you did not expect this email, reply to it before you open the link. It runs on Arc testnet today, with test USDC.

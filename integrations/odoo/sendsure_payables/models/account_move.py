@@ -122,6 +122,35 @@ class AccountMove(models.Model):
                     % {'amount': escape(out.get('amount_usdc', ''))})
         return True
 
+    def action_sendsure_email_vendor(self):
+        """SendSure keeps no contact details, so it cannot tell a vendor that a bill waits for their signature. Odoo's
+        own composer, with the request already written and the vendor's own SendSure link: a person reads it and sends it."""
+        self.ensure_one()
+        vendor = self.partner_id.commercial_partner_id
+        if not vendor.sendsure_invite_url:
+            raise UserError(_("Paste %(vendor)s's SendSure invite link first, and connect SendSure in the settings "
+                              "(Test connection).", vendor=vendor.display_name))
+        to = self.partner_id if self.partner_id.email else vendor
+        if not to.email:
+            raise UserError(_("Add %(vendor)s's email address first.", vendor=vendor.display_name))
+        template = self.env.ref('sendsure_payables.mail_template_sendsure_bill')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Ask the vendor to sign"),
+            'res_model': 'mail.compose.message',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'new',
+            'context': {
+                'default_model': 'account.move',
+                'default_res_ids': self.ids,
+                'default_partner_ids': to.ids,
+                'default_template_id': template.id,
+                'default_composition_mode': 'comment',
+                'default_email_layout_xmlid': 'mail.mail_notification_light',
+            },
+        }
+
     # ------------------------------------------------------------------ withdraw (cancel, reset, delete)
 
     def _sendsure_withdraw_quietly(self):
