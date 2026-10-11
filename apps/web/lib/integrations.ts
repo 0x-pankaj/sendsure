@@ -400,7 +400,8 @@ async function billStatus(org: Address, p: ProposalRow, origin: string) {
   if (c.status === "refused") return { ...base, status: "refused", reason: c.agent_reason || reasonText };
   if (c.status === "withdrawn") return { ...base, status: "withdrawn", reason: "The claim was withdrawn." };
   if (!c.agent_action) return { ...base, status: "signed", reason: "The vendor signed the bill. Waiting for the agent to run." };
-  if (c.last_outcome === "ESCALATED" || (c.agent_action === "escalate" && c.last_outcome !== "PAYABLE")) {
+  const waiting = waitingFor(c);
+  if (waiting !== "held_by_rules") {
     // Once a person has co-signed on-chain, the next agent run pays it: say so, so the books system
     // asks for a run only then (not every few minutes while nobody has co-signed).
     const cosigner = await serverClient
@@ -408,9 +409,20 @@ async function billStatus(org: Address, p: ProposalRow, origin: string) {
       .catch(() => zeroAddress);
     if (cosigner !== zeroAddress)
       return { ...base, status: "signed", reason: "Co-signed by a person. The agent pays it on its next run." };
-    return { ...base, status: "needs_cosign", reason: c.agent_reason || reasonText };
   }
+  if (waiting === "cosign") return { ...base, status: "needs_cosign", reason: c.agent_reason || reasonText };
   return { ...base, status: "held", reason: c.agent_reason || reasonText };
+}
+
+/**
+ * What an open claim the agent has looked at waits for, in the words SendSure's own pages use: a co-sign when the
+ * contract asks for one or the agent asked a person ("Needs a co-sign"); a hold by Claude on a claim the contract
+ * would pay, which a person's co-sign also releases ("On hold"); otherwise a hold by the rules (budget, caps…).
+ */
+export function waitingFor(c: { last_outcome: string | null; agent_action: string | null }): "cosign" | "held_by_agent" | "held_by_rules" {
+  if (c.last_outcome === "ESCALATED" || c.agent_action === "escalate") return "cosign";
+  if (c.agent_action === "hold" && c.last_outcome === "PAYABLE") return "held_by_agent";
+  return "held_by_rules";
 }
 
 export async function listBills(org: Address, idsParam: string | null, origin: string) {

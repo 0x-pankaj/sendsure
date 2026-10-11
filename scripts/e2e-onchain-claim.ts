@@ -10,7 +10,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { arcTestnet, deployment, encodeClaim, formatUsdc, mandateAbi, usdc, type Claim } from "@sendsure/chain";
 import { arg, loadEnv, need } from "./lib/env";
 import { client, cosignAsOwner, setupSandboxOrg } from "./lib/flows";
-import { api, check, failed, withChecks } from "./lib/relay";
+import { api, check, failed, signInAs, withChecks } from "./lib/relay";
 
 loadEnv();
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!;
@@ -69,7 +69,39 @@ check(after - before === usdc("0.2"), `the payee's proven address received ${for
 const replay = (await api(base, `/api/agent/replay?org=${s.org}&seq=${d?.seq}`, { token: s.ownerToken })).body as Record<string, any>;
 check(replay.signatureOk && replay.checkAtBlock?.matches && replay.payment?.carriesDecisionHash, `replay: authorised on-chain by the payee, check() matches at block ${replay.checkAtBlock?.block}, payment carries the decision hash`);
 
-// 5. Someone else cannot submit a claim for this payee.
+// 5. The page closes right after the claim goes on Arc (it never tells SendSure). The page left the claim with
+//    SendSure first, so SendSure records it by itself once Arc shows it was sent: here when the payee opens their claims.
+const closed = await prepare("INV-OC-3", "0.1");
+const intent = await api(base, "/api/claims", {
+  token: s.payeeToken,
+  body: { org: s.org, claim: closed, invoiceRef: "INV-OC-3", description: "Sent, then the tab closed", onchain: true, intent: true },
+});
+check(intent.status === 200 && intent.body.intent === true, `SendSure kept the claim before it went on Arc (${intent.status})`);
+const strangerToken = await signInAs(base, privateKeyToAccount(need("DEPLOYER_PRIVATE_KEY") as Hex));
+const notYours = await api(base, "/api/claims", {
+  token: strangerToken,
+  body: { org: s.org, claim: closed, invoiceRef: "INV-OC-3", onchain: true, intent: true },
+});
+check(notYours.status === 403, `only the payee's own wallet can leave a claim for them (${notYours.status} ${notYours.body.code})`);
+await client.waitForTransactionReceipt({
+  hash: await payeeWallet.writeContract({ address: s.org, abi: mandateAbi, functionName: "submitClaim", args: [encodeClaim(closed)] }),
+});
+const mine = await api(base, `/api/claims?org=${s.org}&ref=${s.payeeRef}`, { token: s.payeeToken });
+const found = (mine.body.claims as any[] | undefined)?.find((c) => c.invoice_ref === "INV-OC-3");
+check(found?.status === "open" && found?.description === "Sent, then the tab closed", `recorded from Arc with no word from the page: ${found?.status} ${found?.last_outcome}`);
+const late = await api(base, "/api/claims", { body: { org: s.org, claim: closed, invoiceRef: "INV-OC-3", onchain: true } });
+check(late.status === 200 && late.body.claimId === found?.claim_id, `the page's late message gets the same answer, nothing stored twice (${late.status})`);
+
+// 6. A claim sent on Arc before this existed (no copy at SendSure) holds its invoice number: the payee hears why
+//    before trying again, instead of a reverted transaction.
+const orphan = await prepare("INV-OC-4", "0.1");
+await client.waitForTransactionReceipt({
+  hash: await payeeWallet.writeContract({ address: s.org, abi: mandateAbi, functionName: "submitClaim", args: [encodeClaim(orphan)] }),
+});
+const again = await api(base, "/api/claims/prepare", { token: s.payeeToken, body: { org: s.org, payeeRef: s.payeeRef, invoiceRef: "INV-OC-4" } });
+check(again.status === 409 && again.body.code === "REF_HELD_ON_ARC", `the same invoice number again is explained, not reverted (${again.status} ${again.body.code})`);
+
+// 7. Someone else cannot submit a claim for this payee.
 const stranger = createWalletClient({ account: privateKeyToAccount(need("DEPLOYER_PRIVATE_KEY") as Hex), chain: arcTestnet, transport: rpc });
 const forged = await prepare("INV-OC-2", "0.2");
 const refused = await stranger

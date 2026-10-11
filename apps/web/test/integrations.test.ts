@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import { setDb } from "../lib/db";
 import { sqliteDb } from "../lib/dbLocal";
-import { parseBill, requireKey } from "../lib/integrations";
+import { parseBill, requireKey, waitingFor } from "../lib/integrations";
 
 const ORG = "0x8FA4f5ee6f04D3Bf1A1a5113799508C171DD076C";
 const REF = `0x${"ab".repeat(32)}`;
@@ -105,5 +105,18 @@ describe("withdrawing a bill the books cancelled", () => {
 
     // Unknown (already withdrawn) is fine: cancelling twice must not fail.
     expect((await withdrawBill(ORG as never, { external_id: "odoo:db:account.move:9" })).status).toBe("withdrawn");
+  });
+});
+
+describe("what a bill waits for, as the books system shows it", () => {
+  it("says co-sign when the contract or the agent asks a person, as SendSure's own pages do", () => {
+    expect(waitingFor({ last_outcome: "ESCALATED", agent_action: "escalate" })).toBe("cosign");
+    // Claude asked a person about a claim the contract would pay (a likely duplicate): Odoo used to call it "held".
+    expect(waitingFor({ last_outcome: "PAYABLE", agent_action: "escalate" })).toBe("cosign");
+    expect(waitingFor({ last_outcome: "ESCALATED", agent_action: "hold" })).toBe("cosign");
+  });
+  it("keeps holds: by Claude on a payable claim (a co-sign releases it) and by the rules", () => {
+    expect(waitingFor({ last_outcome: "PAYABLE", agent_action: "hold" })).toBe("held_by_agent");
+    expect(waitingFor({ last_outcome: "REFUSED", agent_action: "hold" })).toBe("held_by_rules");
   });
 });

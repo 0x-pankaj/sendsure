@@ -1,7 +1,7 @@
 // Server only. Claims: what a payee signed for one invoice. The server keeps the org's secret ref
 // salt, checks every claim against the contract's own check() before storing it, and never
 // stores payee names.
-import { getAddress, recoverAddress, type Address, type Hex } from "viem";
+import { getAddress, recoverAddress, zeroAddress, zeroHash, type Address, type Hex } from "viem";
 import {
   OUTCOMES,
   REASONS,
@@ -92,6 +92,7 @@ export async function prepareClaim(session: Address, body: unknown) {
   const payee = await boundPayee(org, b.payeeRef);
   if (payee.payout !== session) throw new RelayError(403, "Sign in with the wallet this payer pays.", "NotPayout");
   const refHash = refHashOf(await orgSalt(org), invoiceRef);
+  await finishOnchainClaims({ org, payeeRef: b.payeeRef });
   const db = await getDb();
   const existing = await db.first<{ status: string }>(
     "SELECT status FROM claims WHERE org = ? AND payee_ref = ? AND ref_hash = ? AND status != 'withdrawn'",
@@ -100,6 +101,7 @@ export async function prepareClaim(session: Address, body: unknown) {
     refHash,
   );
   if (existing) throw new RelayError(409, `Invoice ${invoiceRef} was already sent (${existing.status}).`, "DUPLICATE_REF");
+  await assertInvoiceFree(org, b.payeeRef, refHash);
   return {
     token: USDC,
     refHash,
@@ -119,7 +121,8 @@ export interface ClaimResult {
   stored: boolean;
 }
 
-export async function submitClaim(body: unknown): Promise<ClaimResult> {
+/** Reads and checks a claim as the payee's page sends it: everything but its authorisation (signature or on-chain). */
+async function readClaim(body: unknown) {
   const b = toObject(body);
   const org = toAddress(b.org, "org");
   const c = toObject(b.claim);
@@ -156,29 +159,42 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
   }
 
   const payee = await boundPayee(org, claim.payeeRef);
-  // A claim confirming an invoice the payer sent (read by AI, or a bill from their books) must match
-  // that invoice: same payee, invoice number and amount. The payer's books then close to the cent.
-  let proposal: { id: string } | null = null;
-  if (typeof b.proposalId === "string" && b.proposalId) {
-    const db0 = await getDb();
-    const p = await db0.first<{ id: string; amount: string }>(
-      "SELECT id, amount FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
-      b.proposalId,
-      org,
-      claim.payeeRef,
-      invoiceRef,
+  const proposalId = typeof b.proposalId === "string" && b.proposalId ? b.proposalId : null;
+  return { org, claim, claimId: claimIdOf(org, claim), onchain, signature, invoiceRef, description, proposalId, payee };
+}
+
+/**
+ * A claim confirming an invoice the payer sent (read by AI, or a bill from their books) must match that invoice:
+ * same payee, invoice number and amount. The payer's books then close to the cent.
+ */
+async function matchProposal(org: Address, claim: Claim, invoiceRef: string, proposalId: string | null) {
+  if (!proposalId) return null;
+  const db = await getDb();
+  const p = await db.first<{ id: string; amount: string }>(
+    "SELECT id, amount FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
+    proposalId,
+    org,
+    claim.payeeRef,
+    invoiceRef,
+  );
+  if (!p) throw new RelayError(409, "That invoice is no longer waiting for you, or its number was changed.", "PROPOSAL_MISMATCH");
+  if (p.amount !== claim.amount.toString())
+    throw new RelayError(
+      409,
+      "The amount differs from the invoice the payer sent. If it is wrong, reject the invoice and ask them to fix it.",
+      "PROPOSAL_MISMATCH",
     );
-    if (!p)
-      throw new RelayError(409, "That invoice is no longer waiting for you, or its number was changed.", "PROPOSAL_MISMATCH");
-    if (p.amount !== claim.amount.toString())
-      throw new RelayError(
-        409,
-        "The amount differs from the invoice the payer sent. If it is wrong, reject the invoice and ask them to fix it.",
-        "PROPOSAL_MISMATCH",
-      );
-    proposal = { id: p.id };
-  }
-  const claimId = claimIdOf(org, claim);
+  return { id: p.id };
+}
+
+const storedClaim = async (claimId: Hex) =>
+  (await getDb()).first<{ last_outcome: Outcome; last_reason: Reason }>(
+    "SELECT last_outcome, last_reason FROM claims WHERE claim_id = ?",
+    claimId,
+  );
+
+export async function submitClaim(body: unknown): Promise<ClaimResult> {
+  const { org, claim, claimId, onchain, signature, invoiceRef, description, proposalId, payee } = await readClaim(body);
   if (onchain) {
     if (!(await submittedByPayee(org, claimId, payee.payout)))
       throw new RelayError(400, "This claim was not sent on Arc from your proven address. Send it again.", "NOT_SUBMITTED");
@@ -186,6 +202,14 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     const signer = await recoverAddress({ hash: claimId, signature }).catch(() => null);
     if (signer !== payee.payout) throw new RelayError(400, REASON_TEXT.BAD_SIGNATURE, "BAD_SIGNATURE");
   }
+  const db = await getDb();
+  // Sent again (a retry, or SendSure already recorded it from Arc): the same answer, nothing stored twice.
+  const same = await storedClaim(claimId);
+  if (same) {
+    await db.run("DELETE FROM claim_intents WHERE claim_id = ?", claimId);
+    return { claimId, outcome: same.last_outcome, reason: same.last_reason, reasonText: REASON_TEXT[same.last_reason], stored: true };
+  }
+  const proposal = await matchProposal(org, claim, invoiceRef, proposalId);
 
   // The contract's own dry run: the same rules settle() applies.
   const [outcomeIndex, reasonIndex] = await serverClient.readContract({
@@ -199,7 +223,6 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
   if (outcome === "ALREADY_SETTLED") throw new RelayError(409, "This invoice was already paid.", "ALREADY_SETTLED");
   if (outcome === "REFUSED" && CLAIM_FAULTS.has(reason)) throw new RelayError(400, REASON_TEXT[reason], reason);
 
-  const db = await getDb();
   const ts = nowSec();
   try {
     await db.run(
@@ -233,6 +256,7 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     throw err;
   }
   if (proposal) await markProposalClaimed(org, proposal.id, claimId);
+  await db.run("DELETE FROM claim_intents WHERE claim_id = ?", claimId);
   await inBackground(
     notifyOrg(
       org,
@@ -240,6 +264,90 @@ export async function submitClaim(body: unknown): Promise<ClaimResult> {
     ),
   );
   return { claimId, outcome, reason, reasonText: REASON_TEXT[reason], stored: true };
+}
+
+// ------------------------------------------------------------------ claims sent on Arc (passkey payees)
+
+// A passkey payee authorises a claim by sending it on Arc, then the page tells SendSure. If the page closed in
+// between, the claim was on Arc (holding the invoice number) and SendSure never knew. So the page first leaves the
+// claim here, checked like any claim, and only then sends it; SendSure records it from here once Arc shows it sent.
+const INTENT_TTL_SECONDS = DAY;
+
+export async function registerClaimIntent(session: Address, body: unknown) {
+  const b = { ...toObject(body), onchain: true, intent: undefined };
+  const { org, claim, claimId, invoiceRef, proposalId, payee } = await readClaim(b);
+  if (payee.payout !== session) throw new RelayError(403, "Sign in with the wallet this payer pays.", "NotPayout");
+  if (await storedClaim(claimId)) throw new RelayError(409, `Invoice ${invoiceRef} was already sent.`, "DUPLICATE_REF");
+  await matchProposal(org, claim, invoiceRef, proposalId);
+  await assertInvoiceFree(org, claim.payeeRef, claim.refHash, claimId);
+  const db = await getDb();
+  await db.run(
+    "INSERT OR REPLACE INTO claim_intents (claim_id, org, payee_ref, body, created_at) VALUES (?, ?, ?, ?, ?)",
+    claimId,
+    org,
+    claim.payeeRef,
+    JSON.stringify(b),
+    nowSec(),
+  );
+  return { claimId, intent: true };
+}
+
+/** The invoice number is not held on Arc by another claim (which would make submitClaim() revert with RefInUse). */
+async function assertInvoiceFree(org: Address, payeeRef: Hex, refHash: Hex, claimId?: Hex) {
+  const held = await serverClient
+    .readContract({ address: org, abi: mandateAbi, functionName: "usedRef", args: [payeeRef, refHash] })
+    .catch(() => zeroHash);
+  if (held === zeroHash || held === claimId) return;
+  const db = await getDb();
+  const known = await db.first<{ status: string }>("SELECT status FROM claims WHERE claim_id = ?", held);
+  if (known && known.status !== "withdrawn")
+    throw new RelayError(409, `This invoice was already sent (${known.status}).`, "DUPLICATE_REF");
+  throw new RelayError(
+    409,
+    "This invoice number already has a claim on Arc that never reached SendSure (sent from your wallet before this fix). Send it under another invoice number, and tell the payer.",
+    "REF_HELD_ON_ARC",
+  );
+}
+
+/**
+ * Records claims that were sent on Arc but never reached SendSure, and forgets those never sent after a day.
+ * Runs on the cron and whenever the payee or payer opens their claims. Returns what it did.
+ */
+export async function finishOnchainClaims(where?: { org: Address; payeeRef?: Hex }) {
+  const db = await getDb();
+  const rows = where
+    ? await db.all<{ claim_id: Hex; org: Address; body: string; created_at: number }>(
+        `SELECT claim_id, org, body, created_at FROM claim_intents WHERE org = ?${where.payeeRef ? " AND payee_ref = ?" : ""} LIMIT 20`,
+        ...(where.payeeRef ? [where.org, where.payeeRef] : [where.org]),
+      )
+    : await db.all<{ claim_id: Hex; org: Address; body: string; created_at: number }>(
+        "SELECT claim_id, org, body, created_at FROM claim_intents ORDER BY created_at LIMIT 20",
+      );
+  let recorded = 0;
+  let dropped = 0;
+  for (const r of rows) {
+    const by = await serverClient
+      .readContract({ address: r.org, abi: mandateAbi, functionName: "submittedBy", args: [r.claim_id] })
+      .catch(() => null);
+    if (by === null) continue; // Arc did not answer: next time.
+    if (by === zeroAddress) {
+      if (r.created_at < nowSec() - INTENT_TTL_SECONDS) {
+        await db.run("DELETE FROM claim_intents WHERE claim_id = ?", r.claim_id);
+        dropped++;
+      }
+      continue;
+    }
+    try {
+      await submitClaim(JSON.parse(r.body));
+      recorded++;
+    } catch (err) {
+      if (!(err instanceof RelayError) || err.status >= 500) continue; // a passing failure: next time.
+      // The contract or the payer's invoice refuses it: the payee sees why when they send it again.
+      await db.run("DELETE FROM claim_intents WHERE claim_id = ?", r.claim_id);
+      dropped++;
+    }
+  }
+  return { recorded, dropped };
 }
 
 /** The claim was sent on Arc by the payee's proven address. Read twice if the node is a block behind. */
@@ -293,6 +401,8 @@ export async function isOwnerOrApprover(org: Address, who: Address): Promise<boo
 /** The org's owner and approvers see every claim; a payee sees their own. */
 export async function listClaims(session: Address, orgParam: string | null, payeeRef: string | null) {
   const org = toAddress(orgParam, "org");
+  if (payeeRef && isBytes32(payeeRef)) await finishOnchainClaims({ org, payeeRef });
+  else if (!payeeRef) await finishOnchainClaims({ org });
   const db = await getDb();
   const columns = `claim_id, org, payee_ref, payout, amount, invoice_ref, period_start, period_end, valid_until,
     description, status, last_outcome, last_reason, agent_action, agent_reason, settle_tx, created_at`;

@@ -189,6 +189,9 @@ tbody tr:hover td { background: #fcfcfe; }
 .notice.warn { border-color: #f0d9a8; background: var(--review-bg); color: #5c3a00; }
 .notice p { margin: 4px 0; }
 .notice a { color: inherit; font-weight: 700; }
+/* A button-styled link inside a notice keeps the button's colours (it was dark text on navy). */
+.notice a.btn { color: #fff; }
+.notice a.btn.secondary { color: var(--ink); }
 
 .steps { list-style: none; padding: 0; margin: 24px 0; display: grid; gap: 14px; max-width: 780px; }
 .steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow-sm); }

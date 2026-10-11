@@ -1,18 +1,18 @@
 {
   "note": "First-party test on a SANDBOX org with throwaway keys. Not traction.",
-  "ranAtUnix": 1791664657,
+  "ranAtUnix": 1791728147,
   "base": "https://sendsure.0xpankaj.workers.dev",
-  "org": "0x71ceE97C3341a24B7DC7C6DD88cE0a3cde4f641b",
-  "payee": "0x00594b2E74f3c6Cd5d901a9e8EAd7CAe09026f56",
-  "submitTx": "0x2f4d58864989ba1b568a1ea957180135bd772b74a04e742f57c26f0a264a3c87",
-  "payment": "0x3f0672dcb791e5015baf1d1c52e68b9db7fcdcf4c49ce65b1a52fc7731eb5f82",
+  "org": "0xBC1daC746e33D59145eE489884a5C77634d414cA",
+  "payee": "0x694E8f45b72dD654cC62a961692C2fAB798e0c25",
+  "submitTx": "0x89a616f8910f63d4d12d54f4cefc9c1038277c803a2f2667b6cb8b418bd04903",
+  "payment": "0x501bec5a37f18f83c103466a37d8c7a83bb7fc250e73d0363a20024cc60eec51",
   "checks": {
-    "passed": 8,
-    "total": 8,
+    "passed": 13,
+    "total": 13,
     "list": [
       {
         "ok": true,
-        "what": "sandbox org 0x71ceE97C3341a24B7DC7C6DD88cE0a3cde4f641b with a bound payee 0x00594b2E74f3c6Cd5d901a9e8EAd7CAe09026f56"
+        "what": "sandbox org 0xBC1daC746e33D59145eE489884a5C77634d414cA with a bound payee 0x694E8f45b72dD654cC62a961692C2fAB798e0c25"
       },
       {
         "ok": true,
@@ -20,7 +20,7 @@
       },
       {
         "ok": true,
-        "what": "the payee's account sent submitClaim() on Arc: https://explorer.testnet.arc.io/tx/0x2f4d58864989ba1b568a1ea957180135bd772b74a04e742f57c26f0a264a3c87"
+        "what": "the payee's account sent submitClaim() on Arc: https://explorer.testnet.arc.io/tx/0x89a616f8910f63d4d12d54f4cefc9c1038277c803a2f2667b6cb8b418bd04903"
       },
       {
         "ok": true,
@@ -28,7 +28,7 @@
       },
       {
         "ok": true,
-        "what": "the agent paid it: pay -> Settled 0x3f0672dcb791e5015baf1d1c52e68b9db7fcdcf4c49ce65b1a52fc7731eb5f82"
+        "what": "the agent paid it: pay -> Settled 0x501bec5a37f18f83c103466a37d8c7a83bb7fc250e73d0363a20024cc60eec51"
       },
       {
         "ok": true,
@@ -36,7 +36,27 @@
       },
       {
         "ok": true,
-        "what": "replay: authorised on-chain by the payee, check() matches at block 66535027, payment carries the decision hash"
+        "what": "replay: authorised on-chain by the payee, check() matches at block 66660398, payment carries the decision hash"
+      },
+      {
+        "ok": true,
+        "what": "SendSure kept the claim before it went on Arc (200)"
+      },
+      {
+        "ok": true,
+        "what": "only the payee's own wallet can leave a claim for them (403 NotPayout)"
+      },
+      {
+        "ok": true,
+        "what": "recorded from Arc with no word from the page: open PAYABLE"
+      },
+      {
+        "ok": true,
+        "what": "the page's late message gets the same answer, nothing stored twice (200)"
+      },
+      {
+        "ok": true,
+        "what": "the same invoice number again is explained, not reverted (409 REF_HELD_ON_ARC)"
       },
       {
         "ok": true,

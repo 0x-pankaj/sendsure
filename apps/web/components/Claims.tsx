@@ -137,6 +137,7 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
     setError("");
     setResult(null);
     setBusy("prepare");
+    let sentOnArc = "";
     try {
       const periodStart = BigInt(Math.floor(Date.parse(`${from}T00:00:00Z`) / 1000));
       const periodEnd = BigInt(Math.floor(Date.parse(`${to}T23:59:59Z`) / 1000));
@@ -159,20 +160,29 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
         nonce: BigInt(prep.nonce),
         validUntil: BigInt(prep.validUntil),
       };
-      setBusy("sign");
       // A passkey wallet authorises the claim by sending it on Arc from the proven address; others sign it.
       const onchain = signer.kind === "passkey";
-      const signature = onchain ? undefined : await signClaim(signer, org, claim);
-      if (signer.kind === "passkey") await submitClaimWithPasskey(signer, org, claim);
-      setBusy("send");
-      const res = await fetch("/api/claims", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(
-          { org, claim, invoiceRef: prep.invoiceRef, description, signature, onchain, proposalId: proposalId ?? undefined },
+      const body = (extra: object) =>
+        JSON.stringify(
+          { org, claim, invoiceRef: prep.invoiceRef, description, onchain, proposalId: proposalId ?? undefined, ...extra },
           (_k, v) => (typeof v === "bigint" ? v.toString() : v),
-        ),
-      });
+        );
+      let signature: Hex | undefined;
+      if (signer.kind === "passkey") {
+        // SendSure checks and keeps the claim first, so it is recorded even if this page closes while it goes on Arc.
+        await jsonOrThrow(
+          await authedFetch(signer, "/api/claims", { method: "POST", headers: { "content-type": "application/json" }, body: body({ intent: true }) }),
+        );
+        setBusy("sign");
+        await submitClaimWithPasskey(signer, org, claim);
+        sentOnArc = prep.invoiceRef;
+      } else {
+        setBusy("sign");
+        signature = await signClaim(signer, org, claim);
+      }
+      setBusy("send");
+      const res = await fetch("/api/claims", { method: "POST", headers: { "content-type": "application/json" }, body: body({ signature }) });
+      if (res.status < 500) sentOnArc = ""; // SendSure answered: its answer (or refusal) is what the payee sees.
       const out = await jsonOrThrow<{ outcome: string; reasonText: string }>(res);
       setResult({ ...out, invoice: prep.invoiceRef });
       setProposalId(null);
@@ -182,7 +192,11 @@ export function PayeeClaims(props: { org: Address; payeeRef: Hex; signer: Signer
       setDescription("");
       await load();
     } catch (err) {
-      setError(err instanceof Error && /invalid|decimal/i.test(err.message) ? "Check the amount." : walletErrorText(err));
+      if (sentOnArc) {
+        // The claim is on Arc and SendSure kept it before it went: SendSure records it within a minute.
+        setError(`Your claim for ${sentOnArc} is on Arc. SendSure records it within a minute; it then shows under Your claims.`);
+        setTimeout(() => void load(), 60_000);
+      } else setError(err instanceof Error && /invalid|decimal/i.test(err.message) ? "Check the amount." : walletErrorText(err));
     } finally {
       setBusy("");
     }
