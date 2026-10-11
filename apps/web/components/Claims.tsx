@@ -322,7 +322,9 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
   }
 
   const cosignButton = (c: ClaimView) => {
-    const needs = c.status === "open" && (c.agent_action === "escalate" || c.last_outcome === "ESCALATED");
+    // Claude can hold a claim the contract would pay; a person who has checked it can co-sign it, and a co-sign wins.
+    const modelHold = c.agent_action === "hold" && c.last_outcome === "PAYABLE";
+    const needs = c.status === "open" && (c.agent_action === "escalate" || c.last_outcome === "ESCALATED" || modelHold);
     if (cosigned[c.claim_id]) {
       return (
         <div className="hint">
