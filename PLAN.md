@@ -8,6 +8,10 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
+- **Oct 11, night: product ready for traction** (T39 fixes from filming, T40 contractor emails). Left for Pankaj:
+  outreach (P4), Canteen questions (P3), Luma (P2), Circle marketplace (P8), the form (S1, S5). Left for Claude,
+  for the re-submission on Oct 16–17: passkey scenes in the submission video (S4), `pnpm evidence` at the
+  freeze (S3). Optional: T14d (needs Circle Console keys).
 - **Oct 11: Pankaj asked to keep building until ~Oct 15** (submission work in the last two days): platform
   working perfectly, Odoo perfect, and what competing teams have that we lack (T34+). Claude now goes through
   the Anthropic API directly (`ANTHROPIC_API_KEY`, Worker secret); the MeshAPI code is kept, commented out.
@@ -140,22 +144,22 @@ Owner **C** = Claude, **P** = Pankaj. "Done when" is the definition of done.
 ### Traction (every day, 2 hours)
 | ID | Task | Owner | Done when | Status |
 |---|---|---|---|---|
-| P1 | Buy the domain (sendsure.com or sendsure.xyz) and tell Claude | P | domain bought | ⬜ |
+| P1 | Buy the domain (sendsure.com or sendsure.xyz) and tell Claude | P | domain bought. **Oct 11: Pankaj said no domain for now**; the workers.dev URL is the submission URL | — |
 | P2 | Confirm the Luma registration; use GitHub `0x-pankaj` (with the hyphen) everywhere | P | confirmed | ⬜ |
 | P3 | Organizer questions in a public Canteen channel: does a testnet rehearsal / payout check count as a business onboarded; the event_name; a test-USDC grant; ask for 2–3 intros | P | posted | ⬜ |
 | P4 | Outreach: 30–40 named teams that pay contractors in stablecoins, ranked by next real payout date; 10 personal messages a day, follow-ups at 24 h and 72 h, never bulk | P | Sep 29: 30+ sent, 6+ calls; Oct 1: 3+ orgs active | ⬜ |
-| P5 | Keys: **MeshAPI key** (`MESH_API_KEY=rsk_…`, for all AI) and a Circle Console TEST API key + entity secret (sandbox treasury), written into `apps/web/.env.local` yourself (never in chat) | P | in `.env.local` | ⬜ |
-| P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended | ⬜ |
+| P5 | Keys: **MeshAPI key** (`MESH_API_KEY=rsk_…`, for all AI) and a Circle Console TEST API key + entity secret (sandbox treasury), written into `apps/web/.env.local` yourself (never in chat) | P | in `.env.local`. **Oct 11: MeshAPI part superseded** (Claude through the Anthropic API). The Circle Console key + entity secret are only for T14d (optional) | ⬜ |
+| P6 | Sep 30 beancount fireside: confirm time/link; bring the six-decimal tolerance question | P | attended. Date passed (Sep 30); not tracked here | — |
 | P8 | Circle marketplace: submit SendSure's paid checks through agents.circle.com/services → "Talk to us" (metadata in `deployments/x402-listing.md`) | P | submitted | ⬜ |
 | P7 | Hosting account: Cloudflare, Pankaj's own (he chose Workers on Sep 29: "if not work then split backend with hono") | P | confirmed | ✅ |
 
 ### Submission
 | ID | Task | Owner | Done when | Status |
 |---|---|---|---|---|
-| S1 | First Loom (60–90 s) + first form submission with repo + diff link | C+P | submitted (target Sat Oct 3) | ⬜ |
+| S1 | First Loom (60–90 s) + first form submission with repo + diff link | C+P | submitted (target Sat Oct 3). Answers ready in the private `07-SUBMISSION.md` (updated Oct 11 with passkey payees and current test counts); the form allows re-submitting, so submit now and again on Oct 16–17 | ⬜ |
 | S2 | README in house style: "X does Y, here is the file"; Circle surfaces table with a proof column; prior art and what's different; threat model; "who can move money" matrix | C | reviewed: drafted Sep 29 with every claim linked to a file, test or live run; Pankaj to read it once. Update the numbers at the freeze | ✅ |
-| S3 | Evidence folder: traction.json (every counted org, run, settle with tx), redacted decision log, anchor txs; nightly DB backup off-host | C | committed at the freeze | ⬜ |
-| S4 | Final video: 4–5 scenes, at most 2:45, captions, sandbox scenes labelled | C+P | uploaded | ⬜ |
+| S3 | Evidence folder: traction.json (every counted org, run, settle with tx), redacted decision log, anchor txs; nightly DB backup off-host | C | committed at the freeze. **Ready Oct 11:** `pnpm evidence` writes [`deployments/evidence/`](deployments/evidence/) from the public `/api/stats/evidence` (every external and first-party org, proven payee, payment, co-sign and anchored head with its tx; sandbox only counted); D1 Time Travel keeps 30 days of restores. Re-run and commit at the freeze | ⬜ |
+| S4 | Final video: 4–5 scenes, at most 2:45, captions, sandbox scenes labelled | C+P | uploaded. Oct 11: the 9-minute walkthrough (`sendsure-video/out/sendsure-walkthrough.mp4`) and the 66-second promo exist; the under-3-minute submission video (2:49) still needs passkey scenes (reuse the walkthrough footage) before the re-submission | ⬜ |
 | S5 | Final submission + final `arc-canteen update product` and `update traction`; re-login the Circle CLI on Oct 10 | P | submitted by Oct 10 evening | ⬜ |
 
 ## Deferred: only if ahead after Mon Oct 5
