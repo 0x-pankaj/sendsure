@@ -4,7 +4,7 @@
 invoices in USDC on Arc from your own wallet. It pays only to an address the supplier proved by signing
 with it, and records each payment back in ERPNext with the exact amount and the Arc transaction.
 
-Built on `frappe/erpnext:v15.121.6` (ERPNext 15.121.6, Frappe 15.121.2); the same 28 tests also pass on
+Built on `frappe/erpnext:v15.121.6` (ERPNext 15.121.6, Frappe 15.121.2); the same 29 tests also pass on
 `frappe/erpnext:v16.50.0` (ERPNext 16.50.0, Frappe 16.52.0). Testnet only; not audited.
 
 ![A purchase invoice paid on Arc, recorded in ERPNext](docs/invoice-paid-on-arc.jpg)
@@ -119,7 +119,7 @@ add `sendsure_erpnext` to `sites/apps.txt` and run `bench --site <site> install-
 
 ## Tests and live runs
 
-- **ERPNext tests** (`./run.sh test`), 28 in total, on ERPNext 15 and 16, in [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py).
+- **ERPNext tests** (`./run.sh test`), 29 in total, on ERPNext 15 and 16, in [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py).
   SendSure's API is mocked; ERPNext is real.
   - USDC currency, account and mode of payment; invite-link parsing;
   - "Check with SendSure" reads the proven address, unapproved;
@@ -155,13 +155,15 @@ add `sendsure_erpnext` to `sites/apps.txt` and run `bench --site <site> install-
 | [`purchase_invoice.py`](sendsure_erpnext/sendsure_erpnext/purchase_invoice.py) | "Pay with SendSure", status sync, and exact recording of each settlement. |
 | [`sync.py`](sendsure_erpnext/sendsure_erpnext/sync.py) | The job ERPNext's scheduler runs every 5 minutes. |
 | [`public/js/`](sendsure_erpnext/sendsure_erpnext/public/js) | The buttons on Supplier and Purchase Invoice. Every check they trigger runs on the server. |
-| [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py) | The 28 tests, run inside ERPNext 15 and 16 by `./run.sh test`. |
+| [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py) | The 29 tests, run inside ERPNext 15 and 16 by `./run.sh test`. |
 | [`run.sh`](run.sh), [`docker/boot.sh`](docker/boot.sh), [`docker-compose.yml`](docker-compose.yml) | The Docker setup: site creation, tests, web server, worker and scheduler. |
 | [`apps/web/lib/integrations.ts`](../../apps/web/lib/integrations.ts) | SendSure's side: hashed, revocable integration keys and the `/api/v1` endpoints. |
 
 ## Limits
 
-- One SendSure org per ERPNext site. Companies that keep their books in USD; invoices in USD; whole invoices only.
+- One SendSure org per ERPNext site. Invoices in USD (1 USDC = 1 USD), whole invoices only. A company that keeps its
+  books in another currency (CHF, EUR, INR…) sets the supplier's billing currency to USD with a USD payable account; the payment is valued at the
+  invoice's own USD rate, so it posts no gain or loss of its own (`test_a_company_with_books_in_another_currency_pays_a_usd_invoice_exactly`).
 - The app checks payments, not journals: a Journal Entry can still credit the USDC account (gas, or a
   transfer to a bank, is booked that way).
 - The Docker setup runs ERPNext's development web server with one worker and the scheduler in one

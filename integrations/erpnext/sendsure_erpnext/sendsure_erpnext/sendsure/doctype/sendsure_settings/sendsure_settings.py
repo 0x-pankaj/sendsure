@@ -34,7 +34,7 @@ def test_connection():
 	if accounts:
 		message += " " + _("The USDC account is ready: {0}.").format(", ".join(accounts))
 	else:
-		message += " " + _("No company keeps its books in USD, so no USDC account was set up.")
+		message += " " + _("No company has a group for bank accounts yet, so no USDC account was set up.")
 	funds = info.get("funds")
 	if funds:
 		message += " " + _(

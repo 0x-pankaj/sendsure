@@ -53,8 +53,15 @@ def validate(doc, method=None):
 		)
 	if doc.deductions or doc.taxes or flt(doc.difference_amount) or flt(doc.unallocated_amount):
 		frappe.throw(_("A SendSure payment has no deductions, taxes, write-offs or unallocated amount."))
-	if flt(doc.source_exchange_rate) != 1 or flt(doc.target_exchange_rate) != 1:
-		frappe.throw(_("1 USDC is 1 USD in the books: a SendSure payment has no exchange rate other than 1."))
+	rate = flt(doc.source_exchange_rate)
+	usd_books = frappe.get_cached_value("Company", doc.company, "default_currency") == install.USD
+	if rate <= 0 or rate != flt(doc.target_exchange_rate) or (usd_books and rate != 1):
+		frappe.throw(
+			_(
+				"1 USDC is 1 USD: a SendSure payment values the USDC paid and the USD invoice at the same rate "
+				"(1 in books kept in USD)."
+			)
+		)
 
 	# The address the supplier proved, read from SendSure (which reads Arc) now, not the stored copy.
 	supplier = frappe.get_doc("Supplier", doc.party)

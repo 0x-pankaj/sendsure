@@ -148,6 +148,56 @@ class TestSendSure(FrappeTestCase):
 		bill.reload()
 		return payment
 
+	def _swiss_company(self):
+		"""A second company that keeps its books in CHF, with a USD payable account for the supplier and a USD rate."""
+		name = "SendSure Test CH"
+		frappe.db.set_value("Currency", "CHF", "enabled", 1)
+		if not frappe.db.exists("Company", name):
+			frappe.get_doc(
+				{
+					"doctype": "Company",
+					"company_name": name,
+					"abbr": "STCH",
+					"default_currency": "CHF",
+					"country": "Switzerland",
+					"chart_of_accounts": "Standard",
+				}
+			).insert()
+		payable = frappe.db.get_value("Account", {"company": name, "account_name": "Creditors USD"})
+		if not payable:
+			parent = frappe.db.get_value("Account", frappe.get_cached_value("Company", name, "default_payable_account"), "parent_account")
+			payable = (
+				frappe.get_doc(
+					{
+						"doctype": "Account",
+						"account_name": "Creditors USD",
+						"parent_account": parent,
+						"company": name,
+						"account_type": "Payable",
+						"account_currency": "USD",
+					}
+				)
+				.insert()
+				.name
+			)
+		self.vendor.default_currency = "USD"
+		self.vendor.append("accounts", {"company": name, "account": payable})
+		self.vendor.save()
+		if not frappe.db.exists("Currency Exchange", {"from_currency": "USD", "to_currency": "CHF"}):
+			frappe.get_doc(
+				{
+					"doctype": "Currency Exchange",
+					"date": "2020-01-01",
+					"from_currency": "USD",
+					"to_currency": "CHF",
+					"exchange_rate": 0.9,
+					"for_buying": 1,
+					"for_selling": 1,
+				}
+			).insert()
+		install.setup_usdc()
+		return name, payable
+
 	def _set_currency_precision(self, precision):
 		frappe.db.set_single_value("System Settings", "currency_precision", precision)
 		frappe.db.set_default("currency_precision", precision)
@@ -274,6 +324,23 @@ class TestSendSure(FrappeTestCase):
 		self.funds = "unreachable"
 		bill = self._approved_bill(250.0)
 		self.assertEqual(bill.sendsure_state, INVOICE_STATES["waiting_for_payee"])
+
+	def test_a_company_with_books_in_another_currency_pays_a_usd_invoice_exactly(self):
+		company, payable = self._swiss_company()
+		account = install.usdc_account(company)
+		self.assertEqual(frappe.db.get_value("Account", account, "account_currency"), "USDC")
+		bill = self._approved_bill(250.0, company=company, credit_to=payable, conversion_rate=0.9)
+		self.assertEqual(self.sent[-1]["amount"], "250.00")
+		self._paid(250_000_000)
+		invoices.sync([bill])
+		bill.reload()
+		self.assertEqual((bill.sendsure_state, bill.status, bill.outstanding_amount), (INVOICE_STATES["paid"], "Paid", 0))
+		[payment] = self._payments()
+		# Exactly 250 USDC out and 250 USD off the payable, both valued at the invoice's rate: 225 CHF, no gain or loss.
+		self.assertEqual(self._ledger(payment), {account: (Decimal(0), Decimal(225)), payable: (Decimal(225), Decimal(0))})
+		usdc_out = frappe.db.get_value("GL Entry", {"voucher_no": payment, "account": account}, "credit_in_account_currency")
+		usd_off = frappe.db.get_value("GL Entry", {"voucher_no": payment, "account": payable}, "debit_in_account_currency")
+		self.assertEqual((usdc_out, usd_off), (250, 250))
 
 	def test_send_is_exact_complete_and_idempotent(self):
 		bill = self._approved_bill(249.99)

@@ -1,6 +1,5 @@
 """What the app adds to an ERPNext site: fields on Supplier, Purchase Invoice and Payment Entry, the USDC
-currency, and for each company that keeps its books in USD a "USDC on Arc (SendSure)" account and mode of
-payment. Everything here can run again without changing what is already there."""
+currency, and for each company a "USDC on Arc (SendSure)" account and mode of payment. Everything here can run again without changing what is already there."""
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
@@ -174,13 +173,14 @@ def usdc_accounts():
 
 
 def setup_usdc():
-	"""The USDC currency, and for every company that keeps its books in USD: an account that holds USDC
-	(valued 1:1 in USD) and the mode of payment that pays from it. Returns the accounts."""
+	"""The USDC currency, and for every company: an account that holds USDC and the mode of payment that pays from
+	it. In books kept in USD it is valued 1:1; in another currency, at the USD rate of the invoice it pays (USD
+	invoices only: 1 USDC = 1 USD). Returns the accounts."""
 	if not frappe.db.exists("Currency", USD):
 		return []
 	usdc_currency()
 	accounts = []
-	for company in frappe.get_all("Company", filters={"default_currency": USD}, pluck="name"):
+	for company in frappe.get_all("Company", pluck="name"):
 		account = usdc_account(company)
 		if not account:
 			parent = frappe.db.get_value(

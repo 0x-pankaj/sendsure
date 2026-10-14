@@ -5,7 +5,7 @@ from decimal import Decimal
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from frappe import _
-from frappe.utils import convert_utc_to_system_timezone, escape_html, get_datetime, getdate
+from frappe.utils import convert_utc_to_system_timezone, escape_html, flt, get_datetime, getdate
 from pypika.functions import Cast
 
 from sendsure_erpnext import client, install
@@ -92,9 +92,11 @@ def payload(doc):
 		frappe.throw(_("{0} is already (partly) paid. SendSure pays whole invoices only.").format(doc.name))
 	if doc.currency != USD or doc.party_account_currency != USD:
 		frappe.throw(
-			_("SendSure pays in USDC at 1 USDC = 1 USD, so the invoice and its payable account must be in USD, not {0}.").format(
-				doc.currency if doc.currency != USD else doc.party_account_currency
-			)
+			_(
+				"SendSure pays in USDC at 1 USDC = 1 USD, so the invoice and its payable account must be in USD, not {0}. "
+				"A company that keeps its books in another currency sets the supplier's billing currency to USD and "
+				"gives them a USD payable account (Supplier > Accounting)."
+			).format(doc.currency if doc.currency != USD else doc.party_account_currency)
 		)
 	if not install.usdc_account(doc.company):
 		frappe.throw(_("{0} has no USDC account yet. Run \"Test connection\" in SendSure Settings.").format(doc.company))
@@ -313,7 +315,14 @@ def _payment_entry(doc, info, paid):
 	s = info["settlement"]
 	# The day Arc says it was paid (UTC), as a date on this site.
 	paid_on = convert_utc_to_system_timezone(get_datetime(s["paidAt"][:19].replace("T", " "))).date()
+	# 1 USDC = 1 USD. In books kept in USD that is a rate of 1; in another currency, both sides are valued at the
+	# invoice's own USD rate, so the payment posts no gain or loss of its own (revaluing the USDC account at the
+	# period end is the accountant's, as for any account in a foreign currency). ERPNext knows no USDC rate to the
+	# company's currency and would say so while preparing the entry; that note is not for the user.
+	rate = flt(doc.conversion_rate) or 1
+	messages = len(frappe.local.message_log)
 	payment = get_payment_entry("Purchase Invoice", doc.name, bank_account=install.usdc_account(doc.company))
+	del frappe.local.message_log[messages:]
 	payment.update(
 		{
 			"mode_of_payment": NAME,
@@ -322,8 +331,8 @@ def _payment_entry(doc, info, paid):
 			"reference_date": paid_on,
 			"paid_amount": float(paid),
 			"received_amount": float(paid),
-			"source_exchange_rate": 1,
-			"target_exchange_rate": 1,
+			"source_exchange_rate": rate,
+			"target_exchange_rate": rate,
 			# The supplier is paid at their proven address, not at a bank account from the supplier's record.
 			"party_bank_account": None,
 			"bank_account": None,
@@ -343,24 +352,40 @@ def _payment_entry(doc, info, paid):
 
 
 def _check_ledger(payment, doc, paid):
-	"""Read back what ERPNext posted, as decimals: the settled amount out of the USDC account (in USDC and
-	in USD), the same amount off the payable account, nothing anywhere else, and nothing left open."""
+	"""Read back what ERPNext posted, as decimals: exactly the settled amount of USDC out of the USDC account and
+	of USD off the payable account, the two rows equal in the company's currency (and equal to the amount itself
+	in books kept in USD), nothing anywhere else, and nothing left open."""
 	gl = frappe.qb.DocType("GL Entry")
 	rows = (
 		frappe.qb.from_(gl)
-		.select(gl.account, Cast(gl.debit, "char"), Cast(gl.credit, "char"), Cast(gl.credit_in_account_currency, "char"))
+		.select(
+			gl.account,
+			Cast(gl.debit, "char"),
+			Cast(gl.credit, "char"),
+			Cast(gl.debit_in_account_currency, "char"),
+			Cast(gl.credit_in_account_currency, "char"),
+		)
 		.where((gl.voucher_type == "Payment Entry") & (gl.voucher_no == payment.name) & (gl.is_cancelled == 0))
 		.run()
 	)
-	posted = {account: (Decimal(debit), Decimal(credit), Decimal(credit_usdc)) for account, debit, credit, credit_usdc in rows}
-	expected = {payment.paid_from: (Decimal(0), paid, paid), payment.paid_to: (paid, Decimal(0), Decimal(0))}
+	posted = {row[0]: tuple(Decimal(v) for v in row[1:]) for row in rows}
+	zero = Decimal(0)
+	out = posted.get(payment.paid_from, (zero,) * 4)  # debit, credit, debit in USDC, credit in USDC
+	into = posted.get(payment.paid_to, (zero,) * 4)
+	currency = frappe.get_cached_value("Company", doc.company, "default_currency")
+	exact = (
+		len(rows) == 2
+		and (out[0], out[2], out[3]) == (zero, zero, paid)
+		and (into[1], into[2], into[3]) == (zero, paid, zero)
+		and out[1] == into[0]
+		and (currency != USD or out[1] == paid)
+	)
 	left = decimal_of("Purchase Invoice", doc.name, "outstanding_amount")
-	if len(rows) != 2 or posted != expected or left != 0:
+	if not exact or left != 0:
 		plain = lambda d: format(d.normalize(), "f")  # noqa: E731
-		usdc_row = posted.get(payment.paid_from, (Decimal(0),) * 3)
 		frappe.throw(
 			_(
 				"ERPNext did not post this payment exactly: Arc paid {0} USDC, but the ledger took {1} USDC valued at "
-				"{2} USD out of the USDC account, in {3} rows, and left {4} open. Nothing was recorded."
-			).format(paid, plain(usdc_row[2]), plain(usdc_row[1]), len(rows), plain(left))
+				"{2} {3} out of the USDC account, in {4} rows, and left {5} open. Nothing was recorded."
+			).format(paid, plain(out[3]), plain(out[1]), currency, len(rows), plain(left))
 		)
