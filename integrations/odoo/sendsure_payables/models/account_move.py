@@ -240,8 +240,9 @@ class AccountMove(models.Model):
 
     def action_sendsure_run_agent(self):
         """A person asks SendSure's agent to pay the bills the vendor signed now, instead of waiting for the cron.
-        Nothing is skipped: the agent pays only what passes the Arc contract's rules, and a first payment still
-        waits for a co-sign in SendSure."""
+        It reads the status first (so it also works while the bill still says the vendor has not signed) and runs
+        the agent only for a signed bill. Nothing is skipped: the agent pays only what passes the Arc contract's
+        rules, and a first payment still waits for a co-sign in SendSure."""
         bills = self.filtered('sendsure_external_id')
         bills._sendsure_sync()
         if not bills.filtered(lambda b: b.sendsure_state == 'signed'):

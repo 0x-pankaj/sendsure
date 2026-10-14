@@ -14,7 +14,7 @@
                         attrs="{'invisible': [('sendsure_state', '!=', 'waiting_for_payee')]}"/>
                 <button name="action_sendsure_run_agent" type="object" string="Run the agent now" class="btn-primary"
                         groups="account.group_account_invoice"
-                        attrs="{'invisible': [('sendsure_state', 'not in', ['signed', 'needs_cosign'])]}"/>
+                        attrs="{'invisible': [('sendsure_state', 'not in', ['waiting_for_payee', 'signed', 'needs_cosign'])]}"/>
                 <button name="action_sendsure_refresh" type="object" string="Refresh SendSure"
                         groups="account.group_account_invoice"
                         attrs="{'invisible': ['|', ('sendsure_external_id', '=', False), ('sendsure_state', 'in', ['paid', 'needs_review'])]}"/>

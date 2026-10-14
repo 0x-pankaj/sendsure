@@ -20,7 +20,8 @@ DOMAINS = {
     "move_type != 'in_invoice' or state != 'posted' or payment_state != 'not_paid' or sendsure_state not in (False, 'withdrawn', 'rejected_by_payee', 'refused')":
         "['|', '|', '|', ('move_type', '!=', 'in_invoice'), ('state', '!=', 'posted'), ('payment_state', '!=', 'not_paid'), ('sendsure_state', 'not in', [False, 'withdrawn', 'rejected_by_payee', 'refused'])]",
     "sendsure_state != 'waiting_for_payee'": "[('sendsure_state', '!=', 'waiting_for_payee')]",
-    "sendsure_state not in ('signed', 'needs_cosign')": "[('sendsure_state', 'not in', ['signed', 'needs_cosign'])]",
+    "sendsure_state not in ('waiting_for_payee', 'signed', 'needs_cosign')":
+        "[('sendsure_state', 'not in', ['waiting_for_payee', 'signed', 'needs_cosign'])]",
     "not sendsure_external_id or sendsure_state in ('paid', 'needs_review')":
         "['|', ('sendsure_external_id', '=', False), ('sendsure_state', 'in', ['paid', 'needs_review'])]",
     "sendsure_state != 'needs_cosign'": "[('sendsure_state', '!=', 'needs_cosign')]",
