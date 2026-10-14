@@ -3,8 +3,10 @@ from unittest.mock import patch
 from odoo import Command, fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import tagged
+from odoo.tools import float_repr
 
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
+from odoo.addons.sendsure_payables.models.compat import ODOO
 from odoo.addons.sendsure_payables.models.sendsure_client import SendSureError
 
 ORG = '0x8FA4f5ee6f04D3Bf1A1a5113799508C171DD076C'
@@ -40,16 +42,24 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.bill_status = {}
         self.withdrawn = []
         self.withdraw_error = None
+        self.sent = []
+        self.funds = {'balance': '1000', 'budget': '1000', 'claim_max': '500', 'cosign_above': '25'}
         patches = [
             patch.object(Client, 'withdraw', lambda self, ext: test._fake_withdraw(ext)),
             patch.object(Client, 'payees', lambda self, refs: [dict(test.payee)]),
             patch.object(Client, 'send_bill', lambda self, payload: test._fake_send(payload)),
             patch.object(Client, 'bills', lambda self, ids: [dict(test.bill_status, external_id=i) for i in ids]),
             patch.object(Client, 'run_agent', lambda self: {'decisions': []}),
+            patch.object(Client, 'org', lambda self: test._fake_org()),
         ]
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
+
+    def _fake_org(self):
+        if self.funds == 'unreachable':
+            raise SendSureError("Could not reach SendSure.", code='UNREACHABLE')
+        return {'org': ORG, 'tier': 'sandbox', 'chain': {'name': 'Arc Testnet'}, 'funds': self.funds}
 
     def _fake_send(self, payload):
         self.sent.append(payload)
@@ -61,6 +71,13 @@ class TestSendSure(AccountTestInvoicingCommon):
             raise SendSureError("refused", code=self.withdraw_error)
         self.withdrawn.append(external_id)
         return {'external_id': external_id, 'status': 'withdrawn'}
+
+    def _composer(self, action):
+        """The email composer the button opens, filled in as the user sees it."""
+        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        if ODOO < 17:  # Odoo 16 fills it from the template in the form's onchange
+            composer._onchange_template_id_wrapper()
+        return composer
 
     def _wallet(self, address):
         return self.env['res.partner.bank'].create({'partner_id': self.vendor.id, 'acc_number': address})
@@ -181,7 +198,8 @@ class TestSendSure(AccountTestInvoicingCommon):
         payment = self.env['account.payment'].search([('sendsure_tx', '=', TX)])
         self.assertEqual(len(payment), 1)
         self.assertEqual((payment.amount, payment.currency_id, payment.journal_id), (250.0, self.usc, self.journal))
-        self.assertIn(TX, payment.memo)
+        # Odoo 18 calls the payment's memo `memo`; before, it was `ref`.
+        self.assertIn(TX, payment.memo if 'memo' in payment._fields else payment.ref)
         self.assertEqual(payment.partner_bank_id.acc_number, PROVEN)
         self.assertEqual(bill.sendsure_amount_paid, '250.000000')
         bill.sendsure_state = 'paid_unconfirmed'  # even if asked again, the same tx is never recorded twice
@@ -223,6 +241,55 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.assertEqual(bill.sendsure_state, 'paid')
         self.assertEqual(fields.Date.to_string(self.env['account.payment'].search([('sendsure_tx', '=', TX)]).date), '2026-09-29')
 
+    def test_run_the_agent_now_pays_a_signed_bill_without_waiting_for_the_cron(self):
+        bill = self._trusted_bill(250.0)
+        self.bill_status = {'status': 'signed', 'reason': 'Signed.'}
+        ran = []
+        Client = type(self.env['sendsure.client'])
+        test = self
+
+        def run(_self):
+            ran.append(1)
+            test._paid(250_000_000)
+            return {'decisions': []}
+
+        with patch.object(Client, 'run_agent', run):
+            bill.action_sendsure_run_agent()
+        self.assertEqual(ran, [1])
+        self.assertEqual(bill.sendsure_state, 'paid')
+        self.assertEqual(self.env['account.payment'].search([('sendsure_tx', '=', TX)]).reconciled_bill_ids, bill)
+
+    def test_run_the_agent_now_does_nothing_until_the_vendor_signed(self):
+        bill = self._trusted_bill(250.0)
+        self.bill_status = {'status': 'waiting_for_payee', 'reason': 'Waiting for the vendor.'}
+        ran = []
+        Client = type(self.env['sendsure.client'])
+        with patch.object(Client, 'run_agent', lambda _self: ran.append(1)):
+            bill.action_sendsure_run_agent()
+        self.assertEqual(ran, [])
+        self.assertEqual(bill.sendsure_state, 'waiting_for_payee')
+
+    def test_a_bill_over_the_per_bill_cap_is_refused_before_the_vendor_signs(self):
+        self.funds = dict(self.funds, claim_max='50')
+        with self.assertRaisesRegex(UserError, 'at most 50 USDC per bill'):
+            self._trusted_bill(250.0)
+        self.assertFalse(self.sent)
+
+    def test_a_bill_the_wallet_cannot_cover_is_refused_before_the_vendor_signs(self):
+        self.funds = dict(self.funds, balance='2', budget='10')
+        with self.assertRaisesRegex(UserError, 'can spend only 2 USDC'):
+            self._trusted_bill(250.0)
+        self.assertFalse(self.sent)
+
+    def test_bills_still_go_when_sendsure_cannot_say_what_the_org_can_pay(self):
+        self.funds = 'unreachable'
+        bill = self._trusted_bill(250.0)
+        self.assertEqual(bill.sendsure_state, 'waiting_for_payee')
+
+    def test_the_list_action_is_for_accounting_users_only(self):
+        action = self.env.ref('sendsure_payables.action_sendsure_send_bills')
+        groups = action.group_ids if 'group_ids' in action._fields else action.groups_id
+        self.assertEqual(groups, self.env.ref('account.group_account_invoice'))
 
     # ---------------------------------------------------------------- the bill changes after it was sent
 
@@ -300,7 +367,8 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.assertEqual(bill.sendsure_state, 'needs_review')
         bill.action_sendsure_record_review()
         self.assertEqual(bill.sendsure_state, 'paid')
-        self.assertEqual(self.env['account.payment'].search([('sendsure_tx', '=', TX)]).amount, 249.995)
+        # Exact at USDC's 6 decimals (Odoo 17 keeps 249.99499999999998 in the float it stores).
+        self.assertEqual(float_repr(self.env['account.payment'].search([('sendsure_tx', '=', TX)]).amount, 6), '249.995000')
         # A USD bill is kept in cents, so Odoo absorbs the half cent; SendSure says so instead of hiding it.
         self.assertIn('absorbed the 0.005 difference', bill.sendsure_reason)
 
@@ -386,7 +454,7 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.vendor.email = 'maria@lopez.design'
         action = self.vendor.action_sendsure_email_invite()
         self.assertEqual(action['res_model'], 'mail.compose.message')
-        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        composer = self._composer(action)
         # A person reads and sends it; the link in it is the vendor's own invite.
         self.assertIn(REF, composer.body)
         self.assertIn(ORG, composer.body)
@@ -401,7 +469,7 @@ class TestSendSure(AccountTestInvoicingCommon):
             bill.action_sendsure_email_vendor()
         self.vendor.email = 'maria@lopez.design'
         action = bill.action_sendsure_email_vendor()
-        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        composer = self._composer(action)
         # SendSure cannot tell the vendor; a person sends this, with the vendor's own link and the exact invoice.
         self.assertIn(REF, composer.body)
         self.assertIn(ORG, composer.body)

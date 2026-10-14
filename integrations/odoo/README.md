@@ -1,8 +1,40 @@
 # SendSure for Odoo
 
-`sendsure_payables` is an Odoo 19 Community add-on (LGPL-3). It lets you pay vendor bills in USDC on
-Arc from your own wallet. It pays only to an address the vendor proved by signing with it, and records
-each payment back in Odoo with the exact amount and the Arc transaction.
+`sendsure_payables` is an Odoo Community add-on (LGPL-3) for **Odoo 16, 17, 18 and 19**. It lets you pay
+vendor bills in USDC on Arc from your own wallet. It pays only to an address the vendor proved by signing
+with it, and records each payment back in Odoo with the exact amount and the Arc transaction.
+
+## Install
+
+| Your Odoo | Add this folder to `addons_path` | Tested |
+|---|---|---|
+| 19, 18, 17 | `integrations/odoo` (it holds `sendsure_payables`) | the full test suite on each (`ODOO_VERSION=18 ./run.sh test`) |
+| 16 | `integrations/odoo/16.0` | the full test suite (`ODOO_VERSION=16 ./run.sh test`) |
+
+```bash
+git clone https://github.com/0x-pankaj/sendsure
+# add the folder above to addons_path in odoo.conf, restart Odoo, then
+# Apps > Update Apps List > search "SendSure" > Activate
+```
+
+Self-hosted Odoo and Odoo.sh can install it. Odoo Online (the SaaS) does not allow custom add-ons: try it on
+a test copy instead (`./run.sh up`, below). It needs only `account` and `mail`, and Python's `requests`,
+which Odoo already ships.
+
+One source serves every version. What differs is kept small: the Python differences are in
+[`models/compat.py`](sendsure_payables/models/compat.py) and a few `in _fields` checks; Odoo 16's views use
+`attrs="{...}"` where 17+ use `invisible="..."`, so [`build16.py`](build16.py) writes the Odoo 16 copy in
+`16.0/` (it refuses to build if a view condition has no Odoo 16 form yet).
+
+| What changed between versions | How the add-on handles it |
+|---|---|
+| Module versions: Odoo 18+ refuse `19.0.x` on another series | the manifest says `1.2.0`; each Odoo adds its own series |
+| 16: `attrs` and the old settings page; 17+: `invisible="expr"`, `<block>`/`<setting>` | `build16.py` converts the views; `compat16/` has the settings page |
+| 16 calls `post_init_hook(cr, registry)`, 17+ `post_init_hook(env)` | the hook takes both |
+| 16 and 17: a cron runs once unless `numbercall` is -1 (18 removed the field) | set at install when the field exists |
+| 17+: the email composer takes `res_ids`, 16 `res_id` | `compat.composer_context` |
+| 18+: accounts have `company_ids`, before `company_id` | `compat.company_domain` |
+| 19: `models.Constraint` and `group_ids`; before: `_sql_constraints` and `groups_id` | both are written; the list action's group is set from code |
 
 ![A vendor bill paid on Arc, recorded in Odoo](docs/bill-paid-on-arc.jpg)
 
@@ -37,12 +69,14 @@ We reproduced three behaviours on Odoo 19 before the hackathon
    the address and adds it as an untrusted wallet.
 3. **Trust it.** A person with the right to validate bank accounts trusts that wallet. SendSure checks
    it again against Arc; any other wallet is refused.
-4. **Pay with SendSure.** Click it on a posted bill (or on several, from the list). The bill becomes
+4. **Pay with SendSure.** Click it on a posted bill (or on several, from the list). Odoo first checks with
+   SendSure that your wallet and budget cover it and that it is under your org's per-bill cap: Arc checks
+   these when the vendor signs, and a claim that fails them is refused for good. The bill becomes
    an invoice the vendor confirms by signing it in SendSure. A claim for a different amount is refused.
    SendSure keeps no contact details, so it cannot tell the vendor: "Email the vendor to sign" opens Odoo's
    composer with the request written, the invoice number and amount, and the vendor's own link.
 5. **The agent pays.** Every 5 minutes, a cron job asks SendSure's agent to pay the bills the vendor
-   signed. The agent pays only what passes your Arc contract's rules. A first payment, or a large one,
+   signed ("Run the agent now" on a signed bill does it at once). The agent pays only what passes your Arc contract's rules. A first payment, or a large one,
    waits until a person co-signs it on-chain in SendSure ("Co-sign in SendSure" on the bill opens it).
    In the bill list, the filters "SendSure: in progress", "needs a person" and "paid on Arc", and a group-by
    on SendSure status, show where every bill is.
@@ -67,7 +101,11 @@ You need Docker. `run.sh` does the same as `docker-compose.yml` with plain `dock
 ./run.sh up       # Odoo 19 + Postgres + the add-on on http://127.0.0.1:18069 (admin / admin)
 ./run.sh test     # the add-on's Odoo tests in a throwaway database
 ./run.sh down     # remove everything
+
+ODOO_VERSION=17 ./run.sh up     # the same on Odoo 17 (or 16, 18), on http://127.0.0.1:18017
 ```
+
+A test copy on the same version as your own Odoo is the quickest way to try it with your team.
 
 End to end against the live SendSure on Arc testnet (sandbox org, throwaway keys), from the repo root:
 
@@ -77,7 +115,7 @@ pnpm e2e:odoo     # needs ./run.sh up first
 
 ## Tests and live runs
 
-- **Odoo tests** (`./run.sh test`), 31 in total, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
+- **Odoo tests** (`./run.sh test`), 37 in total, run on Odoo 16, 17, 18 and 19, in [`tests/test_sendsure.py`](sendsure_payables/tests/test_sendsure.py):
   - currency and journal setup;
   - invite-link parsing, and the invite email opens with the vendor's own link; so does the "sign this bill" email, with the exact invoice;
   - a bill waiting for a co-sign links to SendSure;
@@ -90,7 +128,11 @@ pnpm e2e:odoo     # needs ./run.sh up first
   - an exact payment is recorded once;
   - half a cent is not rounded away;
   - a payment to an untrusted address is not recorded;
-  - the cron job runs the agent and records the payment;
+  - the cron job runs the agent and records the payment; "Run the agent now" does the same for a signed bill, and nothing
+    before the vendor signed;
+  - a bill over the org's per-bill cap, or more than the wallet and budget can pay, is refused before the vendor
+    is asked to sign (and bills still go if SendSure cannot say);
+  - the "Pay with SendSure" list action is for accounting users only;
   - when the bill changes after it was sent: cancelling or resetting it withdraws it from SendSure (and it can be
     sent again after editing); a bill already paid on Arc cannot be cancelled; no hand payment while SendSure is
     paying; a payment for a bill that is no longer posted waits for a person; a transaction recorded for one bill

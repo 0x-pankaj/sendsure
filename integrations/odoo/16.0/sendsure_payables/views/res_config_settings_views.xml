@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Odoo 16 copy of sendsure_payables/views/res_config_settings_views.xml: Odoo 16's settings page has no <block>/<setting>
+     tags and no attrs-free invisible="...". build16.py puts this file in the Odoo 16 copy. Keep both in step. -->
+<odoo>
+    <record id="res_config_settings_view_form_sendsure" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.sendsure</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='print_vendor_checks_setting_container']" position="after">
+                <h2>SendSure: pay vendors in USDC on Arc</h2>
+                <div class="row mt16 o_settings_container" id="sendsure_setting_container">
+                    <div class="col-12 col-lg-6 o_setting_box" id="sendsure_connection">
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Connection</span>
+                            <div class="text-muted">
+                                The key is created by your SendSure org's owner: SendSure &gt; Set up your team &gt; Connect your books.
+                            </div>
+                            <div class="content-group">
+                                <div class="mt16">
+                                    <label for="sendsure_url" class="o_light_label d-block"/>
+                                    <field name="sendsure_url" class="w-100"/>
+                                </div>
+                                <div class="mt8">
+                                    <label for="sendsure_api_key" class="o_light_label d-block"/>
+                                    <field name="sendsure_api_key" password="True" placeholder="ssk_…" class="w-100"/>
+                                </div>
+                                <div class="mt8" attrs="{'invisible': [('sendsure_org', '=', False)]}">
+                                    <span class="o_light_label">Connected to org </span>
+                                    <field name="sendsure_org" class="oe_inline font-monospace"/>
+                                    (<field name="sendsure_org_tier" class="oe_inline"/>)
+                                </div>
+                                <button name="action_sendsure_test" type="object" string="Test connection and set up the USDC journal"
+                                        class="btn-link ps-0 mt8" icon="fa-arrow-right"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="sendsure_manual_only">
+                        <div class="o_setting_left_pane">
+                            <field name="sendsure_manual_only"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="sendsure_manual_only" string="Pay only when a person runs the agent"/>
+                            <div class="text-muted">
+                                Off: every few minutes Odoo asks SendSure's agent to pay bills the vendor signed. It pays only what
+                                passes your Arc contract's rules; first payments and large amounts still wait for a person's co-sign
+                                in SendSure.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

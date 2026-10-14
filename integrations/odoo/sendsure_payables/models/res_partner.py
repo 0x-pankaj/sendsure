@@ -7,6 +7,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
+from .compat import composer_context
 from .sendsure_client import PAYEE_REF, SendSureError, is_evm_address
 
 _logger = logging.getLogger(__name__)
@@ -60,14 +61,7 @@ class ResPartner(models.Model):
             'view_mode': 'form',
             'views': [(False, 'form')],
             'target': 'new',
-            'context': {
-                'default_model': 'res.partner',
-                'default_res_ids': self.ids,
-                'default_partner_ids': self.ids,
-                'default_template_id': template.id,
-                'default_composition_mode': 'comment',
-                'default_email_layout_xmlid': 'mail.mail_notification_light',
-            },
+            'context': composer_context(self, default_partner_ids=self.ids, default_template_id=template.id),
         }
 
     @api.model

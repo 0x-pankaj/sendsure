@@ -12,6 +12,8 @@ import requests
 from odoo import _, api, models
 from odoo.exceptions import AccessError, UserError
 
+from .compat import ODOO
+
 _logger = logging.getLogger(__name__)
 
 DEFAULT_URL = 'https://sendsure.0xpankaj.workers.dev'
@@ -68,7 +70,7 @@ class SendSureClient(models.AbstractModel):
         try:
             res = requests.request(
                 method, url + path, params=params, json=payload, timeout=timeout,
-                headers={'Authorization': 'Bearer %s' % key, 'User-Agent': 'sendsure-odoo/19.0.1.0.0'},
+                headers={'Authorization': 'Bearer %s' % key, 'User-Agent': 'sendsure-odoo/%s' % ODOO},
             )
         except requests.RequestException as err:
             _logger.warning("SendSure %s %s failed: %s", method, path, err)

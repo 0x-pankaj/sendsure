@@ -9,6 +9,7 @@ from odoo.tools import float_repr
 from odoo.addons.base.models.res_bank import sanitize_account_number
 
 from .account_payment import METHOD
+from .compat import composer_context
 from .sendsure_client import SendSureError
 
 _logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ class AccountMove(models.Model):
         for bill in bills.filtered(lambda m: m.sendsure_external_id):
             bill._sendsure_withdraw_quietly()
         payloads = [(bill, bill._sendsure_payload()) for bill in bills]
+        self._sendsure_check_funds(payloads)
         for bill, payload in payloads:
             try:
                 out = client.send_bill(payload)
@@ -121,6 +123,34 @@ class AccountMove(models.Model):
                     "signing it; then SendSure's agent pays it on Arc and the payment is recorded here."))
                     % {'amount': escape(out.get('amount_usdc', ''))})
         return True
+
+    def _sendsure_check_funds(self, payloads):
+        """Arc checks the org's per-bill cap, balance and budget when the vendor signs, and a claim that fails them is
+        refused for good. So say it now, before the vendor is asked to sign. If SendSure cannot say (an older server,
+        or a slow answer), the bills go: the contract still checks everything."""
+        if not payloads:
+            return
+        try:
+            funds = self.env['sendsure.client'].org().get('funds')
+        except SendSureError as err:
+            _logger.warning("SendSure: could not read the org's funds: %s", err)
+            return
+        if not funds:
+            return
+        claim_max, balance, budget = (Decimal(funds[k]) for k in ('claim_max', 'balance', 'budget'))
+        for bill, payload in payloads:
+            if Decimal(payload['amount']) > claim_max:
+                raise UserError(_(
+                    "%(bill)s is %(amount)s USDC, but your SendSure org pays at most %(max)s USDC per bill (its rules on "
+                    "Arc). Ask the org's owner to raise that cap, or split the bill.",
+                    bill=bill.name, amount=payload['amount'], max=funds['claim_max']))
+        total = sum(Decimal(payload['amount']) for _bill, payload in payloads)
+        if total > min(balance, budget):
+            raise UserError(_(
+                "This needs %(total)s USDC, but SendSure can spend only %(can)s USDC from your wallet now (it holds "
+                "%(balance)s, and your budget for SendSure is %(budget)s). Add test USDC or raise the budget in SendSure "
+                "(/org), then try again: a bill the vendor signs while the money is short is refused for good.",
+                total=total, can=min(balance, budget), balance=funds['balance'], budget=funds['budget']))
 
     def action_sendsure_email_vendor(self):
         """SendSure keeps no contact details, so it cannot tell a vendor that a bill waits for their signature. Odoo's
@@ -141,14 +171,7 @@ class AccountMove(models.Model):
             'view_mode': 'form',
             'views': [(False, 'form')],
             'target': 'new',
-            'context': {
-                'default_model': 'account.move',
-                'default_res_ids': self.ids,
-                'default_partner_ids': to.ids,
-                'default_template_id': template.id,
-                'default_composition_mode': 'comment',
-                'default_email_layout_xmlid': 'mail.mail_notification_light',
-            },
+            'context': composer_context(self, default_partner_ids=to.ids, default_template_id=template.id),
         }
 
     # ------------------------------------------------------------------ withdraw (cancel, reset, delete)
@@ -213,6 +236,22 @@ class AccountMove(models.Model):
 
     def action_sendsure_refresh(self):
         self._sendsure_sync()
+        return True
+
+    def action_sendsure_run_agent(self):
+        """A person asks SendSure's agent to pay the bills the vendor signed now, instead of waiting for the cron.
+        Nothing is skipped: the agent pays only what passes the Arc contract's rules, and a first payment still
+        waits for a co-sign in SendSure."""
+        bills = self.filtered('sendsure_external_id')
+        bills._sendsure_sync()
+        if not bills.filtered(lambda b: b.sendsure_state == 'signed'):
+            return True
+        try:
+            self.env['sendsure.client'].run_agent()
+        except SendSureError as err:
+            # A slow answer does not mean the run failed: the chain has the truth, so read it either way.
+            _logger.warning("SendSure: agent run: %s", err)
+        bills._sendsure_sync()
         return True
 
     def action_sendsure_open(self):
@@ -372,7 +411,8 @@ class AccountMove(models.Model):
         client = self.env['sendsure.client']
         if not client.is_configured():
             return
-        self.env['res.company'].search([('sendsure_journal_id', '!=', False)])._sendsure_maintain()
+        # sudo: an accountant may run this job by hand in a database with companies they cannot read.
+        self.env['res.company'].sudo().search([('sendsure_journal_id', '!=', False)])._sendsure_maintain()
         self.env['res.partner']._cron_sendsure_refresh_vendors()
         bills = self.search([('sendsure_state', 'in', IN_FLIGHT)])
         try:

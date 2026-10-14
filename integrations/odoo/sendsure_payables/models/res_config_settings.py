@@ -13,7 +13,7 @@ class ResConfigSettings(models.TransientModel):
         "Pay only when someone runs the agent in SendSure", config_parameter='sendsure.manual_only',
         help="Off (the default): every few minutes, Odoo asks SendSure's agent to pay bills the vendor signed. It pays "
              "only what passes your Arc contract's rules; first payments and large amounts still wait for a person's "
-             "co-sign in SendSure.")
+             "co-sign in SendSure. On: only a person runs it, in SendSure or with \"Run the agent now\" on a bill.")
     sendsure_org = fields.Char("SendSure org", config_parameter='sendsure.org', readonly=True)
     sendsure_org_tier = fields.Char("SendSure org type", config_parameter='sendsure.org_tier', readonly=True)
 
@@ -21,6 +21,7 @@ class ResConfigSettings(models.TransientModel):
         self.ensure_one()
         self.set_values()
         info = self.env['sendsure.client'].org()
+        funds = info.get('funds')
         params = self.env['ir.config_parameter'].sudo()
         params.set_param('sendsure.org', info['org'])
         params.set_param('sendsure.org_tier', info.get('tier', ''))
@@ -32,7 +33,11 @@ class ResConfigSettings(models.TransientModel):
                 'type': 'success',
                 'title': _("Connected to SendSure"),
                 'message': _("Org %(org)s (%(tier)s) on %(chain)s. The USDC journal is ready.",
-                             org=info['org'], tier=info.get('tier', ''), chain=info.get('chain', {}).get('name', 'Arc')),
+                             org=info['org'], tier=info.get('tier', ''), chain=info.get('chain', {}).get('name', 'Arc'))
+                           + (_(" Your wallet holds %(balance)s USDC and SendSure may spend %(budget)s. One bill can be up "
+                                "to %(max)s USDC; a person co-signs above %(cosign)s.",
+                                balance=funds['balance'], budget=funds['budget'], max=funds['claim_max'],
+                                cosign=funds['cosign_above']) if funds else ''),
                 'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
             },
         }

@@ -21,8 +21,12 @@ class AccountPayment(models.Model):
     sendsure_tx = fields.Char("Arc transaction", readonly=True, copy=False, index=True,
                               help="The Arc transaction that paid this, read from the chain by SendSure.")
 
-    _sendsure_tx_unique = models.Constraint(
-        'UNIQUE(sendsure_tx)', "This Arc transaction is already recorded as a payment.")
+    if hasattr(models, 'Constraint'):  # Odoo 19
+        _sendsure_tx_unique = models.Constraint(
+            'UNIQUE(sendsure_tx)', "This Arc transaction is already recorded as a payment.")
+    else:
+        _sql_constraints = [
+            ('sendsure_tx_unique', 'UNIQUE(sendsure_tx)', "This Arc transaction is already recorded as a payment.")]
 
     @api.model
     def _get_method_codes_using_bank_account(self):

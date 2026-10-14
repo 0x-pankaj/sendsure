@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_sendsure" model="ir.ui.view">
+        <field name="name">account.move.form.sendsure</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@id='account_invoice_payment_btn']" position="before">
+                <button name="action_sendsure_send" type="object" string="Pay with SendSure" class="oe_highlight"
+                        groups="account.group_account_invoice"
+                        attrs="{'invisible': ['|', '|', '|', ('move_type', '!=', 'in_invoice'), ('state', '!=', 'posted'), ('payment_state', '!=', 'not_paid'), ('sendsure_state', 'not in', [False, 'withdrawn', 'rejected_by_payee', 'refused'])]}"/>
+                <button name="action_sendsure_email_vendor" type="object" string="Email the vendor to sign"
+                        groups="account.group_account_invoice"
+                        attrs="{'invisible': [('sendsure_state', '!=', 'waiting_for_payee')]}"/>
+                <button name="action_sendsure_run_agent" type="object" string="Run the agent now" class="btn-primary"
+                        groups="account.group_account_invoice"
+                        attrs="{'invisible': [('sendsure_state', 'not in', ['signed', 'needs_cosign'])]}"/>
+                <button name="action_sendsure_refresh" type="object" string="Refresh SendSure"
+                        groups="account.group_account_invoice"
+                        attrs="{'invisible': ['|', ('sendsure_external_id', '=', False), ('sendsure_state', 'in', ['paid', 'needs_review'])]}"/>
+                <button name="action_sendsure_open" type="object" string="Co-sign in SendSure"
+                        groups="account.group_account_invoice" class="btn-primary"
+                        attrs="{'invisible': [('sendsure_state', '!=', 'needs_cosign')]}"/>
+                <button name="action_sendsure_open" type="object" string="Open in SendSure"
+                        groups="account.group_account_invoice"
+                        attrs="{'invisible': [('sendsure_state', '!=', 'held')]}"/>
+                <button name="action_sendsure_record_review" type="object" string="Record SendSure payment"
+                        groups="account.group_account_manager" class="btn-warning"
+                        attrs="{'invisible': [('sendsure_state', '!=', 'needs_review')]}"
+                        confirm="This records the exact amount SendSure paid on Arc. Any difference stays open on the bill for you to book. Continue?"/>
+            </xpath>
+            <xpath expr="//header" position="after">
+                <div class="alert alert-info mb-0" role="alert" attrs="{'invisible': ['|', ('sendsure_state', '=', False), ('sendsure_state', 'in', ['paid', 'needs_review'])]}">
+                    <strong>SendSure:</strong> <field name="sendsure_state" class="oe_inline" readonly="1"/>.
+                    <field name="sendsure_reason" class="oe_inline" readonly="1"/>
+                </div>
+                <div class="alert alert-success mb-0" role="alert" attrs="{'invisible': [('sendsure_state', '!=', 'paid')]}">
+                    <strong>Paid on Arc</strong> with SendSure: <field name="sendsure_amount_paid" class="oe_inline" readonly="1"/> USDC,
+                    transaction <field name="sendsure_tx" class="oe_inline text-break" readonly="1"/>.
+                    <field name="sendsure_receipt_url" widget="url" class="oe_inline" readonly="1" text="Receipt"/>
+                </div>
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': [('sendsure_state', '!=', 'needs_review')]}">
+                    <strong>SendSure paid this on Arc, but it needs review:</strong>
+                    <field name="sendsure_reason" class="oe_inline" readonly="1"/>
+                </div>
+            </xpath>
+            <xpath expr="//group[@id='other_tab_group']" position="inside">
+                <group string="SendSure" name="sendsure" attrs="{'invisible': [('sendsure_external_id', '=', False)]}">
+                    <field name="sendsure_external_id"/>
+                    <field name="sendsure_tx"/>
+                    <field name="sendsure_amount_paid"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_in_invoice_bill_tree_sendsure" model="ir.ui.view">
+        <field name="name">account.move.list.sendsure</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_in_invoice_bill_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_residual_signed']" position="after">
+                <field name="sendsure_state" optional="show" string="SendSure"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_invoice_filter_sendsure" model="ir.ui.view">
+        <field name="name">account.move.search.sendsure</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="sendsure_in_progress" string="SendSure: in progress"
+                        domain="[('sendsure_state', 'in', ['waiting_for_payee', 'signed', 'needs_cosign', 'held', 'paid_unconfirmed'])]"/>
+                <filter name="sendsure_needs_action" string="SendSure: needs a person"
+                        domain="[('sendsure_state', 'in', ['needs_cosign', 'held', 'needs_review', 'rejected_by_payee', 'refused'])]"/>
+                <filter name="sendsure_paid" string="SendSure: paid on Arc" domain="[('sendsure_state', '=', 'paid')]"/>
+                <filter name="group_sendsure_state" string="SendSure status" context="{'group_by': 'sendsure_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_sendsure_send_bills" model="ir.actions.server">
+        <field name="name">Pay with SendSure</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">records.filtered(lambda m: m.move_type == 'in_invoice' and m.state == 'posted' and m.sendsure_state in (False, 'withdrawn', 'rejected_by_payee', 'refused')).action_sendsure_send()</field>
+    </record>
+    <!-- Only accounting users see it. Odoo 19 calls the field group_ids, older versions groups_id. -->
+    <function model="res.company" name="_sendsure_restrict_bill_action"/>
+</odoo>

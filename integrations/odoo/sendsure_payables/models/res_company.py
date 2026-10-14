@@ -1,8 +1,9 @@
 import logging
 
-from odoo import _, fields, models
+from odoo import Command, _, api, fields, models
 
 from .account_payment import METHOD
+from .compat import company_domain
 
 _logger = logging.getLogger(__name__)
 
@@ -40,7 +41,8 @@ class ResCompany(models.Model):
         usd = self.env.ref('base.USD')
         method = self.env.ref('sendsure_payables.payment_method_sendsure_usdc')
         for company in self:
-            if not self.env['account.account'].search_count([('company_ids', 'in', company.id)], limit=1):
+            Account = self.env['account.account']
+            if not Account.search_count(company_domain(Account, company), limit=1):
                 _logger.info("SendSure: company %s has no chart of accounts yet; set up later.", company.name)
                 continue
             Rate = self.env['res.currency.rate'].sudo()
@@ -84,3 +86,10 @@ class ResCompany(models.Model):
                     usd_rate = usd.with_company(company)._get_rates(company, today).get(usd.id)
                     if usd_rate:
                         Rate.create({'currency_id': usc.id, 'company_id': company.id, 'name': today, 'rate': usd_rate})
+
+    @api.model
+    def _sendsure_restrict_bill_action(self):
+        """The "Pay with SendSure" list action, for accounting users only (Odoo 19: group_ids; before: groups_id)."""
+        action = self.env.ref('sendsure_payables.action_sendsure_send_bills')
+        field = 'group_ids' if 'group_ids' in action._fields else 'groups_id'
+        action.write({field: [Command.link(self.env.ref('account.group_account_invoice').id)]})
