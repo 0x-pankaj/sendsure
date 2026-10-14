@@ -22,8 +22,9 @@ export default function Home() {
             Pay only the <em>right person</em>.
           </h1>
           <p className="lede">
-            SendSure pays your contractors and vendors in USDC, but only to an address they proved, only for an invoice they
-            signed, and only inside a budget an Arc contract enforces. Then every payment lands in your books, exact.
+            A fake supplier&apos;s invoice, or an email saying &ldquo;we changed our bank details&rdquo;, can send your money to
+            a stranger, and the books still balance. SendSure pays each supplier in USDC only at the wallet they proved, only
+            for a bill they signed from it. Claude checks every bill, and a person co-signs anything new.
           </p>
           <div className="cta">
             <a className="btn lg" href="/org">
@@ -147,22 +148,16 @@ export default function Home() {
 
       {/* ------------------------------------------------------------ the problem */}
       <section className="section center">
-        <h2>Stablecoin payables, without the wrong-wallet risk</h2>
+        <h2>The fraud that looks like a normal bill</h2>
         <p className="sub">
-          A payment to the wrong wallet balances perfectly in the books. Nothing catches it afterwards, so SendSure stops it
-          before the money moves.
+          Google and Facebook paid over $100 million to a man posing as their real supplier, Quanta Computer. The invoices
+          looked right; the bank account was his (
+          <a href="https://www.theregister.com/2019/03/21/facebook_google_scam/">The Register, 2019</a>). A payment like that
+          balances perfectly in the books, so SendSure stops it before the money moves.
         </p>
         <div className="cards" style={{ textAlign: "left" }}>
           <div className="card">
-            <span className="tag stop">Look-alike address</span>
-            <h3>Copied from history</h3>
-            <p>
-              An attacker plants an address with the same first and last characters as your contractor&apos;s. SendSure pays
-              only the address the contractor proved by signing with it.
-            </p>
-          </div>
-          <div className="card">
-            <span className="tag stop">&ldquo;We changed wallets&rdquo;</span>
+            <span className="tag stop">&ldquo;We changed our bank details&rdquo;</span>
             <h3>The email that redirects a payment</h3>
             <p>
               Changing a payout address needs the old wallet, the new wallet and a waiting period you can cancel. An email
@@ -170,11 +165,19 @@ export default function Home() {
             </p>
           </div>
           <div className="card">
-            <span className="tag stop">Forged or repeated invoice</span>
-            <h3>Paid twice, or paid to a stranger</h3>
+            <span className="tag stop">Fake supplier</span>
+            <h3>A bill from someone posing as your supplier</h3>
             <p>
-              Every invoice is a claim the payee signed. A forged one cannot carry their signature, and one invoice is one
-              payment, enforced on-chain.
+              A bill is paid only to the wallet that supplier proved, and only once they sign it from that wallet. A new
+              supplier&apos;s first payment waits for a person to co-sign.
+            </p>
+          </div>
+          <div className="card">
+            <span className="tag stop">Odd or repeated bill</span>
+            <h3>Paid twice, or more than it should be</h3>
+            <p>
+              One invoice is one payment, enforced on-chain. Claude checks every bill for the same work billed twice, an
+              amount far above normal, or a note asking to hurry. It can hold a payment, never make one.
             </p>
           </div>
         </div>
