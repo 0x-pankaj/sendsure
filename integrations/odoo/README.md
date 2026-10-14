@@ -107,6 +107,25 @@ ODOO_VERSION=17 ./run.sh up     # the same on Odoo 17 (or 16, 18), on http://127
 
 A test copy on the same version as your own Odoo is the quickest way to try it with your team.
 
+No Docker, or on Odoo Online? Open the same test copy in GitHub Codespaces, on your own free hours: Odoo
+[19](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/devcontainer.json),
+[18](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo18/devcontainer.json),
+[17](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo17/devcontainer.json),
+[16](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo16/devcontainer.json).
+
+Then, from the repo root, one command connects it to SendSure without a wallet:
+
+```bash
+pnpm demo-kit            # a SANDBOX payer org on Arc testnet (relayer pays the gas, 2 test USDC from the faucet),
+                         # a budget, a books key in Odoo, and a vendor linked to a fresh invite (link printed)
+pnpm demo-kit cosign     # co-sign a first payment, as the org's owner
+```
+
+The org's owner key (test money only) stays in `.sendsure-demo.json`, git-ignored. The vendor's side stays real:
+they open the invite on their phone and prove a wallet with a passkey. Then "Pay with SendSure", the vendor signs,
+`pnpm demo-kit cosign`, and "Run the agent now": paid on Arc and recorded in Odoo. A sandbox org is never counted
+as a real payer.
+
 End to end against the live SendSure on Arc testnet (sandbox org, throwaway keys), from the repo root:
 
 ```bash

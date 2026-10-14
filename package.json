@@ -28,7 +28,8 @@
     "e2e:wallet": "tsx scripts/e2e-wallet.ts",
     "e2e:onchain-claim": "tsx scripts/e2e-onchain-claim.ts",
     "e2e:passkey": "tsx scripts/e2e-passkey.ts",
-    "evidence": "tsx scripts/evidence.ts"
+    "evidence": "tsx scripts/evidence.ts",
+    "demo-kit": "tsx scripts/demo-kit.ts"
   },
   "devDependencies": {
     "@sendsure/chain": "workspace:*",

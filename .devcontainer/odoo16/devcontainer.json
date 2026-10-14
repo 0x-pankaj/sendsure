@@ -1,0 +1,25 @@
+{
+  "name": "SendSure on Odoo 16 (test copy)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  },
+  "containerEnv": {
+    "ODOO_VERSION": "16"
+  },
+  "forwardPorts": [
+    18016
+  ],
+  "portsAttributes": {
+    "18016": {
+      "label": "Odoo 16 (admin / admin)",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "corepack enable && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install --frozen-lockfile",
+  "postStartCommand": "bash .devcontainer/start.sh"
+}

@@ -138,7 +138,8 @@ We reproduced each of these on stock software before writing the apps, and each 
 | [`/books`](https://sendsure.0xpankaj.workers.dev/books) | Odoo and ERPNext screenshots, what each does alone versus with SendSure, and the demo org's ledger in every format. |
 | MCP, for your agent | `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp` |
 | Pay per call, for agents | [`/api/x402`](https://sendsure.0xpankaj.workers.dev/api/x402): verify a payee ($0.001) or check a payout file ($0.005), paid in USDC with x402 over Circle Gateway. `circle services pay https://sendsure.0xpankaj.workers.dev/api/x402/verify-payee -X POST -d '{"org":"0x…","address":"0x…"}' --address <your agent wallet> --chain ARC-TESTNET --max-amount 0.001` |
-| Odoo or ERPNext | `./run.sh up` in [`integrations/odoo`](integrations/odoo) or [`integrations/erpnext`](integrations/erpnext) (Docker), then connect it with a key from `/org`. |
+| Odoo, nothing to install | Open a test copy in GitHub Codespaces (your own free hours): Odoo [19](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/devcontainer.json), [18](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo18/devcontainer.json), [17](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo17/devcontainer.json), [16](https://codespaces.new/0x-pankaj/sendsure?devcontainer_path=.devcontainer/odoo16/devcontainer.json). When it is up, `pnpm demo-kit` in its terminal connects it to a sandbox payer org on Arc testnet (no wallet needed) and prints the link your vendor opens on their phone. |
+| Odoo or ERPNext on your machine | `./run.sh up` in [`integrations/odoo`](integrations/odoo) (`ODOO_VERSION=16`…`19`) or [`integrations/erpnext`](integrations/erpnext) (`ERPNEXT_VERSION=15` or `16`) with Docker, then `pnpm demo-kit` (Odoo) or connect it with a key from `/org`. |
 
 ## What does what
 
