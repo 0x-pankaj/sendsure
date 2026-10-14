@@ -21,6 +21,7 @@ ITEM = "SendSure Test Design Work"
 
 
 REAL_RUN_AGENT = client.run_agent
+REAL_ORG = client.org
 
 
 class TestSendSure(FrappeTestCase):
@@ -44,7 +45,9 @@ class TestSendSure(FrappeTestCase):
 		self.bill_status = {}
 		self.sent = []
 		self.agent_runs = []
+		self.funds = {"balance": "1000", "budget": "1000", "claim_max": "500", "cosign_above": "25"}
 		for name, fake in {
+			"org": self._fake_org,
 			"payees": lambda refs: [dict(self.payee)],
 			"send_bill": self._fake_send,
 			"bills": lambda ids: [dict(self.bill_status, external_id=i) for i in ids],
@@ -67,6 +70,11 @@ class TestSendSure(FrappeTestCase):
 		frappe.db.rollback()
 
 	# ---------------------------------------------------------------- helpers
+
+	def _fake_org(self):
+		if self.funds == "unreachable":
+			client._fail("Could not reach SendSure.", code="UNREACHABLE")
+		return {"org": ORG, "tier": "sandbox", "chain": {"name": "Arc Testnet"}, "funds": self.funds}
 
 	def _fake_send(self, payload):
 		self.sent.append(payload)
@@ -249,6 +257,23 @@ class TestSendSure(FrappeTestCase):
 		bill.bill_no = None
 		with self.assertRaisesRegex(frappe.ValidationError, "Supplier Invoice No"):
 			invoices.payload(bill)
+
+	def test_an_invoice_over_the_per_invoice_cap_is_refused_before_the_supplier_signs(self):
+		self.funds = dict(self.funds, claim_max="50")
+		with self.assertRaisesRegex(frappe.ValidationError, "at most 50 USDC per invoice"):
+			self._approved_bill(250.0)
+		self.assertFalse(self.sent)
+
+	def test_an_invoice_the_wallet_cannot_cover_is_refused_before_the_supplier_signs(self):
+		self.funds = dict(self.funds, balance="2", budget="10")
+		with self.assertRaisesRegex(frappe.ValidationError, "can spend only 2 USDC"):
+			self._approved_bill(250.0)
+		self.assertFalse(self.sent)
+
+	def test_invoices_still_go_when_sendsure_cannot_say_what_the_org_can_pay(self):
+		self.funds = "unreachable"
+		bill = self._approved_bill(250.0)
+		self.assertEqual(bill.sendsure_state, INVOICE_STATES["waiting_for_payee"])
 
 	def test_send_is_exact_complete_and_idempotent(self):
 		bill = self._approved_bill(249.99)
@@ -479,7 +504,7 @@ class TestSendSure(FrappeTestCase):
 			frappe.db.set_single_value(client.SETTINGS, "url", "http://sendsure.example")
 			request.reset_mock()
 			with self.assertRaises(client.SendSureError) as caught:
-				client.org()
+				REAL_ORG()
 			self.assertEqual(caught.exception.code, "BAD_URL")
 			request.assert_not_called()
 

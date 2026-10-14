@@ -35,5 +35,11 @@ def test_connection():
 		message += " " + _("The USDC account is ready: {0}.").format(", ".join(accounts))
 	else:
 		message += " " + _("No company keeps its books in USD, so no USDC account was set up.")
+	funds = info.get("funds")
+	if funds:
+		message += " " + _(
+			"Your wallet holds {0} USDC and SendSure may spend {1}. One invoice can be up to {2} USDC; a person co-signs "
+			"above {3}."
+		).format(funds["balance"], funds["budget"], funds["claim_max"], funds["cosign_above"])
 	frappe.msgprint(message, title=_("Connected to SendSure"), indicator="green")
 	return {"org": info["org"], "tier": info.get("tier"), "accounts": accounts}

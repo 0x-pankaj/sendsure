@@ -136,6 +136,36 @@ def payload(doc):
 	}
 
 
+def check_funds(doc, amount):
+	"""Arc checks the org's per-invoice cap, balance and budget when the supplier signs, and a claim that fails them is
+	refused for good. So say it now, before the supplier is asked to sign. If SendSure cannot say (an older server, or a
+	slow answer), the invoice goes: the contract still checks everything."""
+	try:
+		funds = client.org().get("funds")
+	except client.SendSureError as err:
+		client.handled(err)
+		return
+	if not funds:
+		return
+	amount = Decimal(amount)
+	if amount > Decimal(funds["claim_max"]):
+		frappe.throw(
+			_(
+				"{0} is {1} USDC, but your SendSure org pays at most {2} USDC per invoice (its rules on Arc). Ask the org's "
+				"owner to raise that cap, or split the invoice."
+			).format(doc.name, amount, funds["claim_max"])
+		)
+	can = min(Decimal(funds["balance"]), Decimal(funds["budget"]))
+	if amount > can:
+		frappe.throw(
+			_(
+				"This needs {0} USDC, but SendSure can spend only {1} USDC from your wallet now (it holds {2}, and your "
+				"budget for SendSure is {3}). Add test USDC or raise the budget in SendSure (/org), then try again: an "
+				"invoice the supplier signs while the money is short is refused for good."
+			).format(amount, can, funds["balance"], funds["budget"])
+		)
+
+
 @frappe.whitelist()
 def pay_with_sendsure(invoice):
 	"""The "Pay with SendSure" button. Sending the same invoice again only returns its status."""
@@ -144,7 +174,10 @@ def pay_with_sendsure(invoice):
 	if doc.sendsure_state in (PAID, NEEDS_REVIEW):
 		return status(doc)
 	first = not doc.sendsure_external_id
-	out = client.send_bill(payload(doc))
+	data = payload(doc)
+	if first:
+		check_funds(doc, data["amount"])
+	out = client.send_bill(data)
 	doc.db_set("sendsure_external_id", out["external_id"])
 	apply(doc, out)
 	if first and not out.get("duplicate"):

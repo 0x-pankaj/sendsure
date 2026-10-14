@@ -227,8 +227,12 @@ def setup_usdc():
 
 
 def before_tests():
-	"""ERPNext's own test setup (a USD company with the standard chart of accounts), then ours."""
-	from erpnext.setup.utils import before_tests as erpnext_before_tests
+	"""ERPNext's own test setup (a USD company with the standard chart of accounts), then ours. ERPNext 16 has no
+	such hook any more: there, the Docker demo's setup makes the same kind of company."""
+	try:
+		from erpnext.setup.utils import before_tests as erpnext_before_tests
+	except ImportError:  # ERPNext 16
+		erpnext_before_tests = demo_company
 
 	erpnext_before_tests()
 	make_custom_fields()

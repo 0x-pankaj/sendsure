@@ -1,10 +1,11 @@
 # SendSure for ERPNext
 
-`sendsure_erpnext` is a Frappe app for ERPNext 15 (GPL-3.0, like ERPNext). It lets you pay purchase
+`sendsure_erpnext` is a Frappe app for ERPNext 15 and 16 (GPL-3.0, like ERPNext). It lets you pay purchase
 invoices in USDC on Arc from your own wallet. It pays only to an address the supplier proved by signing
 with it, and records each payment back in ERPNext with the exact amount and the Arc transaction.
 
-Built and tested on `frappe/erpnext:v15.121.6` (ERPNext 15.121.6, Frappe 15.121.2). Testnet only; not audited.
+Built on `frappe/erpnext:v15.121.6` (ERPNext 15.121.6, Frappe 15.121.2); the same 28 tests also pass on
+`frappe/erpnext:v16.50.0` (ERPNext 16.50.0, Frappe 16.52.0). Testnet only; not audited.
 
 ![A purchase invoice paid on Arc, recorded in ERPNext](docs/invoice-paid-on-arc.jpg)
 
@@ -70,7 +71,9 @@ is never reached, because the rows are rounded first.
 3. **Approve it.** An Accounts Manager clicks "Approve this payout address". SendSure checks the address
    against Arc again at that moment. Nobody else can approve, and the box cannot be ticked by editing the supplier.
 4. **Pay with SendSure.** Click it on a submitted purchase invoice. The invoice needs the supplier's invoice
-   number. It becomes an invoice the supplier confirms by signing it in SendSure. A claim for a different
+   number. The app first checks with SendSure that your wallet and budget cover it and that it is under your
+   org's per-invoice cap: Arc checks these when the supplier signs, and a claim that fails them is refused for
+   good. It becomes an invoice the supplier confirms by signing it in SendSure. A claim for a different
    amount is refused. Sending the same invoice again only returns its status.
 5. **The agent pays.** Every 5 minutes, a scheduled job asks SendSure's agent to pay the invoices the
    supplier signed. The agent pays only what passes your Arc contract's rules. A first payment, or a large
@@ -98,6 +101,9 @@ You need Docker. `run.sh` does the same as `docker-compose.yml` with plain `dock
 ./run.sh up       # ERPNext 15 + MariaDB + Redis + the app on http://127.0.0.1:18080 (Administrator / admin)
 ./run.sh test     # the app's tests inside ERPNext, on a throwaway site
 ./run.sh down     # remove everything
+
+ERPNEXT_VERSION=16 ./run.sh up     # the same on ERPNext 16, on http://127.0.0.1:18086
+ERPNEXT_VERSION=16 ./run.sh test
 ```
 
 The first `up` takes about 75 seconds once the images are there (about 4.2 GB of images, plus the site's database).
@@ -113,7 +119,7 @@ add `sendsure_erpnext` to `sites/apps.txt` and run `bench --site <site> install-
 
 ## Tests and live runs
 
-- **ERPNext tests** (`./run.sh test`), 25 in total, in [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py).
+- **ERPNext tests** (`./run.sh test`), 28 in total, on ERPNext 15 and 16, in [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py).
   SendSure's API is mocked; ERPNext is real.
   - USDC currency, account and mode of payment; invite-link parsing;
   - "Check with SendSure" reads the proven address, unapproved;
@@ -149,7 +155,7 @@ add `sendsure_erpnext` to `sites/apps.txt` and run `bench --site <site> install-
 | [`purchase_invoice.py`](sendsure_erpnext/sendsure_erpnext/purchase_invoice.py) | "Pay with SendSure", status sync, and exact recording of each settlement. |
 | [`sync.py`](sendsure_erpnext/sendsure_erpnext/sync.py) | The job ERPNext's scheduler runs every 5 minutes. |
 | [`public/js/`](sendsure_erpnext/sendsure_erpnext/public/js) | The buttons on Supplier and Purchase Invoice. Every check they trigger runs on the server. |
-| [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py) | The 25 tests, run inside ERPNext by `./run.sh test`. |
+| [`tests/test_sendsure.py`](sendsure_erpnext/sendsure_erpnext/tests/test_sendsure.py) | The 28 tests, run inside ERPNext 15 and 16 by `./run.sh test`. |
 | [`run.sh`](run.sh), [`docker/boot.sh`](docker/boot.sh), [`docker-compose.yml`](docker-compose.yml) | The Docker setup: site creation, tests, web server, worker and scheduler. |
 | [`apps/web/lib/integrations.ts`](../../apps/web/lib/integrations.ts) | SendSure's side: hashed, revocable integration keys and the `/api/v1` endpoints. |
 

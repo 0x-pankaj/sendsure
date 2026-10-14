@@ -13,10 +13,15 @@ echo /home/frappe/frappe-bench/apps/sendsure_erpnext > "$(env/bin/python -c 'imp
 grep -qx sendsure_erpnext sites/apps.txt || printf '\nsendsure_erpnext\n' >> sites/apps.txt
 sed -i '/^$/d' sites/apps.txt
 
+# ERPNext 16's MariaDB client asks for TLS by default; this local database container has none.
+[ -f ~/.my.cnf ] || printf '[client]\nskip-ssl\n' > ~/.my.cnf
+
 bench set-config -g db_host "$DB_HOST" >/dev/null
-bench set-config -g redis_cache "redis://$REDIS_HOST:6379/0" >/dev/null
-bench set-config -g redis_queue "redis://$REDIS_HOST:6379/1" >/dev/null
-bench set-config -g redis_socketio "redis://$REDIS_HOST:6379/2" >/dev/null
+# Each ERPNext version gets its own Redis databases: Frappe caches its module list there (REDIS_DB: 0 for 15, 3 for 16).
+R="${REDIS_DB:-0}"
+bench set-config -g redis_cache "redis://$REDIS_HOST:6379/$R" >/dev/null
+bench set-config -g redis_queue "redis://$REDIS_HOST:6379/$((R + 1))" >/dev/null
+bench set-config -g redis_socketio "redis://$REDIS_HOST:6379/$((R + 2))" >/dev/null
 
 until env/bin/python - <<PY 2>/dev/null
 import socket
@@ -35,14 +40,14 @@ case "${1:-serve}" in
     SITE=sendsure.localhost
     if [ ! -f "sites/$SITE/site_config.json" ]; then
       echo "First start: creating the ERPNext site (about a minute)..."
-      new_site "$SITE" sendsure_erpnext
+      new_site "$SITE" "${SITE_DB:-sendsure_erpnext}"
       # A company with the standard chart of accounts, in USD, so there is something to pay from.
       bench --site "$SITE" execute sendsure_erpnext.install.demo_company
       bench --site "$SITE" enable-scheduler
     else
       bench --site "$SITE" migrate
     fi
-    bench --site "$SITE" set-config host_name "http://127.0.0.1:18080" >/dev/null
+    bench --site "$SITE" set-config host_name "${SITE_URL:-http://127.0.0.1:18080}" >/dev/null
     bench worker --queue long,default,short &
     bench schedule &
     echo "ERPNext is on http://127.0.0.1:18080 (Administrator / admin)."
