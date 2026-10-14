@@ -7,6 +7,8 @@ import {
   SIGNATURE_TTL_SECONDS,
   ZERO_BYTES32,
   arcTestnet,
+  controllerRoleOf,
+  controllerRoleText,
   deployment,
   explorerAddress,
   explorerTx,
@@ -206,6 +208,9 @@ export default function VerifyPage() {
     }
     setBusy("sign");
     try {
+      // Before anything is signed: the org would never pay one of its own wallets (the payer trying their own link).
+      const role = await controllerRoleOf(publicClient, invite.org, signer.address).catch(() => null);
+      if (role) throw new Error(controllerRoleText(role));
       const message: BindMessage = {
         org: invite.org,
         payeeRef: invite.payeeRef,

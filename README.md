@@ -106,8 +106,8 @@ transaction as the reference, once. Live page: [`/books`](https://sendsure.0xpan
 
 | Books | How | Proof |
 |---|---|---|
-| **Odoo 19** | An add-on: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved (checked against Arc at that moment, even for the admin); the USDC journal's only way out is SendSure; each payment is recorded through Odoo's own Register Payment with the tx in the memo. | [`integrations/odoo/`](integrations/odoo/): 28 tests inside Odoo, [live run](deployments/odoo-e2e.json) 27/27 |
-| **ERPNext 15** | A Frappe app: "Pay with SendSure" on a purchase invoice. The supplier's proven address is read from SendSure and cannot be typed in, by anyone; only an Accounts Manager approves it; a Payment Entry on the SendSure mode is refused unless SendSure read the settlement from Arc; the ledger rows are read back after posting. | [`integrations/erpnext/`](integrations/erpnext/): 25 tests inside ERPNext, [live run](deployments/erpnext-e2e.json) 29/29 |
+| **Odoo 16–19** | An add-on: "Pay with SendSure" on a vendor bill. Odoo trusts only the wallet the vendor proved (checked against Arc at that moment, even for the admin); the USDC journal's only way out is SendSure; each payment is recorded through Odoo's own Register Payment with the tx in the memo. | [`integrations/odoo/`](integrations/odoo/): 37 tests inside Odoo, run on 16, 17, 18 and 19; [live run](deployments/odoo-e2e.json) (Odoo 19) 27/27 |
+| **ERPNext 15–16** | A Frappe app: "Pay with SendSure" on a purchase invoice. The supplier's proven address is read from SendSure and cannot be typed in, by anyone; only an Accounts Manager approves it; a Payment Entry on the SendSure mode is refused unless SendSure read the settlement from Arc; the ledger rows are read back after posting. | [`integrations/erpnext/`](integrations/erpnext/): 28 tests inside ERPNext, run on 15 and 16; [live run](deployments/erpnext-e2e.json) (ERPNext 15) 29/29 |
 | **beancount** | Every payment with its claim, decision hash and Arc tx; the treasury balance asserted from the chain after each payment day; movements outside SendSure as one explicit entry computed from that balance. | [`beancount.ts`](packages/core/src/beancount.ts); the [agent run's ledger](deployments/books-e2e.beancount) passes `bean-check` |
 | **hledger** | The same books as a journal with declared accounts and a balance assertion per day. hledger refuses the file if the balance is off by 0.000001. | [`ledgers.ts`](packages/core/src/ledgers.ts); the [journal](deployments/books-e2e.journal) passes `hledger check --strict` |
 | **Journal CSV, statement CSV** | A balanced general journal, and a bank-statement file (date, amount, payee, description, reference = the Arc tx) for tools that reconcile from a statement. Six decimals are kept; the download says which amounts a cents-only tool would round. | [journal](deployments/books-e2e.journal.csv), [statement](deployments/books-e2e.statement.csv), checked in the [agent run](deployments/agent-e2e.json) |
@@ -234,8 +234,8 @@ The books apps handle whole invoices in USD. What comes next, with dates: [ROADM
 |---|---|---|
 | Contracts | 47 (30 Mandate, 14 registry, 3 invariants) | `forge test` in [`contracts/`](contracts/) |
 | TypeScript | 84 (payout check and books 24, chain helpers with live cross-checks against the deployed contracts 16, web server 44) | `pnpm test` |
-| Odoo add-on | 30, inside Odoo 19 | `integrations/odoo/run.sh test` |
-| ERPNext app | 25, inside ERPNext 15, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` |
+| Odoo add-on | 37, inside Odoo 16, 17, 18 and 19 | `integrations/odoo/run.sh test` (`ODOO_VERSION=16` … `19`) |
+| ERPNext app | 28, inside ERPNext 15 and 16, including three that record what stock ERPNext does on its own | `integrations/erpnext/run.sh test` (`ERPNEXT_VERSION=16`) |
 
 Live runs against the deployed site, with throwaway keys on sandbox orgs (not traction). Each record
 lists every check it made under `checks`.

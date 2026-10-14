@@ -11,6 +11,7 @@ import {
   formatUsdc,
   mandateAbi,
   normalizeInvoiceRef,
+  readMandate,
   readPayee,
   readPendingChange,
   refHashOf,
@@ -114,9 +115,10 @@ export async function requireKey(req: Request): Promise<{ org: Address; keyId: s
 // ------------------------------------------------------------------ what a key can do
 
 export async function orgInfo(org: Address) {
-  const [owner, tier] = await Promise.all([
+  const [owner, tier, m] = await Promise.all([
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "owner" }),
     serverClient.readContract({ address: org, abi: mandateAbi, functionName: "tier" }).catch(() => 0),
+    readMandate(serverClient, org).catch(() => null),
   ]);
   return {
     org,
@@ -124,6 +126,14 @@ export async function orgInfo(org: Address) {
     tier: tier === 2 ? "sandbox" : "production",
     chain: { id: arcTestnet.id, name: arcTestnet.name },
     token: { symbol: "USDC", address: deployment.usdc, decimals: 6 },
+    // What the org can pay right now, read from Arc. The contract checks these when the payee signs a bill, and a
+    // claim that fails them is refused for good, so the books check them before sending a bill.
+    funds: m && {
+      balance: formatUsdc(m.treasuryBalance),
+      budget: formatUsdc(m.allowance),
+      claim_max: formatUsdc(m.caps.claimMax),
+      cosign_above: formatUsdc(m.caps.coSignThreshold),
+    },
   };
 }
 

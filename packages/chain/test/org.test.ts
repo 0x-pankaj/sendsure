@@ -8,6 +8,8 @@ import {
   ORG_TIER,
   SENDSURE_AGENTS,
   arcTestnet,
+  controllerRoleOf,
+  controllerRoleText,
   createOrgMessage,
   deployment,
   formatUsdc,
@@ -98,5 +100,30 @@ describe.skipIf(process.env.OFFLINE)("org helpers against Arc testnet", () => {
     expect(m.periodLength).toBe(DEFAULT_PERIOD_SECONDS);
     expect(m.circleAgentAllowed).toBe(true);
     expect(m.caps.orgPeriodCap > 0n).toBe(true);
+  });
+});
+
+describe("controllerRoleOf (offline)", () => {
+  const org = "0x2222222222222222222222222222222222222222" as Address;
+  const treasury = "0x3333333333333333333333333333333333333333" as Address;
+  const approver = "0x4444444444444444444444444444444444444444" as Address;
+  const supplier = "0x5555555555555555555555555555555555555555" as Address;
+  const reader = {
+    readContract: async ({ functionName, args }: { functionName: string; args?: readonly unknown[] }) => {
+      if (functionName === "owner") return owner;
+      if (functionName === "treasury") return treasury;
+      if (functionName === "isApprover") return args?.[0] === approver;
+      if (functionName === "isAgent") return args?.[0] === SENDSURE_AGENTS.serverAgent;
+      throw new Error(functionName);
+    },
+  } as unknown as Parameters<typeof controllerRoleOf>[0];
+
+  it("names the org's own wallets, whatever their case, and lets a supplier's wallet through", async () => {
+    expect(await controllerRoleOf(reader, org, owner.toLowerCase() as Address)).toBe("the owner of this org");
+    expect(await controllerRoleOf(reader, org, treasury)).toBe("the wallet this org pays from");
+    expect(await controllerRoleOf(reader, org, approver)).toBe("an approver of this org");
+    expect(await controllerRoleOf(reader, org, SENDSURE_AGENTS.serverAgent)).toBe("an agent of this org");
+    expect(await controllerRoleOf(reader, org, supplier)).toBeNull();
+    expect(controllerRoleText("the owner of this org")).toMatch(/never pays its own wallets/);
   });
 });

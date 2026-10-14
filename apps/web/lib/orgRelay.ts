@@ -161,7 +161,10 @@ export const CREATE_ORG: RelayKind<CreateOrgRequest> = {
   perDay: 50,
   parse: (body) => parseCreateOrg(body),
   verify: verifyCreateOrg,
-  payoutOf: (r) => `owner:${r.rules.owner}`,
+  // Its own bucket (not shared with the budget), and room for a few retries: a new payer on a call who hits a
+  // wallet hiccup must not be locked out for an hour. The daily limit above still caps the gas spent.
+  payoutOf: (r) => `create-org:${r.rules.owner}`,
+  perKey: { max: 10, windowMs: 60 * 60_000 },
   submit: submitCreateOrg,
 };
 
@@ -222,7 +225,8 @@ export const PERMIT: RelayKind<PermitRequest> = {
   perDay: 100,
   parse: (body) => parsePermit(body),
   verify: verifyPermit,
-  payoutOf: (r) => `owner:${r.message.owner}`,
+  payoutOf: (r) => `budget:${r.message.owner}`,
+  perKey: { max: 10, windowMs: 60 * 60_000 },
   submit: submitPermit,
 };
 

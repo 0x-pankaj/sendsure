@@ -219,3 +219,32 @@ export const usdcPermitAbi = [
   },
   { type: "function", name: "DOMAIN_SEPARATOR", stateMutability: "view", inputs: [], outputs: [{ type: "bytes32" }] },
 ] as const;
+
+/**
+ * Why `who` can never be paid by `org`, or null. A Mandate never pays its own owner, treasury, approvers or agents
+ * (PAYEE_IS_CONTROLLER), so such a wallet must not be proven as a payee's payout address: once bound, moving to
+ * another address needs both keys and a waiting period. Typical case: the payer tries their own invite link.
+ */
+export async function controllerRoleOf(
+  client: Pick<PublicClient, "readContract">,
+  org: Address,
+  who: Address,
+): Promise<string | null> {
+  const [owner, treasury, approver, agent] = await Promise.all([
+    client.readContract({ address: org, abi: mandateAbi, functionName: "owner" }),
+    client.readContract({ address: org, abi: mandateAbi, functionName: "treasury" }),
+    client.readContract({ address: org, abi: mandateAbi, functionName: "isApprover", args: [who] }),
+    client.readContract({ address: org, abi: mandateAbi, functionName: "isAgent", args: [who] }),
+  ]);
+  const same = (a: Address) => a.toLowerCase() === who.toLowerCase();
+  if (same(owner)) return "the owner of this org";
+  if (same(treasury)) return "the wallet this org pays from";
+  if (approver) return "an approver of this org";
+  if (agent) return "an agent of this org";
+  return null;
+}
+
+/** What a supplier (or a payer trying their own invite) is told when the wallet is one of the org's own. */
+export const controllerRoleText = (role: string): string =>
+  `This wallet is ${role}, and an org never pays its own wallets. A supplier proves a wallet of their own: ` +
+  `create a passkey wallet below, or use another account.`;

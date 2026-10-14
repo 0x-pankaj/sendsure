@@ -22,6 +22,8 @@ import {
   arcTestnet,
   bindTypedData,
   changeTypedData,
+  controllerRoleOf,
+  controllerRoleText,
   deployment,
   payeeRegistryAbi,
   readPayee,
@@ -267,6 +269,10 @@ export async function verifyBind(req: BindRequest): Promise<void> {
  */
 export async function submitBind(req: BindRequest): Promise<RelayResult> {
   const { message: m, signature } = req;
+  // The registry would accept it, but the org could never pay this address (PAYEE_IS_CONTROLLER), and undoing a
+  // bind takes both keys and a waiting period. If the read fails, the bind goes on: the contract still refuses to pay.
+  const role = await controllerRoleOf(serverClient, m.org, m.payout).catch(() => null);
+  if (role) throw new RelayError(400, controllerRoleText(role), "PAYEE_IS_CONTROLLER");
   const wallet = relayer();
   const simulate = () =>
     serverClient.simulateContract({
