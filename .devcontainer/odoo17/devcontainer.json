@@ -20,6 +20,6 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "corepack enable && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install --frozen-lockfile",
+  "postCreateCommand": "sudo corepack enable && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install --frozen-lockfile",
   "postStartCommand": "bash .devcontainer/start.sh"
 }
