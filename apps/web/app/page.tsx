@@ -488,11 +488,11 @@ export default function Home() {
           </div>
           <div className="stat">
             <b>37</b>
-            <span>tests inside Odoo, run on 16–19</span>
+            <span>tests inside Odoo 16 to 19</span>
           </div>
           <div className="stat">
             <b>29</b>
-            <span>tests inside ERPNext, run on 15–16</span>
+            <span>tests inside ERPNext 15 and 16</span>
           </div>
         </div>
         <div className="split" style={{ marginTop: 22 }}>

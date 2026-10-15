@@ -554,8 +554,8 @@ export default function DocsPage() {
             <div className="stat"><b>16</b><span>live test suites</span></div>
             <div className="stat"><b>47</b><span>contract tests</span></div>
             <div className="stat"><b>94</b><span>TypeScript tests</span></div>
-            <div className="stat"><b>37</b><span>tests inside Odoo, on 16–19</span></div>
-            <div className="stat"><b>29</b><span>tests inside ERPNext, on 15–16</span></div>
+            <div className="stat"><b>37</b><span>tests inside Odoo 16 to 19</span></div>
+            <div className="stat"><b>29</b><span>tests inside ERPNext 15 and 16</span></div>
           </div>
           <p className="hint" style={{ marginTop: 14 }}>Arc testnet only. The contracts are not audited yet.</p>
         </section>
