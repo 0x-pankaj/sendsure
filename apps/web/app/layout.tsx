@@ -80,8 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div>
                 <h4>Books</h4>
                 <ul>
-                  <li><a href="/books">Odoo 19</a></li>
-                  <li><a href="/books">ERPNext 15</a></li>
+                  <li><a href="/books">Odoo 16–19</a></li>
+                  <li><a href="/books">ERPNext 15–16</a></li>
                   <li><a href="/books">beancount and hledger</a></li>
                   <li><a href="/books">CSV journals</a></li>
                 </ul>

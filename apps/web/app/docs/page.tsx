@@ -104,8 +104,8 @@ const PARTS: [string, string, string][] = [
   ["Autopilot", "Every minute, checks whether anything changed (a new claim, a co-sign, new funds) and runs the agent only then.", "Payments happen on time without anyone pressing a button."],
   ["Decision log and anchors", "Every decision is hash-chained, the head is anchored on Arc, and each payment carries its decision's hash.", "Anyone can replay why a payment was made; edits to the log are detectable."],
   ["Invoice reader", "Claude reads a pasted invoice or a photo and quotes the exact words for each value. The quotes are checked in code.", "No retyping, and the AI cannot invent an amount without being caught."],
-  ["Odoo 19 add-on", "Pay with SendSure on a vendor bill; only the vendor's proven wallet can be trusted; payments come back through Register Payment; email the invite and each bill to sign; co-sign links; filters.", "Teams keep working in Odoo, and their books stay exact."],
-  ["ERPNext 15 app", "The same for purchase invoices: proven address read-only, Accounts Manager approval, a Payment Entry only when the amount matches exactly.", "The same safety for ERPNext teams."],
+  ["Odoo add-on (16–19)", "Pay with SendSure on a vendor bill; only the vendor's proven wallet can be trusted; payments come back through Register Payment; email the invite and each bill to sign; co-sign links; filters.", "Teams keep working in Odoo, and their books stay exact."],
+  ["ERPNext app (15–16)", "The same for purchase invoices: proven address read-only, Accounts Manager approval, a Payment Entry only when the amount matches exactly.", "The same safety for ERPNext teams."],
   ["Ledger exports", "beancount, hledger, journal CSV and bank-statement CSV, exact to 6 decimals, with balances checked against the chain.", "Works with any accounting tool."],
   ["Free payout check", "Paste a payout CSV; it flags look-alikes, changed wallets, duplicates and amount jumps against the last run. Runs in your browser.", "Useful on day one, before anyone signs up."],
   ["Shadow review", "On the payout check, Claude reviews a real payout run line by line and you mark where you agree. Nothing is paid.", "Test the agent on real data with zero risk."],
@@ -434,7 +434,7 @@ export default function DocsPage() {
             <h3>Odoo and ERPNext <a className="where" href="/books">/books</a></h3>
             <p>For teams whose bills live in their ERP.</p>
             <ol>
-              <li>Install the <a href={`${REPO}/tree/main/integrations/odoo`}>Odoo 19 add-on</a> or the <a href={`${REPO}/tree/main/integrations/erpnext`}>ERPNext 15 app</a>. A Docker setup is included: <code>./run.sh up</code>. It needs an Odoo that can install add-ons (your own server or Odoo.sh; tested on Odoo 19 Community). Odoo Online cannot install outside add-ons: there, use SendSure on its own and download your books.</li>
+              <li>Install the <a href={`${REPO}/tree/main/integrations/odoo`}>Odoo add-on</a> (Odoo 16, 17, 18 or 19) or the <a href={`${REPO}/tree/main/integrations/erpnext`}>ERPNext app</a> (ERPNext 15 or 16). A Docker setup is included: <code>./run.sh up</code>; to try it first with nothing to install, open a test Odoo in <a href={`${REPO}#try-it`}>GitHub Codespaces</a>. It needs an Odoo that can install add-ons (your own server or Odoo.sh; tested on Odoo Community 16 to 19). Odoo Online cannot install outside add-ons: there, use SendSure on its own and download your books.</li>
               <li>On <a href="/org">/org</a>, click <b>Create a books key</b>. In Odoo, open Invoicing → Settings → SendSure, paste the key and click <b>Test connection</b>. It creates USDC and a &quot;USDC on Arc&quot; journal.</li>
               <li>On a vendor, paste their SendSure invite link and click <b>Email the invite</b>; Odoo writes the email for you.</li>
               <li>Once the vendor has proved their address, click <b>Check with SendSure</b>, then a manager trusts that wallet. No other wallet can be trusted, not even by the admin.</li>
@@ -554,8 +554,8 @@ export default function DocsPage() {
             <div className="stat"><b>16</b><span>live test suites</span></div>
             <div className="stat"><b>47</b><span>contract tests</span></div>
             <div className="stat"><b>94</b><span>TypeScript tests</span></div>
-            <div className="stat"><b>30</b><span>tests inside Odoo</span></div>
-            <div className="stat"><b>25</b><span>tests inside ERPNext</span></div>
+            <div className="stat"><b>37</b><span>tests inside Odoo, on 16–19</span></div>
+            <div className="stat"><b>29</b><span>tests inside ERPNext, on 15–16</span></div>
           </div>
           <p className="hint" style={{ marginTop: 14 }}>Arc testnet only. The contracts are not audited yet.</p>
         </section>

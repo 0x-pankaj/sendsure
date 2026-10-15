@@ -41,9 +41,9 @@ export default function BooksPage() {
       </section>
 
       <section className="section">
-        <h2>Odoo 19</h2>
+        <h2>Odoo 16–19</h2>
         <p className="sub">
-          An add-on for Odoo Community. It was tested inside Odoo (31 tests) and end to end: a real Odoo bill paid on Arc
+          An add-on for Odoo Community 16, 17, 18 and 19, from one source. It was tested inside Odoo (37 tests, on each version) and end to end: a real Odoo bill paid on Arc
           testnet and recorded back, 27 of 27 checks.
         </p>
         <div className="split">
@@ -106,9 +106,9 @@ export default function BooksPage() {
       </section>
 
       <section className="section">
-        <h2>ERPNext 15</h2>
+        <h2>ERPNext 15–16</h2>
         <p className="sub">
-          A Frappe app. It was tested inside ERPNext (25 tests) and end to end: a real ERPNext purchase invoice paid on Arc
+          A Frappe app for ERPNext 15 and 16, including companies whose books are in another currency. It was tested inside ERPNext (29 tests, on both versions) and end to end: a real ERPNext purchase invoice paid on Arc
           testnet and recorded back, 29 of 29 checks.
         </p>
         <div className="split">

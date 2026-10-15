@@ -76,7 +76,7 @@ export function Integrations(props: { org: Address; signer: Signer }) {
     <div className="card" style={{ maxWidth: 900, marginTop: 14 }}>
       <h3>Connect your books (Odoo or ERPNext)</h3>
       <p className="hint">
-        The SendSure add-on for Odoo 19, or the app for ERPNext 15, sends your posted vendor bills here and records each payment
+        The SendSure add-on for Odoo (16 to 19), or the app for ERPNext (15 or 16), sends your posted vendor bills here and records each payment
         back in your books, exactly, with the Arc transaction as the reference. Your books will only pay a vendor wallet that the
         vendor proved in SendSure. The key can send bills and read their status; it can never approve, co-sign or change your rules.
       </p>

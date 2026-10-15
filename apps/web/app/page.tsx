@@ -331,12 +331,12 @@ export default function Home() {
           <ul className="checks">
             <li>
               <span>
-                <b>Odoo 19:</b> trusts only the vendor&apos;s proven wallet; payments come back through Register Payment.
+                <b>Odoo 16–19:</b> trusts only the vendor&apos;s proven wallet; payments come back through Register Payment.
               </span>
             </li>
             <li>
               <span>
-                <b>ERPNext 15:</b> a payment is recorded only if it matches the invoice exactly.
+                <b>ERPNext 15–16:</b> a payment is recorded only if it matches the invoice exactly.
               </span>
             </li>
             <li>
@@ -487,12 +487,12 @@ export default function Home() {
             <span>contract tests</span>
           </div>
           <div className="stat">
-            <b>30</b>
-            <span>tests inside Odoo 19</span>
+            <b>37</b>
+            <span>tests inside Odoo, run on 16–19</span>
           </div>
           <div className="stat">
-            <b>25</b>
-            <span>tests inside ERPNext 15</span>
+            <b>29</b>
+            <span>tests inside ERPNext, run on 15–16</span>
           </div>
         </div>
         <div className="split" style={{ marginTop: 22 }}>
