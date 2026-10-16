@@ -168,8 +168,19 @@ async function readClaim(body: unknown) {
  * same payee, invoice number and amount. The payer's books then close to the cent.
  */
 async function matchProposal(org: Address, claim: Claim, invoiceRef: string, proposalId: string | null) {
-  if (!proposalId) return null;
   const db = await getDb();
+  if (!proposalId) {
+    // The payee typed the invoice in instead of using the payer's copy: the same number and amount confirm it all the same.
+    return (
+      (await db.first<{ id: string }>(
+        "SELECT id FROM proposals WHERE org = ? AND payee_ref = ? AND invoice_ref = ? AND amount = ? AND status = 'proposed'",
+        org,
+        claim.payeeRef,
+        invoiceRef,
+        claim.amount.toString(),
+      )) ?? null
+    );
+  }
   const p = await db.first<{ id: string; amount: string }>(
     "SELECT id, amount FROM proposals WHERE id = ? AND org = ? AND payee_ref = ? AND invoice_ref = ? AND status = 'proposed'",
     proposalId,

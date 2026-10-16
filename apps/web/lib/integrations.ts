@@ -21,6 +21,7 @@ import {
 import { runAgent } from "./agent";
 import { isOwnerOrApprover, orgSalt } from "./claims";
 import { getDb } from "./db";
+import { markProposalClaimed } from "./invoices";
 import { lookupPayee } from "./lookup";
 import { RelayError, allow, isBytes32, serverClient, toAddress, toObject } from "./relayer";
 
@@ -379,7 +380,25 @@ async function settlement(org: Address, claimId: Hex, tx: Hex) {
   };
 }
 
-async function billStatus(org: Address, p: ProposalRow, origin: string) {
+/**
+ * A bill still waiting, though the payee already signed a claim with its invoice number and amount (they typed it in
+ * instead of using the payer's copy): that claim confirms it.
+ */
+async function linkTypedClaim(org: Address, p: ProposalRow): Promise<ProposalRow> {
+  const db = await getDb();
+  const claim = await db.first<{ claim_id: Hex; amount: string }>(
+    "SELECT claim_id, amount FROM claims WHERE org = ? AND payee_ref = ? AND ref_hash = ? AND status != 'withdrawn'",
+    org,
+    p.payee_ref,
+    refHashOf(await orgSalt(org), p.invoice_ref),
+  );
+  if (!claim || claim.amount !== p.amount) return p;
+  await markProposalClaimed(org, p.id, claim.claim_id);
+  return { ...p, status: "claimed", claim_id: claim.claim_id };
+}
+
+async function billStatus(org: Address, row: ProposalRow, origin: string) {
+  const p = row.status === "proposed" ? await linkTypedClaim(org, row) : row;
   const base = {
     external_id: p.external_id,
     proposal_id: p.id,

@@ -120,3 +120,46 @@ describe("what a bill waits for, as the books system shows it", () => {
     expect(waitingFor({ last_outcome: "REFUSED", agent_action: "hold" })).toBe("held_by_rules");
   });
 });
+
+describe("a bill the vendor typed in instead of using the payer's copy", () => {
+  it("is confirmed by their claim with the same invoice number and amount, and only then", async () => {
+    const { listBills } = await import("../lib/integrations");
+    const { getDb } = await import("../lib/db");
+    const { refHashOf } = await import("@sendsure/chain");
+    const db = await getDb();
+    const now = 1_790_000_000;
+    const PAYEE = `0x${"cd".repeat(32)}`;
+    const salt = `0x${"11".repeat(32)}`;
+    await db.run("INSERT OR IGNORE INTO orgs (org, ref_salt, created_at) VALUES (?, ?, ?)", ORG, salt, now);
+    const saltNow = (await db.first<{ ref_salt: string }>("SELECT ref_salt FROM orgs WHERE org = ?", ORG))!.ref_salt;
+    const proposal = (id: string, invoice: string, amount: string) =>
+      db.run(
+        `INSERT INTO proposals (id, org, payee_ref, invoice_ref, amount, period_start, period_end, description, extraction, source, status, claim_id, external_system, external_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 0, 1, '', '{}', 'odoo', 'proposed', NULL, 'odoo', ?, ?, ?)`,
+        id, ORG, PAYEE, invoice, amount, `odoo:db:account.move:${id}`, now, now,
+      );
+    const claim = (id: string, invoice: string, amount: string) =>
+      db.run(
+        `INSERT INTO claims (claim_id, org, payee_ref, payout, token, amount, ref_hash, invoice_ref, period_start, period_end, nonce, valid_until, payee_sig, description, source, status, created_at, updated_at)
+         VALUES (?, ?, ?, '0x1', '0x2', ?, ?, ?, 0, 1, '1', 9, '0x', '', 'payee', 'open', ?, ?)`,
+        id, ORG, PAYEE, amount, refHashOf(saltNow as never, invoice), invoice, now, now,
+      );
+
+    await proposal("t1", "INV-2041", "120000");
+    await claim("0xd1", "INV-2041", "120000");
+    await proposal("t2", "INV-2042", "1500000");
+    await claim("0xd2", "INV-2042", "1400000");
+    await proposal("t3", "INV-2043", "120000");
+
+    const { bills } = await listBills(ORG as never, "odoo:db:account.move:t1,odoo:db:account.move:t2,odoo:db:account.move:t3", "https://x.test");
+    const by = Object.fromEntries(bills.map((b) => [b.invoice_ref, b]));
+    expect(by["INV-2041"]?.status).toBe("signed");
+    expect(by["INV-2041"]?.claim_id).toBe("0xd1");
+    expect(by["INV-2042"]?.status).toBe("waiting_for_payee");
+    expect(by["INV-2043"]?.status).toBe("waiting_for_payee");
+    expect((await db.first<{ status: string; claim_id: string }>("SELECT status, claim_id FROM proposals WHERE id = 't1'"))).toEqual({
+      status: "claimed",
+      claim_id: "0xd1",
+    });
+  });
+});
