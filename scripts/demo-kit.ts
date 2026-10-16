@@ -187,8 +187,13 @@ async function cosign() {
   const owner = privateKeyToAccount(state.ownerKey);
   const token = await signInAs(base, owner);
   const view = await api(base, `/api/claims?org=${state.org}`, { token });
-  const waiting = ((view.body.claims ?? []) as { claim_id: Hex; claim_hex: Hex; status: string; last_outcome: string; invoice_ref?: string }[]).filter(
-    (c) => c.status === "open" && c.last_outcome === "ESCALATED",
+  // Waiting for a person: the contract asks for a co-sign (a first payment, a large one), or Claude asked for one or
+  // held a claim the rules would pay (SendSure's own pages show both as "Needs a co-sign" / "On hold").
+  type Row = { claim_id: Hex; claim_hex: Hex; status: string; last_outcome: string; agent_action: string | null; invoice_ref?: string };
+  const waiting = ((view.body.claims ?? []) as Row[]).filter(
+    (c) =>
+      c.status === "open" &&
+      (c.last_outcome === "ESCALATED" || c.agent_action === "escalate" || (c.agent_action === "hold" && c.last_outcome === "PAYABLE")),
   );
   const wallet = createWalletClient({ account: owner, chain: arcTestnet, transport: http(process.env.ARC_RPC_URL || undefined) });
   let done = 0;
