@@ -152,7 +152,7 @@ export function walletErrorText(err: unknown): string {
 export async function sendCosign(s: Signer, org: Address, claimHex: Hex): Promise<Hex> {
   const call = { address: org, abi: mandateAbi, functionName: "cosign", args: [claimHex], chain: arcTestnet } as const;
   if (s.kind === "test") {
-    return createWalletClient({ account: s.account, chain: arcTestnet, transport: http() }).writeContract(call);
+    return createWalletClient({ account: s.account, chain: arcTestnet, transport: http("/api/rpc") }).writeContract(call);
   }
   if (s.kind === "passkey") throw new Error("Co-sign with the wallet that approves payments for this org.");
   return s.client.writeContract({ ...call, account: s.address });

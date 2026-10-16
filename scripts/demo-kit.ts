@@ -31,7 +31,9 @@ import {
   usdcPermitAbi,
   type OrgRules,
 } from "@sendsure/chain";
-import { arg } from "./lib/env";
+import { arg, loadEnv } from "./lib/env";
+
+loadEnv(); // ARC_RPC_URL: Arc's public RPC can go away
 import { api, signInAs } from "./lib/relay";
 
 const base = arg("base", "https://sendsure.0xpankaj.workers.dev")!.replace(/\/$/, "");
