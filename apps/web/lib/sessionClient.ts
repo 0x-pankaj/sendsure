@@ -8,6 +8,10 @@ function randomHex(bytes: number): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Sign-ins in progress, one per wallet. A page that loads two lists at once must ask for one signature, not two: a
+// passkey allows only one prompt at a time, so the second would fail (and the payee would not see their invoices).
+const pending = new Map<string, Promise<string>>();
+
 /** A session token for this wallet: reused for a day, otherwise one sign-in signature. */
 export async function sessionToken(s: Signer, fresh = false): Promise<string> {
   if (!fresh) {
@@ -21,6 +25,15 @@ export async function sessionToken(s: Signer, fresh = false): Promise<string> {
       // No storage: sign in again.
     }
   }
+  const key = s.address.toLowerCase();
+  const running = pending.get(key);
+  if (running) return running;
+  const signingIn = signIn(s).finally(() => pending.delete(key));
+  pending.set(key, signingIn);
+  return signingIn;
+}
+
+async function signIn(s: Signer): Promise<string> {
   const issuedAt = new Date().toISOString();
   const nonce = randomHex(16);
   // The server rebuilds the message with the checksummed address, so sign exactly that text.
