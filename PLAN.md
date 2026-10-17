@@ -61,6 +61,10 @@
      A "VoidScout Signal" account quoted it (a summary, not a user: never traction). The hosted Odoo stays up at least
      until Nov 17 (Pankaj) to show users; logins on request, never the admin's.
   5. Next: the two companies Pankaj says agreed to test (their ERP and version; their OK in writing before naming them).
+- **Oct 18: submitted.** Pankaj submitted the Tameion form with his own-voice video (https://youtu.be/lUCKLU_cWYI,
+  2:46; `sendsure-video/make-me.sh`). Canteen `update traction` posted: all outreach replies in one place (4 of 26
+  replied; only Brian Pond named; what changed because of them), and two teams in talks about a mainnet payment,
+  unconfirmed, so not named or counted.
 - **Oct 17, 20:55: Canteen updated** (the Oct 16 pair was missed): `arc-canteen update product` (the mainnet beta and
   the Oct 16–17 testnet fixes, compare 5afea74...mainnet) and `update traction` (external 0 on testnet and mainnet;
   our first mainnet payment as first-party; Brian Pond's paper-check reply, by name with his permission; a German
