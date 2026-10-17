@@ -37,7 +37,7 @@
   rate-limits Cloudflare's shared IPs). Upload them with `wrangler secret bulk` from `.env.local`, never echoed.
 - **Repo:** https://github.com/0x-pankaj/sendsure (public, MIT).
 - **Hackathon-only diff:** https://github.com/0x-pankaj/sendsure/compare/tameion-baseline...main
-- **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.network`.
+- **Chain:** Arc testnet, chain id `5042002`. RPC `https://rpc.testnet.arc.io` (Arc moved its docs and RPC to arc.io; the old `rpc.testnet.arc.network` host is gone). The server uses it as `ARC_RPC_URL` since Oct 17: the Canteen RPC answered reads but could not relay transactions ("all transaction relay upstreams are unreachable").
   USDC `0x3600000000000000000000000000000000000000` (6 decimals). EURC `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a`.
 - **Deployed addresses:** [`deployments/arc-testnet.json`](deployments/arc-testnet.json).
 - **Run locally:** `pnpm install && pnpm gen && pnpm typecheck && pnpm test`; web app:

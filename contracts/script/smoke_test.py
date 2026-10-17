@@ -19,7 +19,7 @@ import time
 import uuid
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-RPC = "https://rpc.testnet.arc.network"
+RPC = "https://rpc.testnet.arc.io"
 EXPLORER = "https://explorer.testnet.arc.io"
 USDC = "0x3600000000000000000000000000000000000000"
 AGENT_WALLET = "0x9f977c4efff254a9284e69a0ae2b03e4ab851c07"
