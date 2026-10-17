@@ -5,9 +5,17 @@ invoices in USDC on Arc from your own wallet. It pays only to an address the sup
 with it, and records each payment back in ERPNext with the exact amount and the Arc transaction.
 
 Built on `frappe/erpnext:v15.121.6` (ERPNext 15.121.6, Frappe 15.121.2); the same 29 tests also pass on
-`frappe/erpnext:v16.50.0` (ERPNext 16.50.0, Frappe 16.52.0). Testnet only; not audited.
+`frappe/erpnext:v16.50.0` (ERPNext 16.50.0, Frappe 16.52.0). Testnet, or the mainnet beta (below); not audited.
 
 ![A purchase invoice paid on Arc, recorded in ERPNext](docs/invoice-paid-on-arc.jpg)
+
+### Mainnet beta (real USDC)
+
+The app uses the testnet SendSure until you change its server. To pay real USDC on Arc mainnet, set the
+server in SendSure Settings to `https://sendsure-mainnet.0xpankaj.workers.dev`, create a key in that site's
+`/org` (Connect your books), enter it and click "Test connection and set up the USDC account". The beta caps
+every invoice at 10 USDC, and SendSure is not audited. Transaction links follow the chain SendSure says it
+runs on.
 
 ## Why it exists
 
@@ -168,4 +176,4 @@ add `sendsure_erpnext` to `sites/apps.txt` and run `bench --site <site> install-
   transfer to a bank, is booked that way).
 - The Docker setup runs ERPNext's development web server with one worker and the scheduler in one
   container. It is for trying the app and for the tests, not for production.
-- Testnet only today.
+- Testnet, or the mainnet beta (at most 10 USDC a bill).

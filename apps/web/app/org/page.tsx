@@ -29,7 +29,7 @@ import { FaucetButton } from "../../components/Faucet";
 import { GetSetUp } from "../../components/GetSetUp";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
-import { BETA_MAX_BILL, ERP_NOT_YET, FEATURES, IS_MAINNET, NETWORK_NAME, TESTNET_SITE } from "../../lib/network";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME } from "../../lib/network";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
 import {
   connectBrowserWallet,
@@ -510,13 +510,7 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
       <Books org={org.org} orgName={org.name} signer={signer} payeeName={payeeName} />
       <AddInvoice org={org.org} signer={signer} vendors={org.vendors} />
       <Notify org={org.org} signer={signer} />
-      {FEATURES.erp ? (
-        <Integrations org={org.org} signer={signer} />
-      ) : (
-        <p className="hint">
-          {ERP_NOT_YET} <a href={TESTNET_SITE}>Testnet version</a>.
-        </p>
-      )}
+      <Integrations org={org.org} signer={signer} />
     </>
   );
 }

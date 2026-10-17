@@ -88,7 +88,7 @@ export async function isOnArc(s: Signer): Promise<boolean> {
   return s.kind !== "browser" || (await s.client.getChainId()) === arc.id;
 }
 
-/** Switch the wallet to Arc testnet, adding the network first if the wallet does not know it. */
+/** Switch the wallet to this build's Arc network (testnet or mainnet), adding it first if the wallet does not know it. */
 export async function switchToArc(s: Signer): Promise<void> {
   if (s.kind !== "browser") return;
   try {

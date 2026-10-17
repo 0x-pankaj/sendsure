@@ -24,6 +24,9 @@ SYSTEM = "erpnext"
 EVM_ADDRESS = re.compile(r"^0x[0-9a-fA-F]{40}$")
 PAYEE_REF = re.compile(r"0x[0-9a-fA-F]{64}")
 LOCAL_URL = re.compile(r"^http://(127\.0\.0\.1|localhost|host\.docker\.internal)(:\d+)?$")
+# The Arc chain SendSure names on every answer (header x-sendsure-chain): test USDC on testnet, real USDC on mainnet.
+MAINNET_CHAIN_ID = "5042"
+EXPLORERS = {"5042": "https://explorer.arc.io", "5042002": "https://explorer.testnet.arc.io"}
 
 
 def is_evm_address(value):
@@ -89,6 +92,7 @@ def _call(method, path, params=None, payload=None, timeout=TIMEOUT):
 		# The error text can carry the URL, never the key (it travels in a header).
 		frappe.logger("sendsure").warning(f"SendSure {method} {path} failed: {type(err).__name__}")
 		_fail(_("Could not reach SendSure. Please try again in a minute."), code="UNREACHABLE")
+	_remember_chain(res.headers.get("x-sendsure-chain"))
 	try:
 		data = res.json()
 	except ValueError:
@@ -100,6 +104,24 @@ def _call(method, path, params=None, payload=None, timeout=TIMEOUT):
 			status=res.status_code,
 		)
 	return data
+
+
+def _remember_chain(chain_id):
+	if chain_id in EXPLORERS and frappe.db.get_default("sendsure_chain_id") != chain_id:
+		frappe.db.set_default("sendsure_chain_id", chain_id)
+
+
+def is_mainnet():
+	"""True once SendSure has said it runs on Arc mainnet. Until a server says so, this is testnet."""
+	return frappe.db.get_default("sendsure_chain_id") == MAINNET_CHAIN_ID
+
+
+def explorer_tx(tx, info=None):
+	"""The transaction on Arc's explorer: SendSure's own link when it gives one, else the explorer of its chain."""
+	url = (info or {}).get("tx_url") or ""
+	if url.startswith("https://"):
+		return url
+	return "{0}/tx/{1}".format(EXPLORERS[MAINNET_CHAIN_ID if is_mainnet() else "5042002"], tx)
 
 
 # One function per endpoint, so tests can replace them.

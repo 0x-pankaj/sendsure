@@ -21,7 +21,6 @@ IN_FLIGHT = [INVOICE_STATES[s] for s in ("waiting_for_payee", "signed", "needs_c
 FIELDS = ("sendsure_state", "sendsure_reason", "sendsure_external_id", "sendsure_tx", "sendsure_amount_paid", "sendsure_receipt_url")
 USDC_DECIMALS = 6
 MICRO = Decimal("0.000001")
-EXPLORER_TX = "https://explorer.testnet.arc.io/tx/{0}"
 
 
 def validate(doc, method=None):
@@ -162,7 +161,7 @@ def check_funds(doc, amount):
 		frappe.throw(
 			_(
 				"This needs {0} USDC, but SendSure can spend only {1} USDC from your wallet now (it holds {2}, and your "
-				"budget for SendSure is {3}). Add test USDC or raise the budget in SendSure (/org), then try again: an "
+				"budget for SendSure is {3}). Add USDC or raise the budget in SendSure (/org), then try again: an "
 				"invoice the supplier signs while the money is short is refused for good."
 			).format(amount, can, funds["balance"], funds["budget"])
 		)
@@ -274,7 +273,7 @@ def record_payment(doc, info):
 			_(
 				"SendSure paid this invoice on Arc (<a href='{0}'>transaction</a>), but it was <b>not</b> recorded "
 				"automatically: {1}"
-			).format(EXPLORER_TX.format(tx), escape_html(problem)),
+			).format(escape_html(client.explorer_tx(tx, info)), escape_html(problem)),
 		)
 		return
 	doc.reload()
@@ -289,7 +288,7 @@ def record_payment(doc, info):
 			escape_html(str(paid)),
 			escape_html(doc.supplier_name),
 			escape_html(s["payout"]),
-			EXPLORER_TX.format(tx),
+			escape_html(client.explorer_tx(tx, info)),
 			escape_html(info.get("receipt_url") or ""),
 			escape_html(payment.name),
 		),

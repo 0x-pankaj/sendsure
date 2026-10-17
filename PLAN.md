@@ -15,7 +15,7 @@
   is byte-identical to testnet's (proxy and implementation code hashes checked). Beta limits, enforced by the relayer and
   by the agent at every run: 10 USDC a bill, 50 per payee, 100 a period, co-sign above 5, periods of 30+ days, budgets of
   100 or less, production orgs only; a daily gas budget per key. Off on mainnet: faucet, /try and test wallets, passkeys,
-  x402, Circle agent wallet, ERP add-on keys (their emails still say testnet). Server RPCs fail over across Circle's,
+  x402 and the Circle agent wallet. Server RPCs fail over across Circle's,
   QuickNode's, dRPC's and Blockdaemon's mainnet endpoints (`ARC_RPC_URL`, comma-separated).
   **Checked before funding:** an independent review (1 blocker, 4 high, all fixed: 55bd4c7), `scripts/rehearse-mainnet.sh`
   36/36 on an anvil fork of Arc mainnet with the real deployer key (same addresses as the real deploy), and a mainnet
@@ -23,16 +23,24 @@
   (`contracts/.env.mainnet`), relayer `0x51c3…Cf19`, server agent `0x59f3…035B` (`apps/web/.env.mainnet.local`, which
   also holds the Worker's other secrets). D1 `sendsure-mainnet` migrated. The same invite/autopilot blocker exists on
   `main` (testnet gas only): fix it there after the hackathon submission, with Pankaj's OK.
+  **ERP on mainnet (Oct 17 afternoon):** Pankaj says two companies agreed to test on mainnet (not in writing yet: name
+  nobody until they OK it in writing). The add-ons now follow the chain SendSure names on every answer (header
+  `x-sendsure-chain`; Odoo 1.3.0, ERPNext 15.0.2): vendor emails say real USDC on mainnet, transaction links use the
+  server's `tx_url` (or the chain's explorer), "Add USDC" instead of "Add test USDC"; testnet until a server says
+  otherwise. Odoo 16–19 39/39 each, ERPNext 15–16 31/31 each. "Connect your books" (`/api/org/keys`) is on for the
+  mainnet beta too, with Pankaj's OK (the auto-mode check had refused it first).
+  **Deployed Oct 17, 15:08 Kathmandu** (block 26410298, from 80c82a4), at the rehearsed addresses: PayeeRegistry
+  `0xdDAd8354D2Ad14DE137D4147B303747885D70db3`, MandateFactory `0x444Ee1C5721822ec2ECA2e52E85911CA5B1caf93`, Mandate
+  implementation `0x6a98994c7348aE13024F2F252D9c7d68622b6BBC`. 6.7M gas, 0.147 USDC; all three verified on Sourcify
+  (exact match). `deployments/arc-mainnet.json`, `pnpm gen` done. The deployer (0.363 USDC left) has no power left:
+  `setFactory` was its one call. Send its leftover back to Pankaj once he names an address.
   **Left, in order (from the worktree):**
-  1. Pankaj funds deployer 1, relayer 5, agent 5 USDC on Arc mainnet.
-  2. `cd contracts && set -a && . ./.env.mainnet && set +a && forge script script/Deploy.s.sol --rpc-url arc_mainnet --broadcast`
-     (expect PayeeRegistry `0xdDAd…0db3`, MandateFactory `0x444E…af93`, implementation `0x6a98…6BBC`).
-  3. `node scripts/record-deployment.mjs mainnet && pnpm gen`; verify on Sourcify: PayeeRegistry (constructor arg USDC),
-     MandateFactory (arg registry), Mandate implementation; set `verified: true`; commit.
-  4. `wrangler secret bulk --env mainnet` from `apps/web/.env.mainnet.local` (never echoed); `pnpm --filter @sendsure/web
+  1. ~~Fund the deployer, deploy, record, verify~~ (done, above). Pankaj funds relayer 1 and agent 1 USDC (gas ~21.7
+     gwei, base fee flat at 20: a new org ~0.01, a payee proof ~0.003, a payment 0.002–0.008; an idle site sends nothing).
+  2. `wrangler secret bulk --env mainnet` from `apps/web/.env.mainnet.local` (never echoed); `pnpm --filter @sendsure/web
      cf:deploy:mainnet` from the worktree (it has no `.env.local`, so no testnet value is bundled).
-  5. One small real payment with Pankaj's own wallets (`FIRST_PARTY_ADDRESSES`: first-party, never traction).
-  6. README note, honest X post (no outside users yet), `arc-canteen submit-showcase`.
+  3. One small real payment with Pankaj's own wallets (`FIRST_PARTY_ADDRESSES`: first-party, never traction).
+  4. README note, honest X post (no outside users yet), `arc-canteen submit-showcase`.
 - **Oct 15: Canteen updated** (missed since Oct 10): `arc-canteen update product` (Oct 11–15 work, compare 676ef63...5afea74) and `update traction` (external 0; 26 ERP companies emailed Oct 14, 3 detailed replies; only Brian Pond named, with his permission). Post the next pair at the re-submission on Oct 16.
 - **Oct 15, 11:30 check:** the site still said "Odoo 19 / ERPNext 15" and old test counts on the home page, nav, /docs and /books: now Odoo 16–19 and ERPNext 15–16, 37 and 29 tests, and a Codespaces link on /docs (live ea5c075). Demo org 0x2cE9… has 1.75 USDC, budget 9.75; local Odoo 19 is connected, Northwind invited, INV-2041 and INV-2042 in draft.
 - **Oct 14 evening: usable in one call (T42).** Odoo 16–19 and ERPNext 15–16 supported and tested; "Run the agent now"; funds checked before a bill is sent; a payer can't prove their own wallet as a supplier. A test copy on a lead's version: `ODOO_VERSION=17 ./run.sh up` (port 18017) or `ERPNEXT_VERSION=16 ./run.sh up` (port 18086); `pnpm demo-kit` connects it to a sandbox org with no wallet (the local Odoo 19 demo already is: org 0x2cE9…, key in `.sendsure-demo.json`). Leads without Docker: the Codespaces links in the README.

@@ -19,13 +19,7 @@ export const FEATURES = {
   passkey: !IS_MAINNET,
   /** x402 paid checks over Circle Gateway (testnet). */
   x402: !IS_MAINNET,
-  /** The Odoo and ERPNext add-ons: their emails and payment links still say testnet, until their next release. */
-  erp: !IS_MAINNET,
 } as const;
-
-/** What the mainnet beta says where the Odoo and ERPNext add-ons would be. */
-export const ERP_NOT_YET =
-  "The Odoo and ERPNext add-ons connect to the testnet version for now. They come to the mainnet beta with their next release.";
 
 /** The most one bill can pay on the mainnet beta, e.g. "10". */
 export const BETA_MAX_BILL = formatUsdc(MAINNET_BETA_MAX_CAPS.claimMax);

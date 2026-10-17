@@ -27,7 +27,8 @@
         Keep this email: each invoice we send for payment shows up on the same link, for you to check and sign.
     </p>
     <p style="color: #6b7280;">
-        If you did not expect this email, reply to it before you open the link. It runs on Arc testnet today, with test USDC.
+        If you did not expect this email, reply to it before you open the link.
+        <t t-out="object.env['sendsure.client'].network_note()">It runs on Arc testnet today, with test USDC.</t>
     </p>
 </div>
         </field>
@@ -61,7 +62,8 @@
         "Not mine / wrong" there and tell us.
     </p>
     <p style="color: #6b7280;">
-        If you did not expect this email, reply to it before you open the link. It runs on Arc testnet today, with test USDC.
+        If you did not expect this email, reply to it before you open the link.
+        <t t-out="object.env['sendsure.client'].network_note()">It runs on Arc testnet today, with test USDC.</t>
     </p>
 </div>
         </field>

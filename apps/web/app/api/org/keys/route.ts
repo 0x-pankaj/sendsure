@@ -1,14 +1,11 @@
 import { limitIp, respond } from "../../../../lib/http";
 import { createKey, listKeys, revokeKey } from "../../../../lib/integrations";
 import { requireSession } from "../../../../lib/session";
-import { testnetOnly } from "../../../../lib/network";
 
 export const dynamic = "force-dynamic";
 
 /** Create an integration key for a books system (owner or approver). Body: { org, label? }. */
 export function POST(req: Request) {
-  const off = testnetOnly("Connecting Odoo or ERPNext");
-  if (off) return off;
   return respond(async () => {
     limitIp(req, "keys", 20);
     return createKey(await requireSession(req), await req.json().catch(() => null));

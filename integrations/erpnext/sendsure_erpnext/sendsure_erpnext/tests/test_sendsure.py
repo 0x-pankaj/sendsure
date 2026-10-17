@@ -4,6 +4,7 @@ from unittest.mock import patch
 import frappe
 import requests
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+from frappe.cache_manager import clear_defaults_cache
 from frappe.tests.utils import FrappeTestCase
 
 from sendsure_erpnext import client, install, sync
@@ -614,3 +615,30 @@ class TestSendSure(FrappeTestCase):
 		with self.assertRaises(frappe.CharacterLengthExceededError):
 			frappe.get_doc({"doctype": "Bank Account", "account_name": "Wallet", "bank": "SendSure Test Bank",
 				"party_type": "Supplier", "party": other.name, "bank_account_no": PROVEN}).insert()
+
+	def test_links_follow_the_chain_sendsure_names(self):
+		self.addCleanup(clear_defaults_cache, "__default")  # the rollback does not reach the cache
+		self.assertFalse(client.is_mainnet())  # testnet until a server says otherwise
+		self.assertEqual(client.explorer_tx(TX), "https://explorer.testnet.arc.io/tx/" + TX)
+		client._remember_chain("5042")
+		self.assertTrue(client.is_mainnet())
+		self.assertEqual(client.explorer_tx(TX), "https://explorer.arc.io/tx/" + TX)
+		# SendSure's own link wins, but only an https one.
+		self.assertEqual(client.explorer_tx(TX, {"tx_url": "https://explorer.arc.io/tx/0x1"}), "https://explorer.arc.io/tx/0x1")
+		self.assertEqual(client.explorer_tx(TX, {"tx_url": "javascript:alert(1)"}), "https://explorer.arc.io/tx/" + TX)
+		client._remember_chain("1")  # not an Arc chain: ignored
+		self.assertTrue(client.is_mainnet())
+
+	def test_every_answer_says_which_chain(self):
+		self.addCleanup(clear_defaults_cache, "__default")
+
+		class Answer:
+			status_code = 200
+			headers = {"x-sendsure-chain": "5042"}
+
+			def json(self):
+				return {"org": ORG}
+
+		with patch.object(requests, "request", lambda *a, **kw: Answer()):
+			client._call("GET", "/api/v1/org")
+		self.assertTrue(client.is_mainnet())

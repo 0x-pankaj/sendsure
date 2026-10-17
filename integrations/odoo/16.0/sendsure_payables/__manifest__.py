@@ -13,7 +13,7 @@ SendSure for Odoo
   the Arc transaction in the memo. An amount that is not exact is left open for review, never rounded.
 """,
     # x.y.z: each Odoo version (16 to 19) puts its own series in front, e.g. 18.0.1.2.0.
-    'version': '1.2.0',
+    'version': '1.3.0',
     'category': 'Accounting/Accounting',
     'author': 'SendSure',
     'website': 'https://github.com/0x-pankaj/sendsure/tree/main/integrations/odoo',

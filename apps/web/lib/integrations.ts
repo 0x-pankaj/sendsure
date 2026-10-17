@@ -5,9 +5,11 @@
 //     to run. It can never approve, co-sign, open invites, change rules or move money itself.
 import { getAddress, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import {
+  IS_MAINNET,
   REASON_TEXT,
   arc,
   deployment,
+  explorerTx,
   formatUsdc,
   mandateAbi,
   normalizeInvoiceRef,
@@ -125,7 +127,8 @@ export async function orgInfo(org: Address) {
     org,
     owner,
     tier: tier === 2 ? "sandbox" : "production",
-    chain: { id: arc.id, name: arc.name },
+    // The books systems word their emails and link transactions by this: test USDC on testnet, real USDC on mainnet.
+    chain: { id: arc.id, name: arc.name, testnet: !IS_MAINNET, explorer: arc.blockExplorers.default.url },
     token: { symbol: "USDC", address: deployment.usdc, decimals: 6 },
     // What the org can pay right now, read from Arc. The contract checks these when the payee signs a bill, and a
     // claim that fails them is refused for good, so the books check them before sending a bill.
@@ -424,6 +427,7 @@ async function billStatus(org: Address, row: ProposalRow, origin: string) {
       reason: paid ? "Paid on Arc to the vendor's proven address." : "Recorded as paid, but the Settled event was not found yet.",
       settlement: paid,
       receipt_url: `${origin}/receipt?tx=${c.settle_tx}`,
+      tx_url: explorerTx(c.settle_tx),
     };
   }
   if (c.status === "refused") return { ...base, status: "refused", reason: c.agent_reason || reasonText };

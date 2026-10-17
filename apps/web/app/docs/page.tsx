@@ -448,7 +448,7 @@ export default function DocsPage() {
                 )}
               </li>
               <li>Click <b>Sign and confirm</b>. Your address is now proven, and the gas is paid for you.</li>
-              <li>Keep the link. For each invoice, open it again: if your client sent the invoice{FEATURES.erp ? " (Odoo can email you when one is waiting)" : ""}, check it and sign; otherwise enter the invoice number, amount and work period, then <b>Sign and send claim</b>.</li>
+              <li>Keep the link. For each invoice, open it again: if your client sent the invoice (Odoo can email you when one is waiting), check it and sign; otherwise enter the invoice number, amount and work period, then <b>Sign and send claim</b>.</li>
               <li>You are paid when the agent runs.{FEATURES.passkey && <> With a passkey wallet, the page shows your balance and lets you <b>Send USDC</b> to another wallet or an exchange.</>}</li>
             </ol>
             <p className="hint">After this, nobody can redirect your payments with an email. Changing your address needs your old wallet too.</p>

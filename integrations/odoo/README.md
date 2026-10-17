@@ -38,6 +38,13 @@ One source serves every version. What differs is kept small: the Python differen
 
 ![A vendor bill paid on Arc, recorded in Odoo](docs/bill-paid-on-arc.jpg)
 
+### Mainnet beta (real USDC)
+
+The add-on uses the testnet SendSure until you change its server. To pay real USDC on Arc mainnet, set the
+SendSure server to `https://sendsure-mainnet.0xpankaj.workers.dev`, create a key in that site's `/org`
+(Connect your books), enter it and click "Test connection". The beta caps every bill at 10 USDC, and
+SendSure is not audited. Vendor emails and transaction links follow the chain SendSure says it runs on.
+
 ## Why it exists
 
 A ledger checks that debits equal credits. A payment to the wrong wallet balances perfectly. Odoo
@@ -191,4 +198,4 @@ record the exact Arc amount with "Record SendSure payment"; any difference Odoo 
 
 The SendSure API is used only by accounting users and the cron; its methods cannot be called over RPC.
 
-One SendSure org per Odoo database. Testnet only today.
+One SendSure org per Odoo database. Testnet, or the mainnet beta (see Install).

@@ -23,6 +23,9 @@ AGENT_RUN_TIMEOUT = 150
 EVM_ADDRESS = re.compile(r'^0x[0-9a-fA-F]{40}$')
 PAYEE_REF = re.compile(r'0x[0-9a-fA-F]{64}')
 LOCAL_URL = re.compile(r'^http://(127\.0\.0\.1|localhost|host\.docker\.internal)(:\d+)?$')
+# The Arc chain SendSure names on every answer (header x-sendsure-chain): test USDC on testnet, real USDC on mainnet.
+MAINNET_CHAIN_ID = '5042'
+EXPLORERS = {'5042': 'https://explorer.arc.io', '5042002': 'https://explorer.testnet.arc.io'}
 
 
 def is_evm_address(value):
@@ -75,6 +78,7 @@ class SendSureClient(models.AbstractModel):
         except requests.RequestException as err:
             _logger.warning("SendSure %s %s failed: %s", method, path, err)
             raise SendSureError(_("Could not reach SendSure. Please try again in a minute."), code='UNREACHABLE') from err
+        self._remember_chain(res.headers.get('x-sendsure-chain'))
         try:
             data = res.json()
         except ValueError:
@@ -132,3 +136,33 @@ class SendSureClient(models.AbstractModel):
     @api.model
     def base_url(self):
         return self._config()[0]
+
+    # ------------------------------------------------------------------ which chain
+
+    @api.model
+    def _remember_chain(self, chain_id):
+        if chain_id in EXPLORERS:
+            params = self.env['ir.config_parameter'].sudo()
+            if params.get_param('sendsure.chain_id') != chain_id:
+                params.set_param('sendsure.chain_id', chain_id)
+
+    @api.model
+    def is_mainnet(self):
+        """True once SendSure has said it runs on Arc mainnet. Until a server says so, this is testnet."""
+        return self.env['ir.config_parameter'].sudo().get_param('sendsure.chain_id') == MAINNET_CHAIN_ID
+
+    @api.model
+    def explorer_tx(self, tx, info=None):
+        """The transaction on Arc's explorer: SendSure's own link when it gives one, else the explorer of its chain."""
+        url = (info or {}).get('tx_url') or ''
+        if url.startswith('https://'):
+            return url
+        chain = MAINNET_CHAIN_ID if self.is_mainnet() else '5042002'
+        return '%s/tx/%s' % (EXPLORERS[chain], tx)
+
+    @api.model
+    def network_note(self):
+        """For emails to vendors: which money this is."""
+        if self.is_mainnet():
+            return _("It runs on Arc mainnet with real USDC, in a beta with small limits. SendSure is not audited yet.")
+        return _("It runs on Arc testnet today, with test USDC.")

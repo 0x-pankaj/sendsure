@@ -31,7 +31,6 @@ IN_FLIGHT = ('waiting_for_payee', 'signed', 'needs_cosign', 'held', 'paid_unconf
 # Ended without a payment: the bill may be sent again (after it is withdrawn from SendSure).
 RESENDABLE = ('withdrawn', 'rejected_by_payee', 'refused')
 USDC_DECIMALS = 6
-EXPLORER_TX = 'https://explorer.testnet.arc.io/tx/%s'
 
 
 class AccountMove(models.Model):
@@ -148,7 +147,7 @@ class AccountMove(models.Model):
         if total > min(balance, budget):
             raise UserError(_(
                 "This needs %(total)s USDC, but SendSure can spend only %(can)s USDC from your wallet now (it holds "
-                "%(balance)s, and your budget for SendSure is %(budget)s). Add test USDC or raise the budget in SendSure "
+                "%(balance)s, and your budget for SendSure is %(budget)s). Add USDC or raise the budget in SendSure "
                 "(/org), then try again: a bill the vendor signs while the money is short is refused for good.",
                 total=total, can=min(balance, budget), balance=funds['balance'], budget=funds['budget']))
 
@@ -317,7 +316,7 @@ class AccountMove(models.Model):
             self.write(dict(base, sendsure_state='needs_review', sendsure_reason=problem[:250]))
             self._message_log(body=Markup(_(
                 "SendSure paid this bill on Arc (<a href='%(url)s'>transaction</a>), but it was <b>not</b> recorded "
-                "automatically: %(problem)s")) % {'url': EXPLORER_TX % tx, 'problem': escape(problem)})
+                "automatically: %(problem)s")) % {'url': self.env['sendsure.client'].explorer_tx(tx, info), 'problem': escape(problem)})
             return
         company = self.company_id
         journal = company.sendsure_journal_id
@@ -357,7 +356,7 @@ class AccountMove(models.Model):
             "<a href='%(url)s'>Transaction</a> · <a href='%(receipt)s'>SendSure receipt</a> (the vendor's proof of address, "
             "their signed claim and the agent's decision). Recorded as %(payment)s.")) % {
                 'amount': escape(str(paid)), 'vendor': escape(vendor.name), 'payout': escape(s['payout']),
-                'url': EXPLORER_TX % tx, 'receipt': escape(info.get('receipt_url') or ''),
+                'url': self.env['sendsure.client'].explorer_tx(tx, info), 'receipt': escape(info.get('receipt_url') or ''),
                 'payment': escape(', '.join(payments.mapped('name')))})
 
     def _sendsure_exactness_problem(self, paid, payout, accept_difference=False):

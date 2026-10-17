@@ -459,6 +459,7 @@ class TestSendSure(AccountTestInvoicingCommon):
         self.assertIn(REF, composer.body)
         self.assertIn(ORG, composer.body)
         self.assertIn(self.vendor, composer.partner_ids)
+        self.assertIn('Arc testnet today, with test USDC', composer.body)  # until SendSure says it is on mainnet
 
     def test_a_bill_waiting_for_the_vendor_can_be_emailed_to_them(self):
         self.env['ir.config_parameter'].sudo().set_param('sendsure.org', ORG)
@@ -480,3 +481,35 @@ class TestSendSure(AccountTestInvoicingCommon):
     def test_a_bill_waiting_for_a_cosign_links_to_sendsure(self):
         action = self._bill().action_sendsure_open()
         self.assertEqual(action['url'], self.env['sendsure.client'].base_url() + '/org')
+
+    def test_links_and_emails_follow_the_chain_sendsure_names(self):
+        client = self.env['sendsure.client']
+        self.assertFalse(client.is_mainnet())  # testnet until a server says otherwise
+        self.assertEqual(client.explorer_tx(TX), 'https://explorer.testnet.arc.io/tx/%s' % TX)
+        client._remember_chain('5042')
+        self.assertTrue(client.is_mainnet())
+        self.assertEqual(client.explorer_tx(TX), 'https://explorer.arc.io/tx/%s' % TX)
+        # SendSure's own link wins, but only an https one.
+        self.assertEqual(client.explorer_tx(TX, {'tx_url': 'https://explorer.arc.io/tx/0x1'}), 'https://explorer.arc.io/tx/0x1')
+        self.assertEqual(client.explorer_tx(TX, {'tx_url': 'javascript:alert(1)'}), 'https://explorer.arc.io/tx/%s' % TX)
+        client._remember_chain('1')  # not an Arc chain: ignored
+        self.assertTrue(client.is_mainnet())
+        self.env['ir.config_parameter'].sudo().set_param('sendsure.org', ORG)
+        self.vendor.invalidate_recordset(['sendsure_invite_url'])
+        self.vendor.email = 'maria@lopez.design'
+        body = self._composer(self.vendor.action_sendsure_email_invite()).body
+        self.assertIn('Arc mainnet with real USDC', body)
+        self.assertNotIn('test USDC', body)
+
+    def test_every_answer_says_which_chain(self):
+        class Answer:
+            status_code = 200
+            headers = {'x-sendsure-chain': '5042'}
+
+            def json(self):
+                return {'org': ORG}
+
+        self.env['ir.config_parameter'].sudo().set_param('sendsure.api_key', 'ssk_test')
+        with patch('odoo.addons.sendsure_payables.models.sendsure_client.requests.request', lambda *a, **kw: Answer()):
+            self.env['sendsure.client']._call('GET', '/api/v1/org')
+        self.assertTrue(self.env['sendsure.client'].is_mainnet())
