@@ -8,6 +8,7 @@
 import { createPublicClient, encodeFunctionData, erc20Abi, getAddress, zeroHash, type Address, type Hex } from "viem";
 import { createBundlerClient, toWebAuthnAccount, type BundlerClient, type SmartAccount } from "viem/account-abstraction";
 import { arc, deployment, encodeClaim, mandateAbi, payeeRegistryAbi, type Claim } from "@sendsure/chain";
+import { FEATURES } from "./network";
 
 // A Client Key is public by design (it only works from the domains set for it in Circle's Console).
 const CLIENT_KEY = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY ?? "";
@@ -21,8 +22,9 @@ export interface PasskeySigner {
   bundler: BundlerClient;
 }
 
+/** Off on the mainnet beta: the passkey wallet's gas comes from Circle Gas Station, which lists Arc for testnet only. */
 export const passkeysAvailable = (): boolean =>
-  Boolean(CLIENT_KEY) && typeof window !== "undefined" && typeof window.PublicKeyCredential !== "undefined";
+  FEATURES.passkey && Boolean(CLIENT_KEY) && typeof window !== "undefined" && typeof window.PublicKeyCredential !== "undefined";
 
 async function fromCredential(credential: unknown): Promise<PasskeySigner> {
   const sdk = await import("@circle-fin/modular-wallets-core");

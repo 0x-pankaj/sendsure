@@ -11,6 +11,7 @@
 //   7. the new log head is anchored on-chain with Mandate.anchor
 import { erc20Abi, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import {
+  MAINNET_BETA_MAX_CAPS,
   OUTCOMES,
   REASONS,
   REASON_TEXT,
@@ -30,6 +31,7 @@ import { getDb, type Db } from "./db";
 import { appendDecision, head } from "./decisionLog";
 import { PROVIDER, lastModel, modelConfigured, primaryModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
 import { agentWallet } from "./orgRelay";
+import { IS_MAINNET } from "./network";
 import { sendAndWait, serverClient } from "./relayer";
 
 export type Action = "pay" | "escalate" | "hold" | "close";
@@ -313,6 +315,10 @@ async function modelPlan(
 const SETTLE_EVENTS = ["Settled", "Escalated", "Refused", "AlreadySettled"] as const;
 
 async function settleOnChain(org: Address, item: Item, decisionHash: Hex): Promise<{ hash: Hex; outcome: string }> {
+  // Mainnet beta (contracts not audited): the agent never pays more than the beta ceiling, whatever an org's caps say.
+  if (IS_MAINNET && item.claim.amount > MAINNET_BETA_MAX_CAPS.claimMax) {
+    throw new Error(`above the mainnet beta limit of ${formatUsdc(MAINNET_BETA_MAX_CAPS.claimMax)} USDC a bill`);
+  }
   const wallet = agentWallet();
   const { request, result } = await serverClient.simulateContract({
     account: wallet.account,

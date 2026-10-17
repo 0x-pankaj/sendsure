@@ -15,11 +15,15 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
+  IS_MAINNET,
+  MAINNET_BETA_MAX_CAPS,
   ORG_TIER,
   SENDSURE_AGENTS,
+  SENDSURE_AGENT_LIST,
   arc,
   createOrgMessage,
   deployment,
+  formatUsdc,
   initParams,
   inviteBatchHash,
   mandateAbi,
@@ -87,13 +91,34 @@ function toCaps(v: unknown): CapsInput {
   return caps;
 }
 
+/** Mainnet beta (contracts not audited): no sandbox orgs, and no caps above the beta ceiling. */
+export function checkBetaLimits(caps: CapsInput, sandbox: boolean): void {
+  if (sandbox) {
+    throw new RelayError(400, "The mainnet beta has no test orgs. To try SendSure with test money, use the testnet site.", "BETA_LIMIT");
+  }
+  const max = MAINNET_BETA_MAX_CAPS;
+  if (
+    caps.claimMax > max.claimMax ||
+    caps.payeePeriodCap > max.payeePeriodCap ||
+    caps.orgPeriodCap > max.orgPeriodCap ||
+    caps.coSignThreshold > max.coSignThreshold
+  ) {
+    throw new RelayError(
+      400,
+      `The mainnet beta allows at most ${formatUsdc(max.claimMax)} USDC a bill, ${formatUsdc(max.payeePeriodCap)} per payee and ` +
+        `${formatUsdc(max.orgPeriodCap)} in all per period, with a person co-signing above ${formatUsdc(max.coSignThreshold)}.`,
+      "BETA_LIMIT",
+    );
+  }
+}
+
 export function parseCreateOrg(body: unknown, nowSec = Math.floor(Date.now() / 1000)): CreateOrgRequest {
   const b = toObject(body);
   if (!isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
   const owner = toAddress(b.owner, "owner");
   const approvers = Array.isArray(b.approvers) ? b.approvers.map((a, i) => toAddress(a, `approvers[${i}]`)) : [];
   if (approvers.length < 1 || approvers.length > 3) throw new RelayError(400, "Name one to three approvers.", "BAD_INPUT");
-  const agents = Object.values(SENDSURE_AGENTS).map((a) => a.toLowerCase());
+  const agents = SENDSURE_AGENT_LIST.map((a) => a.toLowerCase());
   if ([owner, ...approvers].some((a) => agents.includes(a.toLowerCase()))) {
     throw new RelayError(400, "The owner and approvers must be your own addresses, not SendSure's agents.", "BAD_INPUT");
   }
@@ -106,8 +131,10 @@ export function parseCreateOrg(body: unknown, nowSec = Math.floor(Date.now() / 1
     throw new RelayError(400, "The address-change wait must be whole days (1 to 30).", "BAD_INPUT");
   }
   if (typeof b.sandbox !== "boolean") throw new RelayError(400, "sandbox must be true or false.", "BAD_INPUT");
+  const caps = toCaps(b.caps);
+  if (IS_MAINNET) checkBetaLimits(caps, b.sandbox);
   return {
-    rules: { owner, approvers, caps: toCaps(b.caps), periodLength, changeCooldown, sandbox: b.sandbox },
+    rules: { owner, approvers, caps, periodLength, changeCooldown, sandbox: b.sandbox },
     validUntil: toValidUntil(b.validUntil, nowSec),
     signature: b.signature,
   };

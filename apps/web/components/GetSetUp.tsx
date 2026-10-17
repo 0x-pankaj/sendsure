@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CONTACT_URL } from "../lib/contact";
+import { NETWORK_NAME } from "../lib/network";
 
 /** "Get set up": a team that wants help leaves a way to reach them. Nothing is sent until they press the button. */
 export function GetSetUp({ source, title }: { source: string; title?: string }) {
@@ -49,7 +50,7 @@ export function GetSetUp({ source, title }: { source: string; title?: string }) 
       <h3 style={{ marginTop: 0 }}>{title ?? "Want help running your next payout through SendSure?"}</h3>
       <p className="hint">
         We set it up with you on a 20-minute call: your payout file, your contractors proving their addresses, one rehearsal
-        payout on Arc testnet. Free.
+        payout on {NETWORK_NAME}. Free.
       </p>
       {!open ? (
         <div className="row" style={{ marginTop: 10 }}>

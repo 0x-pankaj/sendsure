@@ -1,11 +1,14 @@
 import { lookupPayee } from "../../../../lib/lookup";
 import { toAddress, toObject } from "../../../../lib/relayer";
 import { withPayment } from "../../../../lib/x402";
+import { testnetOnly } from "../../../../lib/network";
 
 export const dynamic = "force-dynamic";
 
 /** Paid (x402, Circle Gateway): { org, address } -> is this the address this payee proved? $0.001. */
 export function POST(req: Request) {
+  const off = testnetOnly("x402 paid checks");
+  if (off) return off;
   return withPayment(req, {
     price: "$0.001",
     description: "SendSure Verification of Payee: is this the payout address the payee proved for this org, right now?",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DemoBooks } from "../../components/DemoBooks";
+import { FEATURES, TESTNET_SITE } from "../../lib/network";
 
 export const metadata: Metadata = {
   title: "SendSure: books",
@@ -198,13 +199,19 @@ export default function BooksPage() {
             </p>
           </div>
         </div>
-        <div className="band" style={{ marginTop: 16 }}>
-          <b>Download a sample</b>
-          <p className="hint" style={{ marginTop: 4 }}>
-            The books of the public demo org (a sandbox: our own test payments on Arc testnet), read from the chain right now.
+        {FEATURES.tryIt ? (
+          <div className="band" style={{ marginTop: 16 }}>
+            <b>Download a sample</b>
+            <p className="hint" style={{ marginTop: 4 }}>
+              The books of the public demo org (a sandbox: our own test payments on Arc testnet), read from the chain right now.
+            </p>
+            <DemoBooks />
+          </div>
+        ) : (
+          <p className="hint" style={{ marginTop: 16 }}>
+            A sample of the books (the demo org&apos;s test payments) is on the <a href={`${TESTNET_SITE}/books`}>testnet site</a>.
           </p>
-          <DemoBooks />
-        </div>
+        )}
         <p className="hint">
           Your own team&apos;s books are in <a href="/org">/org</a> under &ldquo;Your books&rdquo;. Payee names are added in your
           browser; they never reach our server. The writers: <a href={`${REPO}/packages/core/src/beancount.ts`}>beancount.ts</a>,{" "}

@@ -1,5 +1,6 @@
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { CONTACT_URL } from "../lib/contact";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NOTE, TESTNET_SITE } from "../lib/network";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -32,6 +33,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={sans.variable}>
       <body style={{ fontFamily: "var(--font-jakarta), var(--font-sans)" }}>
+        {IS_MAINNET && (
+          <div className="beta-bar" role="note">
+            <div className="wrap">
+              <strong>Mainnet beta.</strong> Real USDC on Arc. The contracts are not audited: at most {BETA_MAX_BILL} USDC a
+              bill. To try SendSure with test money, use the <a href={TESTNET_SITE}>testnet version</a>.
+            </div>
+          </div>
+        )}
         <header className="site">
           <div className="wrap">
             <a className="brand" href="/">
@@ -41,15 +50,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav aria-label="Main">
               <a href="/check">Check a payout</a>
               <a href="/org">For payers</a>
-              <a href="/try">Try it</a>
+              {FEATURES.tryIt && <a href="/try">Try it</a>}
               <a href="/books">Books</a>
               <a href="/docs">Docs</a>
               <a href="/dashboard">Dashboard</a>
             </nav>
             <div className="actions">
-              <a className="btn secondary" href="/try">
-                Try the demo
-              </a>
+              {FEATURES.tryIt ? (
+                <a className="btn secondary" href="/try">
+                  Try the demo
+                </a>
+              ) : (
+                <a className="btn secondary" href={TESTNET_SITE}>
+                  Try it on testnet
+                </a>
+              )}
               <a className="btn" href="/org">
                 Set up your team
               </a>
@@ -71,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <h4>Product</h4>
                 <ul>
                   <li><a href="/check">Check a payout</a></li>
-                  <li><a href="/try">Try it, no wallet</a></li>
+                  {FEATURES.tryIt && <li><a href="/try">Try it, no wallet</a></li>}
                   <li><a href="/org">Set up your team</a></li>
                   <li><a href="/verify">For payees</a></li>
                   <li><a href="/docs">How it works</a></li>
@@ -90,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <h4>Developers</h4>
                 <ul>
                   <li><a href={REPO}>GitHub (MIT)</a></li>
-                  <li><a href="/api/x402">Paid checks (x402)</a></li>
+                  {FEATURES.x402 && <li><a href="/api/x402">Paid checks (x402)</a></li>}
                   <li><a href={`${REPO}#try-it`}>MCP server</a></li>
                   <li><a href="/status">System status</a></li>
                 </ul>
@@ -105,7 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <div className="legal">
-              <span>Arc testnet only · not audited · open source (MIT; Odoo add-on LGPL-3, ERPNext app GPL-3)</span>
+              <span>{NETWORK_NOTE} · open source (MIT; Odoo add-on LGPL-3, ERPNext app GPL-3)</span>
               <span>Built during the Tameion Agents Hackathon</span>
             </div>
           </div>

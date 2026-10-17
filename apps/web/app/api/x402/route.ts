@@ -1,7 +1,11 @@
+import { testnetOnly } from "../../../lib/network";
+
 export const dynamic = "force-dynamic";
 
 /** Free catalog of SendSure's paid agent endpoints (x402 over Circle Gateway Nanopayments). */
 export function GET(req: Request) {
+  const off = testnetOnly("x402 paid checks");
+  if (off) return off;
   const base = new URL(req.url).origin;
   return Response.json({
     provider: "SendSure",

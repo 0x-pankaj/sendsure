@@ -6,6 +6,7 @@ import { deployment, explorerAddress, explorerTx, formatUsdc, usdc } from "@send
 import { publicClient } from "../lib/arc";
 import { sendUsdcWithPasskey, type PasskeySigner } from "../lib/passkey";
 import { walletErrorText } from "../lib/wallet";
+import { NETWORK_NAME } from "../lib/network";
 
 /** The payee's passkey wallet: what it holds, and a way to move it out. Gas is paid by Circle Gas Station. */
 export function PasskeyWallet({ signer }: { signer: PasskeySigner }) {
@@ -53,7 +54,7 @@ export function PasskeyWallet({ signer }: { signer: PasskeySigner }) {
         <a className="mono" href={explorerAddress(signer.address)}>
           {signer.address}
         </a>{" "}
-        holds <b>{balance === null ? "…" : formatUsdc(balance)} USDC</b> (Arc testnet).
+        holds <b>{balance === null ? "…" : formatUsdc(balance)} USDC</b> ({NETWORK_NAME}).
       </p>
       <p className="hint">
         Only your passkey can move it. Your phone keeps the passkey (iCloud Keychain or Google Password Manager), so it comes with

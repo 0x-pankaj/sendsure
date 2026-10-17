@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { explorerAddress, explorerTx } from "@sendsure/chain";
+import { NETWORK_NAME } from "../../lib/network";
 
 type Tier = "external" | "first-party" | "sandbox";
 interface Bucket {
@@ -57,7 +58,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <h1>SendSure on Arc testnet, in numbers</h1>
+      <h1>SendSure on {NETWORK_NAME}, in numbers</h1>
       <p className="lede">
         Counted only from on-chain events of the SendSure contracts, so every number links to a transaction. Sandbox activity is
         shown but never counted as traction.

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CONTACT_URL } from "../../lib/contact";
+import { BETA_MAX_BILL, IS_MAINNET } from "../../lib/network";
 
 export const metadata: Metadata = { title: "What SendSure stores" };
 
@@ -8,7 +9,17 @@ export default function DataPage() {
     <>
       <h1>What SendSure stores, and where</h1>
       <p className="lede">
-        SendSure runs on Arc <b>testnet</b>: the USDC is test money with no value. It is open source, so everything below can be
+        {IS_MAINNET ? (
+          <>
+            This is SendSure&apos;s <b>mainnet beta</b>: the USDC is real money, and the contracts are not audited, so each bill is
+            capped at {BETA_MAX_BILL} USDC.
+          </>
+        ) : (
+          <>
+            SendSure runs on Arc <b>testnet</b>: the USDC is test money with no value.
+          </>
+        )}{" "}
+        It is open source, so everything below can be
         checked in <a href="https://github.com/0x-pankaj/sendsure/tree/main/apps/web/migrations">the database schema</a>.
       </p>
 

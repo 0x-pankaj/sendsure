@@ -7,6 +7,7 @@ import { authedFetch, jsonOrThrow } from "../lib/sessionClient";
 import { submitClaimWithPasskey } from "../lib/passkey";
 import { sendCosign, signClaim, walletErrorText, type Signer } from "../lib/wallet";
 import { PayeeInvoices, type InvoiceProposal } from "./Invoices";
+import { FEATURES } from "../lib/network";
 
 export interface ClaimView {
   claim_id: Hex;
@@ -327,7 +328,9 @@ export function OrgClaims(props: { org: Address; signer: Signer; payeeName: (ref
       const text = walletErrorText(err);
       setError(
         /insufficient funds|gas/i.test(text)
-          ? "Your wallet needs a little testnet USDC for gas. Use \"Get 2 test USDC from SendSure\" at the top of this page, or faucet.circle.com (Arc testnet)."
+          ? FEATURES.faucet
+            ? "Your wallet needs a little testnet USDC for gas. Use \"Get 2 test USDC from SendSure\" at the top of this page, or faucet.circle.com (Arc testnet)."
+            : "Your wallet needs a little USDC on Arc mainnet for gas (about a cent)."
           : text,
       );
     } finally {

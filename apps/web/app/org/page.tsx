@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAddress, isAddress, type Address, type Hex } from "viem";
 import {
+  DEFAULT_CAPS,
   DEFAULT_PERIOD_SECONDS,
   createOrgMessage,
   deployment,
@@ -28,6 +29,7 @@ import { FaucetButton } from "../../components/Faucet";
 import { GetSetUp } from "../../components/GetSetUp";
 import { OrgClaims } from "../../components/Claims";
 import { publicClient } from "../../lib/arc";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME } from "../../lib/network";
 import { inviteLink, loadOrgs, newSalt, parseVendorLines, saveOrg, type SavedOrg, type Vendor } from "../../lib/orgStore";
 import {
   connectBrowserWallet,
@@ -136,9 +138,11 @@ export default function OrgPage() {
             <button className="btn" disabled={busy} onClick={() => connect("browser")}>
               {busy ? "Waiting for your wallet…" : "Connect wallet"}
             </button>
-            <button className="btn secondary" disabled={busy} onClick={() => connect("test")}>
-              Try it with a test wallet
-            </button>
+            {FEATURES.tryIt && (
+              <button className="btn secondary" disabled={busy} onClick={() => connect("test")}>
+                Try it with a test wallet
+              </button>
+            )}
           </div>
           {busy && (
             <p className="notice">
@@ -147,14 +151,16 @@ export default function OrgPage() {
             </p>
           )}
           <p className="hint">
-            This wallet becomes the owner and the treasury: payments come from it, only inside the rules you set. Arc testnet
-            only.
+            This wallet becomes the owner and the treasury: payments come from it, only inside the rules you set.{" "}
+            {IS_MAINNET
+              ? `Arc mainnet beta: real USDC, contracts not audited, at most ${BETA_MAX_BILL} USDC a bill.`
+              : "Arc testnet only."}
           </p>
         </div>
       ) : !onArc ? (
         <p>
           <button className="btn" onClick={doSwitch}>
-            Switch to Arc testnet
+            Switch to {NETWORK_NAME}
           </button>
         </p>
       ) : (
@@ -245,10 +251,10 @@ function CreateOrg(props: { signer: Signer; onCreated: (org: SavedOrg) => void; 
   const { signer, onCreated, onCancel } = props;
   const [name, setName] = useState("");
   const [approver, setApprover] = useState("");
-  const [total, setTotal] = useState("100");
-  const [perPayee, setPerPayee] = useState("50");
-  const [perClaim, setPerClaim] = useState("50");
-  const [cosign, setCosign] = useState("25");
+  const [total, setTotal] = useState(formatUsdc(DEFAULT_CAPS.orgPeriodCap));
+  const [perPayee, setPerPayee] = useState(formatUsdc(DEFAULT_CAPS.payeePeriodCap));
+  const [perClaim, setPerClaim] = useState(formatUsdc(DEFAULT_CAPS.claimMax));
+  const [cosign, setCosign] = useState(formatUsdc(DEFAULT_CAPS.coSignThreshold));
   const [changeDays, setChangeDays] = useState("1");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -430,7 +436,7 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
         await new Promise((r) => setTimeout(r, 1000));
       }
     } catch {
-      setLoadError("Could not reach Arc testnet. Refresh to try again.");
+      setLoadError(`Could not reach ${NETWORK_NAME}. Refresh to try again.`);
     }
   }, [org]);
 
@@ -470,10 +476,16 @@ function OrgView(props: { org: SavedOrg; signer: Signer; onChange: (org: SavedOr
         {loadError && <p className="notice">{loadError}</p>}
         {view && view.treasuryBalance < view.caps.claimMax && (
           <p className="notice warn">
-            Your wallet holds {formatUsdc(view.treasuryBalance)} USDC: that is what SendSure can pay from (testnet USDC, no
-            value).
-            <FaucetButton signer={signer} onDone={() => setTimeout(() => void refresh(), 2000)} /> Or get more at{" "}
-            <a href="https://faucet.circle.com">faucet.circle.com</a> (pick Arc testnet).
+            Your wallet holds {formatUsdc(view.treasuryBalance)} USDC: that is what SendSure can pay from
+            {FEATURES.faucet ? (
+              <>
+                {" "}(testnet USDC, no value).
+                <FaucetButton signer={signer} onDone={() => setTimeout(() => void refresh(), 2000)} /> Or get more at{" "}
+                <a href="https://faucet.circle.com">faucet.circle.com</a> (pick Arc testnet).
+              </>
+            ) : (
+              <>. Send USDC to this wallet on Arc mainnet to pay bills.</>
+            )}
           </p>
         )}
         <p className="hint">

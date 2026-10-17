@@ -19,5 +19,29 @@
       "database_id": "4b2134c8-7d8c-4200-b611-8f521767ca3d",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  // The mainnet beta (real USDC, contracts not audited, at most 10 USDC a bill): its own Worker and database.
+  //   build + deploy:  pnpm --filter @sendsure/web cf:deploy:mainnet
+  //   migrations:      npx wrangler d1 migrations apply sendsure-mainnet --remote --env mainnet
+  //   secrets:         wrangler secret bulk --env mainnet, from .env.mainnet.local (fresh mainnet keys, never the testnet ones)
+  "env": {
+    "mainnet": {
+      "name": "sendsure-mainnet",
+      "triggers": { "crons": ["* * * * *"] },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sendsure-mainnet",
+          "database_id": "eaefeb1e-77c9-43df-890c-fcee3f1615ae",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": {
+        "NEXT_PUBLIC_ARC_NETWORK": "mainnet",
+        // OpenNext fills missing settings from the .env.local it bundled at build time (testnet keys); in its
+        // "test" mode it skips .env.local, so only this Worker's own mainnet secrets apply.
+        "NEXTJS_ENV": "test"
+      }
+    }
+  }
 }

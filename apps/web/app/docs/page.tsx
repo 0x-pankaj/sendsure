@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { arc, deployment, explorerAddress } from "@sendsure/chain";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, TESTNET_SITE } from "../../lib/network";
 
 export const metadata: Metadata = {
   title: "SendSure: how it works",
@@ -141,8 +143,12 @@ const FAQ: [string, React.ReactNode][] = [
   ["What if the AI makes a mistake?", <>Claude can only make a decision stricter: hold a payment or ask a person. It can never pay something the contract would refuse, change an amount or add a payee. The worst AI mistake is a delay.</>],
   ["What if a payee loses their wallet?", <>They prove a new address. A change needs the old key and the new key plus a waiting period; if the old key is lost, the payer revokes the payee and sends a new invite. A passkey wallet lives in the phone&apos;s passkey store (iCloud Keychain or Google Password Manager), so it moves with them to a new phone.</>],
   ["Do payees need to understand crypto?", <>No. They open a link and sign once, or create a passkey wallet with Face ID. Gas is paid for them.</>],
-  ["Why testnet?", <>The contracts are not audited yet. Teams rehearse real payouts with their real contractors on Arc testnet first. Mainnet comes after an audit, with design partners.</>],
-  ["What does it cost?", <>It is free on testnet, and the payout check is always free. Other agents pay per call for checks: $0.001 to verify a payee, $0.005 for a payout file.</>],
+  IS_MAINNET
+    ? ["Why a beta?", <>The contracts are not audited yet, so the mainnet beta caps every bill at {BETA_MAX_BILL} USDC and SendSure&apos;s agent never pays more. To rehearse with test money first, use the <a href={TESTNET_SITE}>testnet version</a>.</>]
+    : ["Why testnet?", <>The contracts are not audited yet. Teams rehearse real payouts with their real contractors on Arc testnet first. Mainnet comes after an audit, with design partners.</>],
+  IS_MAINNET
+    ? ["What does it cost?", <>SendSure pays the gas (about a cent per bill on Arc) and charges no fee during the beta. The payout check is always free.</>]
+    : ["What does it cost?", <>It is free on testnet, and the payout check is always free. Other agents pay per call for checks: $0.001 to verify a payee, $0.005 for a payout file.</>],
   ["Which chains and currencies?", <>Payouts are USDC on Arc, and payout addresses are EVM addresses. The free check also reads Solana, Tron, Stellar, Cosmos, bitcoin (bc1) and Polkadot addresses.</>],
   ["Is it open source?", <>Yes: MIT for the core; the Odoo add-on is LGPL-3 and the ERPNext app GPL-3, as those ecosystems require. Every live test run is recorded in the repo.</>],
   ["What does the dashboard count?", <>Only on-chain events from orgs SendSure created, split into outside teams, our own team and our tests. Only outside teams count as usage.</>],
@@ -391,7 +397,7 @@ export default function DocsPage() {
 
         <section id="use">
           <h2>How to use it</h2>
-          <p className="sub">Everything runs on Arc testnet with test USDC, so nobody risks real money. Pick your role.</p>
+          <p className="sub">{IS_MAINNET ? `This is the mainnet beta: real USDC, at most ${BETA_MAX_BILL} USDC a bill. Pick your role.` : "Everything runs on Arc testnet with test USDC, so nobody risks real money. Pick your role."}</p>
           <div className="roles">
             <a href="#payer">Teams who pay</a>
             <a href="#payee">Payees</a>
@@ -405,9 +411,9 @@ export default function DocsPage() {
             <h3>Teams who pay <a className="where" href="/org">/org</a></h3>
             <p>For an agency, startup, DAO or grant program that pays people in USDC.</p>
             <ol>
-              <li>Open <a href="/org">/org</a> and connect the wallet that holds the team&apos;s USDC. The page adds Arc testnet for you.</li>
-              <li>No test USDC? Click <b>Get 2 test USDC from SendSure</b>.</li>
-              <li>Name the team, check the rules (by default 100 USDC per 30 days, 50 per payee, 50 per claim, co-sign above 25) and click <b>Sign and create my org</b>.</li>
+              <li>Open <a href="/org">/org</a> and connect the wallet that holds the team&apos;s USDC. The page adds {NETWORK_NAME} for you.</li>
+              {FEATURES.faucet && <li>No test USDC? Click <b>Get 2 test USDC from SendSure</b>.</li>}
+              <li>Name the team, check the rules (by default {IS_MAINNET ? `100 USDC per 30 days, 50 per payee, ${BETA_MAX_BILL} per bill, co-sign above 5` : "100 USDC per 30 days, 50 per payee, 50 per claim, co-sign above 25"}) and click <b>Sign and create my org</b>.</li>
               <li><b>Sign budget</b>: choose how much the org may spend from your wallet.</li>
               <li>Type the names of the people you pay and click <b>Sign and create invite links</b>. Send each link from your own email or chat.</li>
               <li>When a claim arrives, click <b>Run the agent now</b>, or turn on autopilot.</li>
@@ -524,7 +530,7 @@ export default function DocsPage() {
             <div className="card">
               <span className="tag">Arc</span>
               <h3>Contracts, with USDC as gas</h3>
-              <p>PayeeRegistry and Mandate run on Arc testnet, source-verified. USDC is the money, the gas and the budget (EIP-2612 permits), so nobody needs a second token.</p>
+              <p>PayeeRegistry and Mandate run on {NETWORK_NAME}, source-verified. USDC is the money, the gas and the budget (EIP-2612 permits), so nobody needs a second token.</p>
             </div>
             <div className="card">
               <span className="tag">Modular Wallets and Gas Station</span>
@@ -557,7 +563,7 @@ export default function DocsPage() {
             <div className="stat"><b>37</b><span>tests inside Odoo 16 to 19</span></div>
             <div className="stat"><b>29</b><span>tests inside ERPNext 15 and 16</span></div>
           </div>
-          <p className="hint" style={{ marginTop: 14 }}>Arc testnet only. The contracts are not audited yet.</p>
+          <p className="hint" style={{ marginTop: 14 }}>{IS_MAINNET ? "The live suites run on Arc testnet. The mainnet beta uses the same contracts, not audited yet." : "Arc testnet only. The contracts are not audited yet."}</p>
         </section>
 
         <section id="faq">
@@ -591,11 +597,11 @@ export default function DocsPage() {
           <div className="card">
             <dl className="facts">
               <dt>PayeeRegistry</dt>
-              <dd><a className="mono" href="https://explorer.testnet.arc.io/address/0x53f0761fC833064Ca78fc09f6E37aa20eCb21378">0x53f0761fC833064Ca78fc09f6E37aa20eCb21378</a></dd>
+              <dd><a className="mono" href={explorerAddress(deployment.payeeRegistry)}>{deployment.payeeRegistry}</a></dd>
               <dt>MandateFactory</dt>
-              <dd><a className="mono" href="https://explorer.testnet.arc.io/address/0x8c474aCDDe8bD150B65234582171Fd3f70A49FC2">0x8c474aCDDe8bD150B65234582171Fd3f70A49FC2</a></dd>
+              <dd><a className="mono" href={explorerAddress(deployment.mandateFactory)}>{deployment.mandateFactory}</a></dd>
               <dt>Network</dt>
-              <dd>Arc testnet (chain 5042002)</dd>
+              <dd>{NETWORK_NAME} (chain {arc.id})</dd>
               <dt>Source code</dt>
               <dd><a href={REPO}>github.com/0x-pankaj/sendsure</a></dd>
               <dt>System status</dt>
@@ -606,9 +612,9 @@ export default function DocsPage() {
 
         <div className="cta-band">
           <h2>See it work in two minutes</h2>
-          <p>No wallet needed for the demo. When you are ready, set up your team on Arc testnet in about five minutes.</p>
+          <p>No wallet needed for the demo{IS_MAINNET ? " (on testnet)" : ""}. When you are ready, set up your team on {NETWORK_NAME} in about five minutes.</p>
           <div className="row">
-            <a className="btn lg" href="/try">Try the demo</a>
+            <a className="btn lg" href={FEATURES.tryIt ? "/try" : `${TESTNET_SITE}/try`}>Try the demo</a>
             <a className="btn lg secondary" href="/org">Set up your team</a>
           </div>
         </div>

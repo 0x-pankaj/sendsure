@@ -1,11 +1,14 @@
 import { checkPayout, parsePayoutCsv } from "@sendsure/core";
 import { toObject } from "../../../../lib/relayer";
 import { withPayment } from "../../../../lib/x402";
+import { testnetOnly } from "../../../../lib/network";
 
 export const dynamic = "force-dynamic";
 
 /** Paid (x402, Circle Gateway): a payout CSV (+ last paid) -> PAY / REVIEW / STOP per row. $0.005. */
 export function POST(req: Request) {
+  const off = testnetOnly("x402 paid checks");
+  if (off) return off;
   return withPayment(req, {
     price: "$0.005",
     description: "SendSure payout check: changed wallets, look-alike (poisoned) addresses, duplicates and amount jumps, per row.",

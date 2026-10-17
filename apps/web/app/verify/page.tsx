@@ -43,6 +43,7 @@ import {
 } from "../../lib/wallet";
 import { Help } from "../../components/Help";
 import { ping } from "../../lib/ping";
+import { FEATURES, IS_MAINNET, NETWORK_NAME } from "../../lib/network";
 
 interface Invite {
   org: Address;
@@ -120,7 +121,7 @@ export default function VerifyPage() {
         await new Promise((r) => setTimeout(r, 1000));
       }
     } catch {
-      setLoaded({ kind: "error", text: "Could not reach Arc testnet. Refresh the page to try again." });
+      setLoaded({ kind: "error", text: `Could not reach ${NETWORK_NAME}. Refresh the page to try again.` });
     }
   }, []);
 
@@ -275,7 +276,7 @@ export default function VerifyPage() {
   return (
     <>
       <h1>Confirm your payout address</h1>
-      {loaded.kind === "loading" && <p className="hint">Checking your invite on Arc testnet…</p>}
+      {loaded.kind === "loading" && <p className="hint">Checking your invite on {NETWORK_NAME}…</p>}
       {loaded.kind === "bad-link" && <BadLink />}
       {loaded.kind === "error" && <p className="notice">{loaded.text}</p>}
       {loaded.kind === "ready" && invite && (
@@ -305,7 +306,7 @@ export default function VerifyPage() {
                         <button className="btn" disabled={busy !== ""} onClick={() => connect("browser")}>
                           {busy === "connect" ? "Waiting for your wallet…" : "Connect wallet"}
                         </button>
-                        {sandboxOrg && (
+                        {sandboxOrg && FEATURES.tryIt && (
                           <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
                             No wallet? Use a test wallet
                           </button>
@@ -329,7 +330,7 @@ export default function VerifyPage() {
                           >
                             {copied ? "Link copied" : "Copy this link"}
                           </button>
-                          {sandboxOrg && (
+                          {sandboxOrg && FEATURES.tryIt && (
                             <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
                               Use a test wallet
                             </button>
@@ -367,13 +368,13 @@ export default function VerifyPage() {
               </li>
 
               <li className={!signer ? "off" : onArc ? "done" : ""}>
-                <h3>2. Use Arc testnet</h3>
+                <h3>2. Use {NETWORK_NAME}</h3>
                 {signer && !onArc ? (
                   <button className="btn" disabled={busy !== ""} onClick={doSwitch}>
-                    {busy === "switch" ? "Check your wallet…" : "Switch to Arc testnet"}
+                    {busy === "switch" ? "Check your wallet…" : `Switch to ${NETWORK_NAME}`}
                   </button>
                 ) : (
-                  <p className="hint">{signer ? "Your wallet is on Arc testnet." : "After you connect."}</p>
+                  <p className="hint">{signer ? `Your wallet is on ${NETWORK_NAME}.` : "After you connect."}</p>
                 )}
               </li>
 
@@ -400,12 +401,12 @@ export default function VerifyPage() {
                       : busy === "relay"
                         ? signer?.kind === "passkey"
                           ? "Confirm with your passkey, then recording on Arc…"
-                          : "Recording on Arc testnet…"
+                          : `Recording on ${NETWORK_NAME}…`
                         : "Sign and confirm"}
                   </button>
                   {relayFailed && signer?.kind === "browser" && (
                     <button className="linkish" disabled={busy !== ""} onClick={sendItYourself}>
-                      {busy === "self" ? "Sending…" : "Or send it yourself (needs a little testnet USDC for gas)"}
+                      {busy === "self" ? "Sending…" : `Or send it yourself (needs a little ${IS_MAINNET ? "" : "testnet "}USDC for gas)`}
                     </button>
                   )}
                 </div>

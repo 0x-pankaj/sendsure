@@ -1,4 +1,9 @@
 import { deployment, explorerAddress, explorerTx } from "@sendsure/chain";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, TESTNET_SITE } from "../lib/network";
+
+// The demo, the sample receipt and the x402 catalog run on test money: from the mainnet beta they open on the testnet site.
+const TEST_BASE = IS_MAINNET ? TESTNET_SITE : "";
+const TRY_URL = FEATURES.tryIt ? "/try" : `${TESTNET_SITE}/try`;
 
 // A real payment on Arc testnet from our own end-to-end run (a sandbox org), shown as it is on its receipt.
 const SAMPLE = {
@@ -40,7 +45,7 @@ export default function Home() {
             <span>Open source</span>
           </div>
           <p className="hint" style={{ marginTop: 14 }}>
-            Just looking? <a href="/try">Try it in two minutes, no wallet needed</a>.
+            Just looking? <a href={TRY_URL}>Try it in two minutes{IS_MAINNET ? " on testnet" : ""}, no wallet needed</a>.
           </p>
         </div>
 
@@ -104,7 +109,7 @@ export default function Home() {
               </li>
             </ul>
             <div className="foot">
-              <a href={`/receipt?tx=${SAMPLE.tx}`}>Open the receipt →</a>
+              <a href={`${TEST_BASE}/receipt?tx=${SAMPLE.tx}`}>Open the receipt →</a>
               <span>A real payment on Arc testnet, from our own tests.</span>
             </div>
           </div>
@@ -115,7 +120,7 @@ export default function Home() {
                 <span>
                   The same claim to a look-alike address
                   <small>
-                    refused by the contract, not by our server. <a href="/try">See it happen</a>
+                    refused by the contract, not by our server. <a href={TRY_URL}>See it happen</a>
                   </small>
                 </span>
               </li>
@@ -232,7 +237,7 @@ export default function Home() {
               </span>
             </li>
           </ul>
-          <a className="btn secondary" href="/try">
+          <a className="btn secondary" href={TRY_URL}>
             See it in the two-minute demo
           </a>
         </div>
@@ -462,7 +467,7 @@ export default function Home() {
           <div className="card">
             <h3>Other agents</h3>
             <p>An MCP server, and paid checks over Circle Gateway (x402): $0.001 to verify a payee, $0.005 to check a payout file.</p>
-            <a className="more" href="/api/x402">
+            <a className="more" href={`${TEST_BASE}/api/x402`}>
               Catalog →
             </a>
           </div>
@@ -471,7 +476,7 @@ export default function Home() {
 
       {/* ------------------------------------------------------------ proof */}
       <section className="section">
-        <p className="eyebrow">Live on Arc testnet</p>
+        <p className="eyebrow">Live on {NETWORK_NAME}</p>
         <h2>Checkable, end to end</h2>
         <p className="sub">
           Every number on the <a href="/dashboard">dashboard</a> is counted from chain events, with our own tests kept apart from
@@ -501,7 +506,7 @@ export default function Home() {
             <ul className="checks" style={{ marginBottom: 0 }}>
               <li>
                 <span>
-                  A <a href={`/receipt?tx=${SAMPLE.tx}`}>payment receipt</a>: proof of address, the signed claim, the anchored decision.
+                  A <a href={`${TEST_BASE}/receipt?tx=${SAMPLE.tx}`}>payment receipt</a>: proof of address, the signed claim, the anchored decision.
                 </span>
               </li>
               <li>
@@ -512,7 +517,8 @@ export default function Home() {
               </li>
               <li>
                 <span>
-                  <a href={REPO}>Source and every test run</a> (MIT) · <a href="/status">system status</a> · testnet only, not audited.
+                  <a href={REPO}>Source and every test run</a> (MIT) · <a href="/status">system status</a> ·{" "}
+                  {IS_MAINNET ? `mainnet beta, not audited, at most ${BETA_MAX_BILL} USDC a bill.` : "testnet only, not audited."}
                 </span>
               </li>
             </ul>
@@ -528,7 +534,7 @@ export default function Home() {
       {/* ------------------------------------------------------------ call to action */}
       <section className="cta-band">
         <h2>Check your next payout before you send it</h2>
-        <p>Free, in your browser, nothing uploaded. Or set up your team on Arc testnet in ten minutes; we can do it with you on a call.</p>
+        <p>Free, in your browser, nothing uploaded. Or set up your team on {NETWORK_NAME} in ten minutes; we can do it with you on a call.</p>
         <div className="row">
           <a className="btn lg" href="/check">
             Check a payout

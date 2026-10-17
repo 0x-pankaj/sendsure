@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   DEFAULT_CAPS,
+  MAINNET_BETA_MAX_CAPS,
   SENDSURE_AGENTS,
   createOrgMessage,
   permitTypedData,
@@ -9,7 +10,7 @@ import {
   usdc,
   type OrgRules,
 } from "@sendsure/chain";
-import { parseCreateOrg, parseInvites, parsePermit, verifyCreateOrg, verifyPermit } from "../lib/orgRelay";
+import { checkBetaLimits, parseCreateOrg, parseInvites, parsePermit, verifyCreateOrg, verifyPermit } from "../lib/orgRelay";
 
 const now = Math.floor(Date.now() / 1000);
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -90,5 +91,16 @@ describe("invites", () => {
     expect(() => parseInvites(body([ref, ref]), now)).toThrow(/Duplicate/);
     expect(() => parseInvites(body(Array.from({ length: 51 }, () => randomBytes32())), now)).toThrow(/1 to 50/);
     expect(() => parseInvites(body([ref], now + 3600), now)).toThrow(/15 minutes/);
+  });
+});
+
+describe("mainnet beta limits", () => {
+  it("allows the ceiling itself, and nothing above it or a test org", () => {
+    const max = MAINNET_BETA_MAX_CAPS;
+    expect(() => checkBetaLimits(max, false)).not.toThrow();
+    expect(() => checkBetaLimits({ ...max, claimMax: max.claimMax + 1n }, false)).toThrow(/at most 10 USDC a bill/);
+    expect(() => checkBetaLimits({ ...max, orgPeriodCap: max.orgPeriodCap + 1n }, false)).toThrow(/mainnet beta/);
+    expect(() => checkBetaLimits({ ...max, coSignThreshold: max.coSignThreshold + 1n }, false)).toThrow(/co-signing above 5/);
+    expect(() => checkBetaLimits(max, true)).toThrow(/no test orgs/);
   });
 });
