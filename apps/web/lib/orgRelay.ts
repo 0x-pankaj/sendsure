@@ -16,6 +16,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   IS_MAINNET,
   MAINNET_BETA_MAX_CAPS,
+  MAINNET_BETA_MIN_PERIOD,
   ORG_TIER,
   SENDSURE_AGENTS,
   SENDSURE_AGENT_LIST,
@@ -42,6 +43,7 @@ import {
   isSignature,
   relayer,
   sendAndWait,
+  sendContract,
   serverClient,
   toAddress,
   toObject,
@@ -56,6 +58,10 @@ import { claimSignature, releaseSignature } from "./signatures";
 import { arcTransport } from "./rpc";
 
 const factory = deployment.mandateFactory as Address;
+
+/** Only contracts SendSure's MandateFactory made. Any other contract could make our keys pay for its calls. */
+export const isSendSureOrg = (org: Address): Promise<boolean> =>
+  serverClient.readContract({ address: factory, abi: mandateFactoryAbi, functionName: "isMandate", args: [org] }).catch(() => false);
 const errorsOnly = <T extends readonly { type: string }[]>(abi: T) => abi.filter((x) => x.type === "error");
 /** The factory ABI plus the errors its calls can bubble up, so reverts decode to names. */
 const factoryAbiWithErrors = [...mandateFactoryAbi, ...errorsOnly(mandateAbi), ...errorsOnly(payeeRegistryAbi)];
@@ -91,10 +97,13 @@ function toCaps(v: unknown): CapsInput {
   return caps;
 }
 
-/** Mainnet beta (contracts not audited): no sandbox orgs, and no caps above the beta ceiling. */
-export function checkBetaLimits(caps: CapsInput, sandbox: boolean): void {
+/** Mainnet beta (contracts not audited): no sandbox orgs, no caps above the beta ceiling, budgets per 30 days or more. */
+export function checkBetaLimits(caps: CapsInput, sandbox: boolean, periodLength: bigint): void {
   if (sandbox) {
     throw new RelayError(400, "The mainnet beta has no test orgs. To try SendSure with test money, use the testnet site.", "BETA_LIMIT");
+  }
+  if (periodLength < MAINNET_BETA_MIN_PERIOD) {
+    throw new RelayError(400, "On the mainnet beta, a budget period is at least 30 days.", "BETA_LIMIT");
   }
   const max = MAINNET_BETA_MAX_CAPS;
   if (
@@ -143,7 +152,7 @@ export function parseCreateOrg(body: unknown, nowSec = Math.floor(Date.now() / 1
   }
   if (typeof b.sandbox !== "boolean") throw new RelayError(400, "sandbox must be true or false.", "BAD_INPUT");
   const caps = toCaps(b.caps);
-  if (IS_MAINNET) checkBetaLimits(caps, b.sandbox);
+  if (IS_MAINNET) checkBetaLimits(caps, b.sandbox, periodLength);
   return {
     rules: { owner, approvers, caps, periodLength, changeCooldown, sandbox: b.sandbox },
     validUntil: toValidUntil(b.validUntil, nowSec),
@@ -180,7 +189,7 @@ export async function submitCreateOrg(req: CreateOrgRequest): Promise<RelayResul
       functionName: "createMandate",
       args: [params],
     });
-    const result = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    const result = await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
     if (result.status === "success") {
       const receipt = await serverClient.getTransactionReceipt({ hash: result.txHash });
       const [created] = parseEventLogs({ abi: mandateFactoryAbi, logs: receipt.logs, eventName: "MandateCreated" });
@@ -254,7 +263,7 @@ export async function submitPermit(req: PermitRequest): Promise<RelayResult> {
       functionName: "permit",
       args: [m.owner, m.spender, m.value, m.deadline, Number(v ?? BigInt(yParity + 27)), r, s],
     });
-    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    return await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }
@@ -312,6 +321,7 @@ export function parseInvites(body: unknown, nowSec = Math.floor(Date.now() / 100
 }
 
 export async function verifyInvites(req: InvitesRequest): Promise<void> {
+  if (!(await isSendSureOrg(req.org))) throw new RelayError(400, "That is not a SendSure org.", "NotOrg");
   const owner = await serverClient.readContract({ address: req.org, abi: mandateAbi, functionName: "owner" }).catch(() => null);
   if (!owner) throw new RelayError(400, "That is not a SendSure org.", "NotOrg");
   const message = openInvitesMessage(req.org, inviteBatchHash(req.payeeRefs), req.payeeRefs.length, req.validUntil);
@@ -345,7 +355,7 @@ export async function submitInvites(req: InvitesRequest): Promise<RelayResult | 
         functionName: "openSlots",
         args: [toOpen],
       });
-      sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+      sent = await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
     } catch (err) {
       await releaseSignature(req.signature); // nothing was opened: the owner can retry with the same signature
       throw err;

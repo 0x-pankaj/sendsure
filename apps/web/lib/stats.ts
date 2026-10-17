@@ -3,7 +3,7 @@
 //   first-party production orgs owned by our own keys (demos, dogfooding)
 //   sandbox     tier-SANDBOX orgs (tests, judges' test wallets): never counted
 import type { Address } from "viem";
-import { SENDSURE_AGENT_LIST, formatUsdc } from "@sendsure/chain";
+import { NETWORK_NAME, SENDSURE_AGENT_LIST, arc, formatUsdc } from "@sendsure/chain";
 import { getDb } from "./db";
 import { usageTotals } from "./notify";
 
@@ -240,9 +240,9 @@ export async function evidence(origin: string) {
   const totals = (await stats()).tiers;
   return {
     note:
-      "Counted from SendSure's contracts on Arc testnet. external = orgs whose owner is not one of SendSure's own wallets " +
+      `Counted from SendSure's contracts on ${NETWORK_NAME}. external = orgs whose owner is not one of SendSure's own wallets ` +
       "(the only tier that counts as traction); first-party = our own wallets; sandbox = our tests, counted but not listed.",
-    explorerTx: "https://explorer.testnet.arc.io/tx/",
+    explorerTx: `${arc.blockExplorers.default.url}/tx/`,
     firstPartyWallets: [...ours],
     totals,
     tiers,

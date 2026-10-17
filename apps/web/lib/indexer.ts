@@ -5,7 +5,8 @@ import { deployment, mandateAbi, mandateFactoryAbi, payeeRegistryAbi } from "@se
 import { getDb } from "./db";
 import { serverClient } from "./relayer";
 
-export const DEPLOY_BLOCK = 64_484_273n;
+/** Where the index starts: the block our contracts were deployed in, on this build's chain. */
+export const DEPLOY_BLOCK = BigInt(deployment.block);
 const WINDOW = 9_999n;
 const pick = (abi: readonly unknown[], names: string[]) =>
   (abi as AbiEvent[]).filter((x) => x.type === "event" && names.includes(x.name));
@@ -93,6 +94,15 @@ export async function indexerTick(opts: { maxWindows?: number; minIntervalSec?: 
         a.reason === undefined ? null : Number(a.reason),
         str(a.decisionHash ?? a.head),
       );
+      // A payment the agent could not record (its Worker stopped, or the receipt was slow) gets its transaction
+      // here, so the books and the ERP see it as paid.
+      if (l.eventName === "Settled" && !isRegistry) {
+        await db.run(
+          "UPDATE claims SET settle_tx = ?, status = 'settled' WHERE claim_id = ? AND settle_tx IS NULL",
+          l.transactionHash,
+          str(a.claimId),
+        );
+      }
     }
     await db.run(
       `INSERT INTO indexer_cursor (name, block, updated_at) VALUES ('main', ?, ?)

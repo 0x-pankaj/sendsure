@@ -28,8 +28,9 @@ import { orgSalt, submitClaim } from "./claims";
 import { getDb } from "./db";
 import { appendDecision } from "./decisionLog";
 import { agentWallet } from "./orgRelay";
-import { RelayError, relayBind, sendAndWait, serverClient, toRelayError, verifyChange } from "./relayer";
+import { RelayError, relayBind, sendAndWait, sendContract, serverClient, toRelayError, verifyChange } from "./relayer";
 import { arcTransport } from "./rpc";
+import { FEATURES } from "./network";
 
 export type Scene = "bind" | "attack" | "change" | "pay" | "inbox";
 
@@ -91,7 +92,7 @@ async function bind(session: string) {
     functionName: "openSlots",
     args: [[payeeRef]],
   });
-  const opened = await sendAndWait(() => agent.writeContract(request), agent.account.address);
+  const opened = await sendAndWait(() => sendContract(agent, request), agent.account.address);
   const message = {
     org,
     payeeRef,
@@ -155,7 +156,7 @@ async function attack(session: string) {
       functionName: "settle",
       args: [encodeClaim(claim), forged, logged.hash],
     });
-    const sent = await sendAndWait(() => agent.writeContract(request), agent.account.address);
+    const sent = await sendAndWait(() => sendContract(agent, request), agent.account.address);
     return {
       attacker: attacker.address,
       payout: p.payout,
@@ -252,7 +253,7 @@ async function pay(session: string) {
     functionName: "cosign",
     args: [encodeClaim(claim)],
   });
-  const cosigned = await sendAndWait(() => approver.writeContract(request), approver.account.address);
+  const cosigned = await sendAndWait(() => sendContract(approver, request), approver.account.address);
   const cosignReceipt = await serverClient.getTransactionReceipt({ hash: cosigned.txHash });
   const run2 = await runAgent(org, { execute: true, minBlock: cosignReceipt.blockNumber, only: [sent.claimId] });
   const d2 = run2.decisions.find((d) => d.claimId === sent.claimId);
@@ -366,6 +367,7 @@ async function inbox(session: string) {
 const SCENES: Record<Scene, (session: string) => Promise<Record<string, unknown>>> = { bind, attack, change, pay, inbox };
 
 export async function runScene(session: string, scene: Scene) {
+  if (!FEATURES.tryIt) throw new RelayError(404, "The demo is not part of the mainnet beta.", "NOT_ON_MAINNET");
   if (!/^[0-9a-f-]{36}$/.test(session)) throw new RelayError(400, "Bad demo session.", "BAD_INPUT");
   if (!(scene in SCENES)) throw new RelayError(400, "Unknown scene.", "BAD_INPUT");
   const done = await saved(session, scene);

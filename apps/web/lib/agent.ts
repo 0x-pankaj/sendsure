@@ -12,6 +12,8 @@
 import { erc20Abi, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import {
   MAINNET_BETA_MAX_CAPS,
+  MAINNET_BETA_MIN_PERIOD,
+  ORG_TIER,
   OUTCOMES,
   REASONS,
   REASON_TEXT,
@@ -32,7 +34,7 @@ import { appendDecision, head } from "./decisionLog";
 import { PROVIDER, lastModel, modelConfigured, primaryModel, toolLoop, type ToolSpec, type ToolStep } from "./llm";
 import { agentWallet } from "./orgRelay";
 import { IS_MAINNET } from "./network";
-import { sendAndWait, serverClient } from "./relayer";
+import { sendAndWait, sendContract, serverClient } from "./relayer";
 
 export type Action = "pay" | "escalate" | "hold" | "close";
 const RANK: Record<Action, number> = { pay: 0, escalate: 1, hold: 2, close: 3 };
@@ -314,6 +316,30 @@ async function modelPlan(
 
 const SETTLE_EVENTS = ["Settled", "Escalated", "Refused", "AlreadySettled"] as const;
 
+/** Why an org is outside the mainnet beta's limits, or null: its tier, caps and budget period, read at `block`. */
+async function outsideBetaLimits(org: Address, allowance: bigint, block: bigint): Promise<string | null> {
+  const m = { address: org, abi: mandateAbi, blockNumber: block } as const;
+  const [caps, tier, periodLength] = await Promise.all([
+    serverClient.readContract({ ...m, functionName: "caps", args: [deployment.usdc as Address] }),
+    serverClient.readContract({ ...m, functionName: "tier" }),
+    serverClient.readContract({ ...m, functionName: "periodLength" }),
+  ]);
+  const [orgPeriodCap, payeePeriodCap, claimMax, coSignThreshold] = caps;
+  const max = MAINNET_BETA_MAX_CAPS;
+  if (tier !== ORG_TIER.PRODUCTION) return "it is a test org";
+  if (
+    orgPeriodCap > max.orgPeriodCap ||
+    payeePeriodCap > max.payeePeriodCap ||
+    claimMax > max.claimMax ||
+    coSignThreshold > max.coSignThreshold
+  ) {
+    return "its caps are above the beta's";
+  }
+  if (periodLength < MAINNET_BETA_MIN_PERIOD) return "its budget period is shorter than 30 days";
+  if (allowance > max.orgPeriodCap) return `its budget is above ${formatUsdc(max.orgPeriodCap)} USDC`;
+  return null;
+}
+
 async function settleOnChain(org: Address, item: Item, decisionHash: Hex): Promise<{ hash: Hex; outcome: string }> {
   // Mainnet beta (contracts not audited): the agent never pays more than the beta ceiling, whatever an org's caps say.
   if (IS_MAINNET && item.claim.amount > MAINNET_BETA_MAX_CAPS.claimMax) {
@@ -329,7 +355,7 @@ async function settleOnChain(org: Address, item: Item, decisionHash: Hex): Promi
   });
   const [outcome] = result;
   if (OUTCOMES[outcome] !== "PAYABLE") throw new Error(`check changed before paying: ${OUTCOMES[outcome]}`);
-  const sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+  const sent = await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
   const receipt = await serverClient.getTransactionReceipt({ hash: sent.txHash });
   const events = parseEventLogs({
     abi: mandateAbi,
@@ -357,7 +383,7 @@ async function anchorHead(db: Db, org: Address) {
     functionName: "anchor",
     args: [h.hash, anchorSeq],
   });
-  const sent = await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+  const sent = await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
   await db.run(
     "INSERT OR REPLACE INTO anchors (org, anchor_seq, decision_seq, head, tx_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
     org,
@@ -436,6 +462,9 @@ export async function runAgent(
     serverClient.readContract({ ...usdcToken, functionName: "allowance", args: [treasury, org] }),
   ]);
   const available = balance < allowance ? balance : allowance;
+  // Mainnet beta: the agent pays only for orgs inside every beta limit. An owner can change caps, tier or budget
+  // on-chain without SendSure, so they are read at this run's block.
+  const outsideBeta = IS_MAINNET ? await outsideBetaLimits(org, allowance, block) : null;
 
   let model: ModelPlan | null = null;
   let modelError: string | null = null;
@@ -460,8 +489,13 @@ export async function runAgent(
     const rules = rulesDecision(item.outcome, item.reason, item.flags, item.cosigned);
     const m = model?.decisions.get(item.row.claim_id);
     let final = combine(rules, m, item.cosigned);
-    // Mainnet beta (contracts not audited): above the ceiling the agent holds the bill instead of deciding to pay it.
-    if (IS_MAINNET && final.action === "pay" && item.claim.amount > MAINNET_BETA_MAX_CAPS.claimMax) {
+    // Mainnet beta (contracts not audited): outside the limits the agent holds the bill instead of deciding to pay it.
+    if (IS_MAINNET && final.action === "pay" && outsideBeta) {
+      final = {
+        action: "hold",
+        reason: `This org is outside the mainnet beta's limits (${outsideBeta}), so SendSure's agent will not pay from it. Bring them back inside the limits, or pay yourself.`,
+      };
+    } else if (IS_MAINNET && final.action === "pay" && item.claim.amount > MAINNET_BETA_MAX_CAPS.claimMax) {
       final = {
         action: "hold",
         reason: `Above the mainnet beta limit of ${formatUsdc(MAINNET_BETA_MAX_CAPS.claimMax)} USDC a bill, so SendSure's agent will not pay it. Pay it yourself, outside SendSure.`,

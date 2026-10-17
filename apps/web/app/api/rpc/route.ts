@@ -1,7 +1,7 @@
 import { limitIp } from "../../../lib/http";
 import { RelayError } from "../../../lib/relayer";
 import { arcRpcUrls } from "../../../lib/rpc";
-import { arc } from "@sendsure/chain";
+import { NETWORK_NAME, arc } from "@sendsure/chain";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,6 @@ export async function POST(req: Request) {
     throw new Error(`every Arc RPC failed (last status ${last?.status ?? "none"})`);
   } catch (err) {
     const status = err instanceof RelayError ? err.status : 502;
-    return Response.json({ jsonrpc: "2.0", id: null, error: { code: -32603, message: "Arc testnet is not reachable." } }, { status });
+    return Response.json({ jsonrpc: "2.0", id: null, error: { code: -32603, message: `${NETWORK_NAME} is not reachable.` } }, { status });
   }
 }

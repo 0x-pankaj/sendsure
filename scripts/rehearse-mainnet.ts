@@ -1,7 +1,8 @@
 // Rehearses the mainnet beta on a local fork of Arc mainnet: run it through scripts/rehearse-mainnet.sh, which
 // deploys the contracts there with the real deployer key and starts the web app in mainnet mode. Every check is
 // something a real payer or payee will do on mainnet, plus the beta's limits. It never touches the real chain.
-import { createPublicClient, createTestClient, createWalletClient, erc20Abi, http, type Address, type Hex } from "viem";
+import { readFileSync } from "node:fs";
+import { createPublicClient, createTestClient, createWalletClient, erc20Abi, http, type Abi, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   DEFAULT_CAPS,
@@ -115,6 +116,8 @@ const sandbox = await createOrg(rules({ sandbox: true }));
 check(sandbox.status === 400 && sandbox.body.code === "BETA_LIMIT", `a test (sandbox) org is refused: ${sandbox.body.error}`);
 const big = await createOrg(rules({ caps: { ...DEFAULT_CAPS, claimMax: usdc(11) } }));
 check(big.status === 400 && big.body.code === "BETA_LIMIT", `an org asking for 11 USDC a bill is refused: ${big.body.error}`);
+const daily = await createOrg(rules({ periodLength: 86_400n }));
+check(daily.status === 400 && daily.body.code === "BETA_LIMIT", `a 1-day budget period is refused: ${daily.body.error}`);
 const created = await createOrg(rules());
 const org = created.body.org as Address;
 check(created.status === 200 && Boolean(org), `org created through the relayer: ${org ?? created.body.error}`);
@@ -191,8 +194,6 @@ const d2 = decisionFor(run2, first.claimId);
 const paid = (await balanceOf(payee.address)) - before;
 check(d2?.action === "pay" && d2?.tx?.outcome === "Settled", `run #2 after the co-sign: ${d2?.action} -> ${d2?.tx?.outcome ?? d2?.error} (planner: ${run2.planner})`);
 check(paid === usdc(2), `payee received ${formatUsdc(paid)} USDC at their own address`);
-const receipt = d2?.tx?.hash ? await api(base, `/api/receipt?tx=${d2.tx.hash}`) : null;
-check(receipt?.status === 200, `public receipt for the payment (${receipt?.status})`);
 
 // ------------------------------------------------------------------ 6. the agent's own ceiling, whatever the org's caps
 // The owner can raise caps on-chain without SendSure; the agent still never pays above the beta's limit.
@@ -209,15 +210,53 @@ const run3 = await runAgent();
 const d3 = decisionFor(run3, big2.claimId);
 const paid2 = (await balanceOf(payee.address)) - before2;
 check(
-  d3?.action === "hold" && /mainnet beta limit/.test(String(d3?.reason)) && !d3?.tx && paid2 === 0n,
+  d3?.action === "hold" && /outside the mainnet beta's limits/.test(String(d3?.reason)) && !d3?.tx && paid2 === 0n,
   `a co-signed 15 USDC bill in an org that raised its own caps is held, not paid (${d3?.action}: ${d3?.reason})`,
 );
 
-// ------------------------------------------------------------------ 7. the chain index and the numbers
+// ------------------------------------------------------------------ 7. a look-alike org gets nothing from our keys
+// A contract that answers like an org (owner(), isAgent(), openSlots()) but that our factory did not make.
+const fakeArtifact = JSON.parse(readFileSync(new URL("../contracts/out/FakeOrg.sol/FakeOrg.json", import.meta.url), "utf8")) as {
+  abi: Abi;
+  bytecode: { object: Hex };
+};
+const attacker = privateKeyToAccount(generatePrivateKey());
+const deployHash = await minter.deployContract({ abi: fakeArtifact.abi, bytecode: fakeArtifact.bytecode.object, args: [attacker.address] });
+const fake = (await client.waitForTransactionReceipt({ hash: deployHash })).contractAddress!;
+const agentNonce = await client.getTransactionCount({ address: SENDSURE_AGENTS.serverAgent });
+const fakeRef = randomBytes32();
+const fvu = now() + 600n;
+const fakeInvite = await api(base, "/api/org/invites", {
+  body: { org: fake, payeeRefs: [fakeRef], validUntil: fvu, signature: await attacker.signMessage({ message: openInvitesMessage(fake, inviteBatchHash([fakeRef]), 1, fvu) }) },
+});
+const fakeAutopilot = await api(base, "/api/org/autopilot", { token: await signInAs(base, attacker), body: { org: fake, enabled: true } });
+check(
+  fakeInvite.status === 400 && fakeInvite.body.code === "NotOrg" && fakeAutopilot.status === 404,
+  `a look-alike org is refused: invites ${fakeInvite.status} ${fakeInvite.body.code}, autopilot ${fakeAutopilot.status}`,
+);
+check((await client.getTransactionCount({ address: SENDSURE_AGENTS.serverAgent })) === agentNonce, "the server agent sent nothing to it");
+
+// ------------------------------------------------------------------ 8. the chain index, and everything read from it
 const tick = await fetch(`${base}/api/indexer/tick`, { method: "POST", headers: { "x-cron-secret": process.env.CRON_SECRET ?? "" } });
-check(tick.status === 200, `indexer tick on mainnet settings (${tick.status})`);
+const tickBody = (await tick.json().catch(() => ({}))) as { block?: number; ran?: boolean };
+check(tick.status === 200 && Number(tickBody.block) >= deployment.block, `indexer ran from the mainnet deploy block (${tick.status}, at block ${tickBody.block})`);
 const stats = await api(base, "/api/stats");
-check(stats.status === 200, `dashboard numbers (${stats.status})`);
+check(stats.status === 200 && Number(stats.body.tiers?.external?.payments) >= 1, `dashboard counts the payment (${stats.body.tiers?.external?.payments} external)`);
+const receipt = d2?.tx?.hash ? await api(base, `/api/receipt?tx=${d2.tx.hash}`) : null;
+check(receipt?.status === 200 && Boolean(receipt.body.addressProof), `public receipt, with the payee's address proof (${receipt?.status})`);
+const lookup = await api(base, `/api/lookup?org=${org}&address=${payee.address}`);
+check(lookup.body.verified === true, `payee lookup: ${lookup.body.state}`);
+const books = await api(base, `/api/org/books?org=${org}`, { token: ownerToken });
+check(
+  books.status === 200 && (books.body.payments as any[] | undefined)?.some((p) => p.txHash === d2?.tx?.hash) === true,
+  `books: the payment with its Arc transaction (${books.body.payments?.length} payment(s), ${books.body.balances?.length} balance(s))`,
+);
+const viaProxy = await fetch(`${base}/api/rpc`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] }),
+});
+check(((await viaProxy.json()) as { result?: string }).result === "0x13b2", "the browser's RPC proxy reads Arc mainnet (chain 0x13b2)");
 
 console.log(failed() ? `${failed()} check(s) FAILED` : "all checks passed: the mainnet beta works end to end on a fork of Arc mainnet");
 process.exitCode = failed() ? 1 : 0;

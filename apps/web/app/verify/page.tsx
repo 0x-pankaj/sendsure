@@ -455,9 +455,11 @@ export default function VerifyPage() {
                     {busy === "passkey" ? "Follow your phone's prompt…" : "Use my passkey wallet"}
                   </button>
                 )}
-                <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
-                  Use the test wallet from this tab
-                </button>
+                {FEATURES.tryIt && (
+                  <button className="btn secondary" disabled={busy !== ""} onClick={() => connect("test")}>
+                    Use the test wallet from this tab
+                  </button>
+                )}
               </div>
             </div>
           )}

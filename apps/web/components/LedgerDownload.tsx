@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ping } from "../lib/ping";
 import { LEDGER_FORMATS, toLedger, toStatementCsv, type LedgerFormat, type LedgerInput } from "@sendsure/core";
+import { NETWORK_NAME } from "@sendsure/chain";
 
 /** What the books API returns (amounts as strings); names are added by the caller, in the browser. */
 export interface BooksData {
@@ -50,7 +51,7 @@ export function LedgerDownload(props: { load: () => Promise<LedgerInput>; fileBa
     setNote("");
     setBusy(format);
     try {
-      const data = input ?? (await props.load());
+      const data = input ?? { ...(await props.load()), network: NETWORK_NAME };
       setInput(data);
       const f = LEDGER_FORMATS[format];
       const url = URL.createObjectURL(new Blob([toLedger(format, data)], { type: f.mime }));

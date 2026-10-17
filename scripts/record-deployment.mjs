@@ -47,6 +47,8 @@ const out = {
     MandateImplementation: { address: getAddress(implementation), deployedBy: "MandateFactory constructor", verified: false, url: url(implementation) },
   },
   setFactoryTx: setFactory?.hash ?? null,
+  // From a local fork (scripts/rehearse-mainnet.sh), never the real chain: pnpm gen refuses it unless told otherwise.
+  ...(process.env.RECORD_RPC_URL ? { rehearsal: true } : {}),
 };
 writeFileSync(`${root}deployments/arc-${network}.json`, JSON.stringify(out, null, 2) + "\n");
 console.log(`wrote deployments/arc-${network}.json`, out.contracts.PayeeRegistry.address, out.contracts.MandateFactory.address);

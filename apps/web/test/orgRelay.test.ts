@@ -3,6 +3,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   DEFAULT_CAPS,
   MAINNET_BETA_MAX_CAPS,
+  MAINNET_BETA_MIN_PERIOD,
   SENDSURE_AGENTS,
   createOrgMessage,
   permitTypedData,
@@ -97,11 +98,13 @@ describe("invites", () => {
 describe("mainnet beta limits", () => {
   it("allows the ceiling itself, and nothing above it or a test org", () => {
     const max = MAINNET_BETA_MAX_CAPS;
-    expect(() => checkBetaLimits(max, false)).not.toThrow();
-    expect(() => checkBetaLimits({ ...max, claimMax: max.claimMax + 1n }, false)).toThrow(/at most 10 USDC a bill/);
-    expect(() => checkBetaLimits({ ...max, orgPeriodCap: max.orgPeriodCap + 1n }, false)).toThrow(/mainnet beta/);
-    expect(() => checkBetaLimits({ ...max, coSignThreshold: max.coSignThreshold + 1n }, false)).toThrow(/co-signing above 5/);
-    expect(() => checkBetaLimits(max, true)).toThrow(/no test orgs/);
+    const month = MAINNET_BETA_MIN_PERIOD;
+    expect(() => checkBetaLimits(max, false, month)).not.toThrow();
+    expect(() => checkBetaLimits({ ...max, claimMax: max.claimMax + 1n }, false, month)).toThrow(/at most 10 USDC a bill/);
+    expect(() => checkBetaLimits({ ...max, orgPeriodCap: max.orgPeriodCap + 1n }, false, month)).toThrow(/mainnet beta/);
+    expect(() => checkBetaLimits({ ...max, coSignThreshold: max.coSignThreshold + 1n }, false, month)).toThrow(/co-signing above 5/);
+    expect(() => checkBetaLimits(max, true, month)).toThrow(/no test orgs/);
+    expect(() => checkBetaLimits(max, false, month - 86_400n)).toThrow(/at least 30 days/);
   });
 
   it("caps the budget an org lets its contract spend", () => {

@@ -19,6 +19,10 @@ import { mandateAbi } from "./generated";
 export const SENDSURE_AGENTS: { readonly circleAgentWallet?: Address; readonly serverAgent: Address } = IS_MAINNET
   ? { serverAgent: "0x59f34EBD58571F98267b6CDbA0dC478BeB05035B" }
   : { circleAgentWallet: "0x9f977c4efff254a9284e69a0ae2b03e4ab851c07", serverAgent: "0xdE71581E008DD869241C550182A8B2FFa8063E30" };
+/** The relayer: pays the gas for org, budget and payee signatures; it holds no role in any contract. */
+export const SENDSURE_RELAYER: Address = IS_MAINNET
+  ? "0x51c38105b546bE9BD7cD420743778Dc74f89Cf19"
+  : "0x1B66e68D3F61D84B5498013b0981537DBef28b73";
 /** Every SendSure agent on this network, the Circle agent wallet first. */
 export const SENDSURE_AGENT_LIST: Address[] = [SENDSURE_AGENTS.circleAgentWallet, SENDSURE_AGENTS.serverAgent].filter(
   (a): a is Address => Boolean(a),
@@ -63,6 +67,8 @@ export const MAINNET_BETA_MAX_CAPS: CapsInput = {
   claimMax: usdc(10),
   coSignThreshold: usdc(5),
 };
+/** The mainnet beta's shortest budget period: a short period would let the period budget repeat more often. */
+export const MAINNET_BETA_MIN_PERIOD = 30n * 86_400n;
 /** Defaults for a new org: test-sized on Arc testnet (the faucet gives 10 USDC at a time), the beta ceiling on mainnet. */
 export const DEFAULT_CAPS: CapsInput = IS_MAINNET
   ? MAINNET_BETA_MAX_CAPS
@@ -266,4 +272,4 @@ export async function controllerRoleOf(
 /** What a supplier (or a payer trying their own invite) is told when the wallet is one of the org's own. */
 export const controllerRoleText = (role: string): string =>
   `This wallet is ${role}, and an org never pays its own wallets. A supplier proves a wallet of their own: ` +
-  `create a passkey wallet below, or use another account.`;
+  (IS_MAINNET ? "use another account." : "create a passkey wallet below, or use another account.");

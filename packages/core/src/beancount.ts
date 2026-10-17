@@ -35,6 +35,8 @@ export interface LedgerInput {
   treasury: string;
   payments: LedgerPayment[];
   balances: LedgerBalance[];
+  /** The chain the books come from, e.g. "Arc mainnet". Default "Arc testnet". */
+  network?: string;
 }
 
 /** 40000000n -> "40.000000"; always six decimals, so no rounding ever happens in the books. */
@@ -76,7 +78,7 @@ export function toBeancount(input: LedgerInput): string {
 
   const out: string[] = [
     `; SendSure books: ${input.title}`,
-    `; Org ${input.org} on Arc testnet. Treasury ${input.treasury}.`,
+    `; Org ${input.org} on ${input.network ?? "Arc testnet"}. Treasury ${input.treasury}.`,
     "; Each payment carries its claim id, the agent's decision hash and its Arc transaction.",
     "; Balances come from the chain; movements outside SendSure are computed from them, never guessed.",
     `option "title" ${quote(input.title)}`,
@@ -84,7 +86,7 @@ export function toBeancount(input: LedgerInput): string {
     'option "inferred_tolerance_default" "USDC:0.000001"',
     "",
     `${openDate} commodity USDC`,
-    '  name: "USDC on Arc testnet (6 decimals)"',
+    `  name: "USDC on ${input.network ?? "Arc testnet"} (6 decimals)"`,
     "",
     `${openDate} open ${treasury} USDC`,
     `${openDate} open ${other} USDC`,

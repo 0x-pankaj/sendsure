@@ -45,7 +45,7 @@ export function toHledger(input: LedgerInput): string {
   const accounts = [...new Set(days.flatMap((d) => d.payments.map(accountOf)))].sort();
   const out: string[] = [
     `; SendSure books: ${plain(input.title)}`,
-    `; Org ${input.org} on Arc testnet. Treasury ${input.treasury}.`,
+    `; Org ${input.org} on ${input.network ?? "Arc testnet"}. Treasury ${input.treasury}.`,
     "; Each payment carries its claim id, the agent's decision hash and its Arc transaction.",
     "; Balances come from the chain; movements outside SendSure are computed from them, never guessed.",
     "",

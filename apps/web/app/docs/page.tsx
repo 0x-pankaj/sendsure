@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { arc, deployment, explorerAddress } from "@sendsure/chain";
-import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, TESTNET_SITE } from "../../lib/network";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, SITE, TESTNET_SITE } from "../../lib/network";
 
 export const metadata: Metadata = {
   title: "SendSure: how it works",
@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 const REPO = "https://github.com/0x-pankaj/sendsure";
-const SITE = "https://sendsure.0xpankaj.workers.dev";
+// The demo and its sample data run on test money: from the mainnet beta they open on the testnet site.
+const TEST_BASE = IS_MAINNET ? TESTNET_SITE : "";
 
 const TOC: [string, string][] = [
   ["short", "The short version"],
@@ -35,7 +36,7 @@ const FLOW: { who: string; title: string; body: React.ReactNode }[] = [
     body: (
       <>
         Connect the wallet that holds the team&apos;s USDC and sign once. SendSure creates the team&apos;s own contract (a
-        Mandate) on Arc and pays the gas. A new wallet can take 2 test USDC from the built-in faucet.
+        Mandate) on Arc and pays the gas.{FEATURES.faucet && " A new wallet can take 2 test USDC from the built-in faucet."}
       </>
     ),
   },
@@ -52,7 +53,7 @@ const FLOW: { who: string; title: string; body: React.ReactNode }[] = [
   {
     who: "Payee",
     title: "Prove the payout address",
-    body: <>The payee opens the link, connects their wallet (or creates a passkey wallet) and signs once. That address is now theirs for this payer, recorded on Arc. Gas is paid for them.</>,
+    body: <>The payee opens the link, connects their wallet{FEATURES.passkey ? " (or creates a passkey wallet)" : ""} and signs once. That address is now theirs for this payer, recorded on Arc. Gas is paid for them.</>,
   },
   {
     who: "Payee or payer",
@@ -116,6 +117,17 @@ const PARTS: [string, string, string][] = [
   ["Dashboard, receipts, faucet, status", "Live numbers counted from chain events, with outside teams, our own team and our tests kept apart; public receipts; 2 test USDC for new wallets; system health.", "Everything is checkable, and new users are never stuck."],
 ];
 
+// The mainnet beta has no passkey wallets, x402 or faucet, and the ERP add-ons still point at testnet.
+const PARTS_SHOWN: [string, string, string][] = IS_MAINNET
+  ? PARTS.flatMap(([name, what, why]): [string, string, string][] => {
+      if (name === "Passkey wallets") return [];
+      if (name.startsWith("Paid checks (x402)")) return [["MCP server", "Other AI agents verify a payee or read a payment receipt over MCP.", "An agent can check a wallet before it pays."]];
+      if (name.startsWith("Dashboard, receipts, faucet")) return [["Dashboard, receipts, status", "Live numbers counted from chain events, with outside teams and our own team kept apart; public receipts; system health.", "Everything is checkable."]];
+      if (name.startsWith("Odoo add-on") || name.startsWith("ERPNext app")) return [[`${name}, on testnet for now`, what, why]];
+      return [[name, what, why]];
+    })
+  : PARTS;
+
 const ROLES: [string, string, string][] = [
   ["Treasury (the payer's own wallet)", "Hold the money; set or revoke the budget.", "Be paid by its own org."],
   ["Owner", "Set caps, agents and approvers; invite; freeze or revoke payees; pause; turn autopilot on.", "Change a payee's address or sign their claim."],
@@ -141,8 +153,8 @@ const ATTACKS: [string, string][] = [
 const FAQ: [string, React.ReactNode][] = [
   ["Does SendSure hold our money?", <>No. The money stays in your own wallet. You sign a budget that lets your team&apos;s contract move up to that amount, only through its rules. You can set it to 0 at any time.</>],
   ["What if the AI makes a mistake?", <>Claude can only make a decision stricter: hold a payment or ask a person. It can never pay something the contract would refuse, change an amount or add a payee. The worst AI mistake is a delay.</>],
-  ["What if a payee loses their wallet?", <>They prove a new address. A change needs the old key and the new key plus a waiting period; if the old key is lost, the payer revokes the payee and sends a new invite. A passkey wallet lives in the phone&apos;s passkey store (iCloud Keychain or Google Password Manager), so it moves with them to a new phone.</>],
-  ["Do payees need to understand crypto?", <>No. They open a link and sign once, or create a passkey wallet with Face ID. Gas is paid for them.</>],
+  ["What if a payee loses their wallet?", <>They prove a new address. A change needs the old key and the new key plus a waiting period; if the old key is lost, the payer revokes the payee and sends a new invite.{FEATURES.passkey && <> A passkey wallet lives in the phone&apos;s passkey store (iCloud Keychain or Google Password Manager), so it moves with them to a new phone.</>}</>],
+  ["Do payees need to understand crypto?", <>No. They open a link and sign once{FEATURES.passkey ? ", or create a passkey wallet with Face ID" : " with their wallet"}. Gas is paid for them.</>],
   IS_MAINNET
     ? ["Why a beta?", <>The contracts are not audited yet, so the mainnet beta caps every bill at {BETA_MAX_BILL} USDC and SendSure&apos;s agent never pays more. To rehearse with test money first, use the <a href={TESTNET_SITE}>testnet version</a>.</>]
     : ["Why testnet?", <>The contracts are not audited yet. Teams rehearse real payouts with their real contractors on Arc testnet first. Mainnet comes after an audit, with design partners.</>],
@@ -263,7 +275,7 @@ export default function DocsPage() {
           <div className="cards numbered">
             <div className="card">
               <h3>The payee proved their address</h3>
-              <p>They signed with that wallet, once. Changing it later needs the old wallet, the new wallet and a waiting period the payer can cancel. A payee without a wallet app can use a passkey.</p>
+              <p>They signed with that wallet, once. Changing it later needs the old wallet, the new wallet and a waiting period the payer can cancel.{FEATURES.passkey && " A payee without a wallet app can use a passkey."}</p>
             </div>
             <div className="card">
               <h3>The payee signed this claim</h3>
@@ -331,7 +343,7 @@ export default function DocsPage() {
                 </tr>
               </thead>
               <tbody>
-                {PARTS.map(([part, what, why]) => (
+                {PARTS_SHOWN.map(([part, what, why]) => (
                   <tr key={part}>
                     <td><b>{part}</b></td>
                     <td data-label="What it does">{what}</td>
@@ -428,10 +440,16 @@ export default function DocsPage() {
             <p>For freelancers and vendors. About a minute, free, and it works on a phone.</p>
             <ol>
               <li>Open the invite link your client sent you.</li>
-              <li>Choose how to be paid: <b>Connect wallet</b>, or <b>Create a passkey wallet</b> if you have no wallet app. A passkey uses Face ID, a fingerprint or your phone&apos;s PIN.</li>
+              <li>
+                {FEATURES.passkey ? (
+                  <>Choose how to be paid: <b>Connect wallet</b>, or <b>Create a passkey wallet</b> if you have no wallet app. A passkey uses Face ID, a fingerprint or your phone&apos;s PIN.</>
+                ) : (
+                  <>Click <b>Connect wallet</b> (MetaMask, Rabby or another EVM wallet). The page adds {NETWORK_NAME} for you.</>
+                )}
+              </li>
               <li>Click <b>Sign and confirm</b>. Your address is now proven, and the gas is paid for you.</li>
-              <li>Keep the link. For each invoice, open it again: if your client sent the invoice (Odoo can email you when one is waiting), check it and sign; otherwise enter the invoice number, amount and work period, then <b>Sign and send claim</b>.</li>
-              <li>You are paid when the agent runs. With a passkey wallet, the page shows your balance and lets you <b>Send USDC</b> to another wallet or an exchange.</li>
+              <li>Keep the link. For each invoice, open it again: if your client sent the invoice{FEATURES.erp ? " (Odoo can email you when one is waiting)" : ""}, check it and sign; otherwise enter the invoice number, amount and work period, then <b>Sign and send claim</b>.</li>
+              <li>You are paid when the agent runs.{FEATURES.passkey && <> With a passkey wallet, the page shows your balance and lets you <b>Send USDC</b> to another wallet or an exchange.</>}</li>
             </ol>
             <p className="hint">After this, nobody can redirect your payments with an email. Changing your address needs your old wallet too.</p>
           </div>
@@ -461,23 +479,26 @@ export default function DocsPage() {
           </div>
 
           <div className="guide" id="developers">
-            <h3>Developers and AI agents <a className="where" href="/api/x402">/api/x402</a></h3>
+            <h3>Developers and AI agents <a className="where" href={`${TEST_BASE}/api/x402`}>/api/x402{FEATURES.x402 ? "" : " (testnet)"}</a></h3>
             <ol>
               <li>Add SendSure to Claude or any MCP client:</li>
             </ol>
             <div className="mono-box" style={{ margin: "10px 0 12px" }}>claude mcp add --transport http sendsure {SITE}/api/mcp</div>
             <ol start={2}>
-              <li>Or pay per call over Circle Gateway (x402): verify a payee for $0.001 or check a payout file for $0.005, in USDC. The catalog is at <a href="/api/x402">/api/x402</a>.</li>
+              <li>
+                {FEATURES.x402 ? "Or pay" : "On the testnet version, agents can also pay"} per call over Circle Gateway (x402): verify a payee for $0.001 or check a
+                payout file for $0.005, in USDC. The catalog is at <a href={`${TEST_BASE}/api/x402`}>{TEST_BASE}/api/x402</a>.
+              </li>
               <li>Everything is <a href={REPO}>open source</a>: contracts, web app, agent, Odoo and ERPNext apps, and every live test run.</li>
             </ol>
           </div>
 
           <div className="guide" id="first-look">
-            <h3>A first look in two minutes <a className="where" href="/try">/try</a></h3>
+            <h3>A first look in two minutes <a className="where" href={`${TEST_BASE}/try`}>/try{FEATURES.tryIt ? "" : " (testnet)"}</a></h3>
             <ol>
-              <li>Open <a href="/try">/try</a>. No wallet needed.</li>
+              <li>Open <a href={`${TEST_BASE}/try`}>{FEATURES.tryIt ? "/try" : "the demo on the testnet site"}</a>. No wallet needed.</li>
               <li>Watch a payee prove their address, an attacker&apos;s claim get refused on-chain, a fake address change fail, a real payment get co-signed and paid, and Claude hold tricky claims with reasons.</li>
-              <li>Then open the receipt, the <a href="/books">books</a> and the <a href="/dashboard">dashboard</a>.</li>
+              <li>Then open the receipt, the <a href={`${TEST_BASE}/books`}>books</a> and the <a href={`${TEST_BASE}/dashboard`}>dashboard</a>.</li>
             </ol>
           </div>
         </section>
@@ -532,28 +553,42 @@ export default function DocsPage() {
               <h3>Contracts, with USDC as gas</h3>
               <p>PayeeRegistry and Mandate run on {NETWORK_NAME}, source-verified. USDC is the money, the gas and the budget (EIP-2612 permits), so nobody needs a second token.</p>
             </div>
-            <div className="card">
-              <span className="tag">Modular Wallets and Gas Station</span>
-              <h3>Passkey wallets for payees</h3>
-              <p>Payees without a wallet app get a smart account protected by a passkey. Gas Station sponsors their transactions.</p>
-            </div>
-            <div className="card">
-              <span className="tag">Gateway and x402</span>
-              <h3>Paid checks for agents</h3>
-              <p>Other agents pay $0.001 or $0.005 in USDC per check, settled through Circle Gateway.</p>
-            </div>
-            <div className="card">
-              <span className="tag">Agent wallet</span>
-              <h3>An agent that can pay</h3>
-              <p>A Circle agent wallet signs in with ERC-1271 and can send <code>settle()</code> and <code>anchor()</code> itself.</p>
-            </div>
+            {IS_MAINNET ? (
+              <div className="card">
+                <span className="tag">On testnet</span>
+                <h3>Passkey wallets, paid checks, an agent wallet</h3>
+                <p>
+                  On the <a href={TESTNET_SITE}>testnet version</a>, payees can also use Circle passkey wallets (Gas Station pays their gas),
+                  other agents buy checks over Circle Gateway (x402), and a Circle agent wallet can settle and anchor. The mainnet beta does
+                  not have them yet.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="card">
+                  <span className="tag">Modular Wallets and Gas Station</span>
+                  <h3>Passkey wallets for payees</h3>
+                  <p>Payees without a wallet app get a smart account protected by a passkey. Gas Station sponsors their transactions.</p>
+                </div>
+                <div className="card">
+                  <span className="tag">Gateway and x402</span>
+                  <h3>Paid checks for agents</h3>
+                  <p>Other agents pay $0.001 or $0.005 in USDC per check, settled through Circle Gateway.</p>
+                </div>
+                <div className="card">
+                  <span className="tag">Agent wallet</span>
+                  <h3>An agent that can pay</h3>
+                  <p>A Circle agent wallet signs in with ERC-1271 and can send <code>settle()</code> and <code>anchor()</code> itself.</p>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
         <section id="proof">
           <h2>Proof: tested on the live site</h2>
           <p className="sub">
-            Each live test suite runs real transactions on Arc testnet against this site and records every check it made, in
+            Each live test suite runs real transactions on Arc testnet against {IS_MAINNET ? "the testnet site" : "this site"} and records every check it made, in
             the <a href={`${REPO}/tree/main/deployments`}>repo</a>.
           </p>
           <div className="stats five">

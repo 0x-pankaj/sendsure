@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DemoBooks } from "../../components/DemoBooks";
-import { FEATURES, TESTNET_SITE } from "../../lib/network";
+import { ERP_NOT_YET, FEATURES, TESTNET_SITE } from "../../lib/network";
 
 export const metadata: Metadata = {
   title: "SendSure: books",
@@ -19,6 +19,11 @@ export default function BooksPage() {
         difference can vanish into rounding. SendSure writes each payment into the books you already keep, with the exact
         amount from the chain and the Arc transaction, once.
       </p>
+      {!FEATURES.erp && (
+        <p className="notice warn">
+          {ERP_NOT_YET} On the mainnet beta, download your books from <a href="/org">/org</a> (beancount, hledger, CSV).
+        </p>
+      )}
 
       <section className="section" style={{ marginTop: 28 }}>
         <h2>What SendSure never does in your books</h2>

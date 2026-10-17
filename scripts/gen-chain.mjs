@@ -10,6 +10,9 @@ const read = (file) => {
   const path = `${root}deployments/${file}`;
   if (!existsSync(path)) return null;
   const dep = JSON.parse(readFileSync(path, "utf8"));
+  if (dep.rehearsal && process.env.ALLOW_REHEARSAL !== "1") {
+    throw new Error(`deployments/${file} is from a local rehearsal, not the real chain (a stopped run left it): delete it.`);
+  }
   return {
     chainId: dep.chainId,
     block: dep.block,

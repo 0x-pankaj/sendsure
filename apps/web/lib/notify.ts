@@ -8,8 +8,9 @@ import type { Address } from "viem";
 import { isOwnerOrApprover } from "./claims";
 import { getDb } from "./db";
 import { RelayError, toAddress, toObject } from "./relayer";
+import { SITE as OWN_SITE } from "./network";
 
-const SITE = process.env.PUBLIC_BASE_URL || "https://sendsure.0xpankaj.workers.dev";
+const SITE = process.env.PUBLIC_BASE_URL || OWN_SITE;
 const HOSTS = new Set(["discord.com", "discordapp.com", "ptb.discord.com", "canary.discord.com", "hooks.slack.com"]);
 
 /** A Discord or Slack incoming webhook, or null. */
@@ -182,6 +183,9 @@ export async function countEvent(body: unknown) {
 
 export async function usageTotals(): Promise<Record<string, number>> {
   const db = await getDb();
-  const rows = await db.all<{ event: string; n: number }>("SELECT event, SUM(n) AS n FROM usage_counts GROUP BY event");
+  // gas:* rows are the mainnet gas budget (lib/relayer.ts), not usage.
+  const rows = await db.all<{ event: string; n: number }>(
+    "SELECT event, SUM(n) AS n FROM usage_counts WHERE event NOT LIKE 'gas:%' GROUP BY event",
+  );
   return Object.fromEntries(rows.map((r) => [r.event, Number(r.n)]));
 }

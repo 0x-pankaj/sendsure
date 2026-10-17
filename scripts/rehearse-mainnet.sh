@@ -15,8 +15,18 @@ FORK=http://127.0.0.1:$PORT_FORK
 BASE=http://127.0.0.1:$PORT_WEB
 WORK=$(mktemp -d)
 
-[ ! -e deployments/arc-mainnet.json ] || { echo "deployments/arc-mainnet.json exists: mainnet is deployed, nothing to rehearse."; exit 1; }
 [ -e contracts/.env.mainnet ] && [ -e apps/web/.env.mainnet.local ] || { echo "Needs contracts/.env.mainnet and apps/web/.env.mainnet.local."; exit 1; }
+# Once the real deployer has sent anything, mainnet is deployed (or being deployed): nothing to rehearse, and
+# contracts/broadcast/Deploy.s.sol/5042 then holds the real deploy, which cleanup must never delete.
+DEPLOYER=$(grep -E '^DEPLOYER_ADDRESS=' contracts/.env.mainnet | cut -d= -f2)
+[ "$(cast nonce "$DEPLOYER" --rpc-url https://rpc.mainnet.arc.io)" = 0 ] || { echo "The mainnet deployer has sent transactions: mainnet is deployed, nothing to rehearse."; exit 1; }
+if [ -e deployments/arc-mainnet.json ]; then
+  # Only a file a stopped rehearsal left behind (marked "rehearsal") is cleaned up; a real record never is.
+  grep -q '"rehearsal": true' deployments/arc-mainnet.json || { echo "deployments/arc-mainnet.json is a real deployment record."; exit 1; }
+  echo "Removing what a stopped rehearsal left behind."
+  rm -rf deployments/arc-mainnet.json contracts/broadcast/Deploy.s.sol/5042
+  git checkout -- packages/chain/src/generated.ts
+fi
 [ ! -e apps/web/.env.local ] || { echo "apps/web/.env.local exists here: its testnet values would leak into the rehearsal."; exit 1; }
 git diff --quiet -- packages/chain/src/generated.ts || { echo "packages/chain/src/generated.ts has local changes."; exit 1; }
 
@@ -51,7 +61,7 @@ for a in "$DEPLOYER_ADDRESS" "$RELAYER_ADDRESS" "$(cast wallet address --private
 done
 (cd contracts && forge script script/Deploy.s.sol --rpc-url "$FORK" --broadcast | grep -E "PayeeRegistry:|MandateFactory:|implementation:")
 RECORD_RPC_URL=$FORK node scripts/record-deployment.mjs mainnet
-pnpm -s gen
+ALLOW_REHEARSAL=1 pnpm -s gen
 
 # 3. The web app in mainnet mode against the fork. `next dev` uses wrangler's local D1 (like production D1):
 #    a fresh one, with every migration applied (for both bindings in wrangler.jsonc).

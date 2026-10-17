@@ -12,6 +12,7 @@ import { RelayError, serverClient, toAddress } from "./relayer";
 import { stats } from "./stats";
 import { indexerTick } from "./indexer";
 import { getDb } from "./db";
+import { FEATURES, NETWORK_NAME } from "./network";
 import { readPayee } from "@sendsure/chain";
 
 export const MCP_PROTOCOL = "2025-06-18";
@@ -84,7 +85,7 @@ const TOOLS: Tool[] = [
     name: "verify_payee_address",
     title: "Is this a proven payee address?",
     description:
-      "For a SendSure org (its Mandate contract address) and a wallet address: is this address a payee who proved it for this org, right now, on Arc testnet? Answers yes/no with the proof block; no names or amounts. Read-only.",
+      `For a SendSure org (its Mandate contract address) and a wallet address: is this address a payee who proved it for this org, right now, on ${NETWORK_NAME}? Answers yes/no with the proof block; no names or amounts. Read-only.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -100,7 +101,7 @@ const TOOLS: Tool[] = [
     name: "get_payment_receipt",
     title: "Explain a SendSure payment",
     description:
-      "Given an Arc testnet transaction hash, return the SendSure payment receipt from on-chain facts: amount, payee address and the proof they own it, the signed claim id, the agent's decision hash and whether an on-chain anchor covers it. Read-only.",
+      `Given an ${NETWORK_NAME} transaction hash, return the SendSure payment receipt from on-chain facts: amount, payee address and the proof they own it, the signed claim id, the agent's decision hash and whether an on-chain anchor covers it. Read-only.`,
     inputSchema: { type: "object", properties: { tx_hash: { type: "string" } }, required: ["tx_hash"] },
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
     run: async (a) => {
@@ -158,6 +159,9 @@ const TOOLS: Tool[] = [
   },
 ];
 
+// The demo runs on test money: the mainnet beta does not offer it.
+const AVAILABLE = TOOLS.filter((t) => FEATURES.tryIt || t.name !== "run_demo_scene");
+
 const ok = (id: unknown, result: Json) => ({ jsonrpc: "2.0", id, result });
 const fail = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0", id, error: { code, message } });
 
@@ -174,14 +178,15 @@ export async function handleMcp(msg: Json): Promise<Json | null> {
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "sendsure", title: "SendSure", version: "0.1.0" },
         instructions:
-          "SendSure pays only payees who proved their own address, for claims they signed, inside an on-chain budget (Arc testnet). Use check_payout_list before sending any stablecoin payout. run_demo_scene only touches the sandbox demo org and is a dry run unless dry_run is false.",
+          `SendSure pays only payees who proved their own address, for claims they signed, inside an on-chain budget (${NETWORK_NAME}). Use check_payout_list before sending any stablecoin payout.` +
+          (FEATURES.tryIt ? " run_demo_scene only touches the sandbox demo org and is a dry run unless dry_run is false." : ""),
       });
     case "ping":
       return ok(id, {});
     case "tools/list":
-      return ok(id, { tools: TOOLS.map(({ run: _run, ...t }) => t) });
+      return ok(id, { tools: AVAILABLE.map(({ run: _run, ...t }) => t) });
     case "tools/call": {
-      const tool = TOOLS.find((t) => t.name === params.name);
+      const tool = AVAILABLE.find((t) => t.name === params.name);
       if (!tool) return fail(id, -32602, `Unknown tool: ${String(params.name)}`);
       try {
         const out = await tool.run((params.arguments ?? {}) as Json);

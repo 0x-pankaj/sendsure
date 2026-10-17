@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { explorerAddress, explorerTx } from "@sendsure/chain";
-import { NETWORK_NAME } from "../../lib/network";
+import { FEATURES, NETWORK_NAME } from "../../lib/network";
 
 type Tier = "external" | "first-party" | "sandbox";
 interface Bucket {
@@ -121,8 +121,14 @@ export default function Dashboard() {
           {data.usage && (
             <p className="hint" style={{ maxWidth: 900 }}>
               Anonymous counts (no addresses, amounts or files, and our own test runs included): payout checks run{" "}
-              <b>{data.usage.check_run ?? 0}</b> · invite links opened <b>{data.usage.invite_open ?? 0}</b> · /try walkthroughs
-              started <b>{data.usage.try_start ?? 0}</b> · ledgers downloaded <b>{data.usage.books_download ?? 0}</b>.
+              <b>{data.usage.check_run ?? 0}</b> · invite links opened <b>{data.usage.invite_open ?? 0}</b>
+              {FEATURES.tryIt && (
+                <>
+                  {" "}
+                  · /try walkthroughs started <b>{data.usage.try_start ?? 0}</b>
+                </>
+              )}{" "}
+              · ledgers downloaded <b>{data.usage.books_download ?? 0}</b>.
             </p>
           )}
           {data.usage && (data.usage.review_runs ?? 0) > 0 && (
@@ -176,7 +182,7 @@ export default function Dashboard() {
               </div>
             </>
           )}
-          {data.paidCalls && (
+          {FEATURES.x402 && data.paidCalls && (
             <>
               <h2>Agents paying SendSure per call</h2>
               <p className="hint" style={{ maxWidth: 900 }}>

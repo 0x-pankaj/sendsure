@@ -1,9 +1,11 @@
-import { deployment, explorerAddress, explorerTx } from "@sendsure/chain";
-import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, TESTNET_SITE } from "../lib/network";
+import { arcTestnet, deployment, explorerAddress } from "@sendsure/chain";
+import { BETA_MAX_BILL, FEATURES, IS_MAINNET, NETWORK_NAME, SITE, TESTNET_SITE } from "../lib/network";
 
 // The demo, the sample receipt and the x402 catalog run on test money: from the mainnet beta they open on the testnet site.
 const TEST_BASE = IS_MAINNET ? TESTNET_SITE : "";
 const TRY_URL = FEATURES.tryIt ? "/try" : `${TESTNET_SITE}/try`;
+// The sample payment is one of our testnet runs, so its links go to the testnet explorer on every build.
+const sampleTx = (hash: string) => `${arcTestnet.blockExplorers.default.url}/tx/${hash}`;
 
 // A real payment on Arc testnet from our own end-to-end run (a sandbox org), shown as it is on its receipt.
 const SAMPLE = {
@@ -73,7 +75,7 @@ export default function Home() {
                 <span>
                   The payee proved this address
                   <small>
-                    signed with it, once: <a href={explorerTx(SAMPLE.proofTx)}>{short(SAMPLE.proofTx)}</a>
+                    signed with it, once: <a href={sampleTx(SAMPLE.proofTx)}>{short(SAMPLE.proofTx)}</a>
                   </small>
                 </span>
               </li>
@@ -103,7 +105,7 @@ export default function Home() {
                 <span>
                   The agent&apos;s decision is anchored
                   <small>
-                    hash-chained, replayable: <a href={explorerTx(SAMPLE.anchorTx)}>{short(SAMPLE.anchorTx)}</a>
+                    hash-chained, replayable: <a href={sampleTx(SAMPLE.anchorTx)}>{short(SAMPLE.anchorTx)}</a>
                   </small>
                 </span>
               </li>
@@ -195,8 +197,17 @@ export default function Home() {
             <div className="t">Confirm your payout address</div>
             <div className="s">Pankaj Studio wants to pay you through SendSure.</div>
             <div className="row" style={{ marginTop: 12 }}>
-              <span className="pill">Create a passkey wallet</span>
-              <span className="s">Face ID · gas paid by Circle</span>
+              {FEATURES.passkey ? (
+                <>
+                  <span className="pill">Create a passkey wallet</span>
+                  <span className="s">Face ID · gas paid by Circle</span>
+                </>
+              ) : (
+                <>
+                  <span className="pill">Connect wallet</span>
+                  <span className="s">MetaMask, Rabby · gas paid by SendSure</span>
+                </>
+              )}
             </div>
           </div>
           <div className="mini offset">
@@ -223,7 +234,7 @@ export default function Home() {
           <ul className="checks">
             <li>
               <span>
-                <b>Signed once</b> with their own wallet, or with a passkey if they have no wallet app.
+                <b>Signed once</b> with their own wallet{FEATURES.passkey ? ", or with a passkey if they have no wallet app" : ""}.
               </span>
             </li>
             <li>
@@ -418,7 +429,10 @@ export default function Home() {
         <div className="cards numbered">
           <div className="card">
             <h3>Each payee proves their address, once</h3>
-            <p>You send an invite link from your own email. The payee signs with their wallet or a passkey, and that address is theirs on Arc.</p>
+            <p>
+              You send an invite link from your own email. The payee signs with their wallet{FEATURES.passkey ? " or a passkey" : ""}, and that
+              address is theirs on Arc.
+            </p>
           </div>
           <div className="card">
             <h3>Payees sign a claim for every invoice</h3>
@@ -466,7 +480,10 @@ export default function Home() {
           </div>
           <div className="card">
             <h3>Other agents</h3>
-            <p>An MCP server, and paid checks over Circle Gateway (x402): $0.001 to verify a payee, $0.005 to check a payout file.</p>
+            <p>
+              An MCP server, and paid checks over Circle Gateway (x402{FEATURES.x402 ? "" : ", on testnet"}): $0.001 to verify a payee,
+              $0.005 to check a payout file.
+            </p>
             <a className="more" href={`${TEST_BASE}/api/x402`}>
               Catalog →
             </a>
@@ -525,8 +542,10 @@ export default function Home() {
           </div>
           <div className="card">
             <h3 style={{ marginTop: 0 }}>For your agent</h3>
-            <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>Connect over MCP, or buy checks per call with USDC over Circle Gateway.</p>
-            <div className="mono-box">claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp</div>
+            <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>
+              Connect over MCP{FEATURES.x402 ? ", or buy checks per call with USDC over Circle Gateway" : ""}.
+            </p>
+            <div className="mono-box">claude mcp add --transport http sendsure {SITE}/api/mcp</div>
           </div>
         </div>
       </section>

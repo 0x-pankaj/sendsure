@@ -11,7 +11,7 @@ import { OUTCOMES, REASONS, deployment, encodeClaim, mandateAbi } from "@sendsur
 import { runAgent } from "./agent";
 import { isAgentOf, isOwnerOrApprover } from "./claims";
 import { getDb } from "./db";
-import { agentWallet } from "./orgRelay";
+import { agentWallet, isSendSureOrg } from "./orgRelay";
 import { RelayError, serverClient, toAddress, toObject } from "./relayer";
 
 /** No more than one autopilot run per org in this many seconds, and this many a day. */
@@ -209,6 +209,8 @@ export async function setAutopilot(session: Address, body: unknown) {
   const b = toObject(body);
   const org = toAddress(b.org, "org");
   const enabled = b.enabled === true;
+  // Only SendSure's own orgs: a look-alike contract could fill the autopilot list and crowd out real orgs.
+  if (!(await isSendSureOrg(org))) throw new RelayError(404, "That org was not found on Arc.", "NOT_FOUND");
   const owner = await serverClient.readContract({ address: org, abi: mandateAbi, functionName: "owner" }).catch(() => null);
   if (!owner) throw new RelayError(404, "That org was not found on Arc.", "NOT_FOUND");
   if (enabled && owner !== session) throw new RelayError(403, "Only the org's owner can turn autopilot on.", "FORBIDDEN");

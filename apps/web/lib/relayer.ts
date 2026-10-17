@@ -4,19 +4,30 @@ import {
   ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
+  encodeFunctionData,
   formatEther,
   getAddress,
   isAddress,
+  keccak256,
   nonceManager,
   recoverTypedDataAddress,
+  type Abi,
+  type Account,
   type Address,
+  type Chain,
   type Hex,
+  type Transport,
+  type WalletClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
+  IS_MAINNET,
   MAX_SIGNATURE_TTL_SECONDS,
+  NETWORK_NAME,
   PAYEE_STATES,
   REGISTRY_ERROR_TEXT,
+  SENDSURE_AGENTS,
+  SENDSURE_RELAYER,
   ZERO_BYTES32,
   arc,
   bindTypedData,
@@ -29,6 +40,7 @@ import {
   type BindMessage,
   type ChangeMessage,
 } from "@sendsure/chain";
+import { getDb } from "./db";
 import { arcTransport } from "./rpc";
 
 /** An error the relayer returns to the caller as { error, code } with an HTTP status. */
@@ -54,6 +66,8 @@ function makeWallet() {
   }
   // The relayer key only pays gas. It holds no role in any contract.
   const account = privateKeyToAccount(key as Hex, { nonceManager });
+  if (IS_MAINNET && account.address !== SENDSURE_RELAYER)
+    throw new RelayError(503, "RELAYER_PRIVATE_KEY is not SendSure's mainnet relayer.", "NOT_CONFIGURED");
   return createWalletClient({ account, chain: arc, transport });
 }
 export function relayer() {
@@ -208,7 +222,7 @@ export function toRelayError(err: unknown): RelayError {
     err instanceof BaseError ? err.shortMessage : err,
     err instanceof BaseError ? err.details : "",
   );
-  return new RelayError(502, "Could not reach Arc testnet. Please try again in a minute.", "RPC_ERROR");
+  return new RelayError(502, `Could not reach ${NETWORK_NAME}. Please try again in a minute.`, "RPC_ERROR");
 }
 
 // ------------------------------------------------------------------ sending
@@ -231,14 +245,61 @@ export interface RelayResult {
   alreadyOpen?: number;
 }
 
+// "already known" is not here: sendContract knows its own transaction's hash, so it is never signed again.
 const isNonceError = (err: unknown) =>
-  /nonce too low|nonce has already been used|already known|replacement transaction underpriced/i.test(String(err));
+  /nonce too low|nonce has already been used|replacement transaction underpriced/i.test(String(err));
+
+/** A simulated contract call (what simulateContract returns as `request`). */
+interface ContractCall {
+  address: Address;
+  abi: Abi | readonly unknown[];
+  functionName: string;
+  args?: readonly unknown[];
+}
+
+/**
+ * Signs a contract call with the server's key, then sends it. The hash is known before sending, so a backup RPC
+ * answering "already known" (the first one took it, then the connection broke) means our own transaction went
+ * out: it is not signed again, which would make a second, different transaction.
+ */
+export async function sendContract(wallet: WalletClient<Transport, Chain, Account>, call: ContractCall): Promise<Hex> {
+  const data = encodeFunctionData({ abi: call.abi as Abi, functionName: call.functionName, args: call.args as unknown[] });
+  const prepared = await wallet.prepareTransactionRequest({ account: wallet.account, chain: wallet.chain, to: call.address, data });
+  const raw = await wallet.signTransaction(prepared as Parameters<typeof wallet.signTransaction>[0]);
+  const hash = keccak256(raw);
+  try {
+    return await wallet.sendRawTransaction({ serializedTransaction: raw });
+  } catch (err) {
+    if (/already known|known transaction|already imported/i.test(String(err))) return hash;
+    if (isNonceError(err) && (await serverClient.getTransaction({ hash }).catch(() => null))) return hash;
+    throw err;
+  }
+}
+
+/** Mainnet beta: most transactions SendSure's keys send in a day, so no traffic can drain their gas. */
+const MAINNET_TX_PER_DAY = { relayer: 300, agent: 600 } as const;
+
+async function spendGasBudget(from: Address): Promise<void> {
+  const role = from.toLowerCase() === SENDSURE_AGENTS.serverAgent.toLowerCase() ? "agent" : "relayer";
+  const day = new Date().toISOString().slice(0, 10);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO usage_counts (day, event, n) VALUES (?, ?, 1) ON CONFLICT(day, event) DO UPDATE SET n = n + 1",
+    day,
+    `gas:${role}`,
+  );
+  const row = await db.first<{ n: number }>("SELECT n FROM usage_counts WHERE day = ? AND event = ?", day, `gas:${role}`);
+  if (Number(row?.n ?? 0) > MAINNET_TX_PER_DAY[role]) {
+    throw new RelayError(429, "SendSure's gas budget for today is used up. Please try again tomorrow.", "GAS_BUDGET");
+  }
+}
 
 /**
  * Sends one transaction and waits for it. On Cloudflare several isolates can send at once, so a nonce
  * clash is possible: then the account's nonce is re-read and the send retried (3 tries in all).
  */
 export async function sendAndWait(send: () => Promise<Hex>, from?: Address): Promise<RelayResult> {
+  if (IS_MAINNET && from) await spendGasBudget(from);
   let txHash: Hex | undefined;
   for (let attempt = 1; !txHash; attempt++) {
     try {
@@ -289,7 +350,7 @@ export async function submitBind(req: BindRequest): Promise<RelayResult> {
       await new Promise((r) => setTimeout(r, 2500));
       return simulate();
     });
-    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    return await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }
@@ -328,7 +389,7 @@ export async function submitChange(req: ChangeRequest): Promise<RelayResult> {
       functionName: "requestChange",
       args: [m.org, m.payeeRef, m.newPayout, m.nonce, m.validUntil, oldSig, newSig],
     });
-    return await sendAndWait(() => wallet.writeContract(request), wallet.account.address);
+    return await sendAndWait(() => sendContract(wallet, request), wallet.account.address);
   } catch (err) {
     throw toRelayError(err);
   }

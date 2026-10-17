@@ -1,7 +1,7 @@
 // Server only. A public receipt for one SendSure payment, from on-chain facts only (no invoice
 // numbers or reasons: those stay private to the payer and payee).
 import { formatUnits, parseEventLogs, type Address, type Hex } from "viem";
-import { deployment, mandateAbi, mandateFactoryAbi } from "@sendsure/chain";
+import { NETWORK_NAME, deployment, mandateAbi, mandateFactoryAbi } from "@sendsure/chain";
 import { getDb } from "./db";
 import { indexerTick } from "./indexer";
 import { RelayError, serverClient } from "./relayer";
@@ -9,7 +9,7 @@ import { firstParty, tierOf } from "./stats";
 
 export async function receiptFor(txHash: Hex) {
   const r = await serverClient.getTransactionReceipt({ hash: txHash }).catch(() => null);
-  if (!r) throw new RelayError(404, "No such transaction on Arc testnet.", "NOT_FOUND");
+  if (!r) throw new RelayError(404, `No such transaction on ${NETWORK_NAME}.`, "NOT_FOUND");
   const ev = parseEventLogs({ abi: mandateAbi, logs: r.logs, eventName: "Settled" })[0];
   if (!ev) throw new RelayError(404, "This transaction has no SendSure payment.", "NOT_FOUND");
   const org = ev.address as Address;
