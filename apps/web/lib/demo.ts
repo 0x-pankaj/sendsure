@@ -6,7 +6,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   SIGNATURE_TTL_SECONDS,
   ZERO_BYTES32,
-  arcTestnet,
+  arc,
   bindTypedData,
   changeTypedData,
   claimIdOf,
@@ -241,7 +241,7 @@ async function pay(session: string) {
   const d1 = run1.decisions.find((d) => d.claimId === sent.claimId);
   const approver = createWalletClient({
     account: privateKeyToAccount(env("DEMO_APPROVER_PRIVATE_KEY") as Hex),
-    chain: arcTestnet,
+    chain: arc,
     transport: http(process.env.ARC_RPC_URL || undefined),
   });
   const { request } = await serverClient.simulateContract({

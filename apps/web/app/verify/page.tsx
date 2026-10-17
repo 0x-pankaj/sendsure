@@ -6,7 +6,7 @@ import {
   ORG_TIER,
   SIGNATURE_TTL_SECONDS,
   ZERO_BYTES32,
-  arcTestnet,
+  arc,
   controllerRoleOf,
   controllerRoleText,
   deployment,
@@ -254,7 +254,7 @@ export default function VerifyPage() {
     try {
       const hash = await signer.client.writeContract({
         account: signer.address,
-        chain: arcTestnet,
+        chain: arc,
         address: deployment.payeeRegistry as Address,
         abi: payeeRegistryAbi,
         functionName: "bind",

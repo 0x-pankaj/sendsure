@@ -10,7 +10,7 @@ import {
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
-  arcTestnet,
+  arc,
   bindTypedData,
   changeTypedData,
   claimTypes,
@@ -46,7 +46,7 @@ export const hasBrowserWallet = () => typeof window !== "undefined" && Boolean(w
 /** `pickAccount` asks the wallet to show its account picker (used when switching to a new address). */
 export async function connectBrowserWallet(pickAccount = false): Promise<Signer> {
   if (!window.ethereum) throw new Error("No wallet found in this browser. Install MetaMask or Rabby, or use a test wallet.");
-  const client = createWalletClient({ chain: arcTestnet, transport: custom(window.ethereum) });
+  const client = createWalletClient({ chain: arc, transport: custom(window.ethereum) });
   if (pickAccount) await client.requestPermissions({ eth_accounts: {} }).catch(() => undefined);
   const [address] = await client.requestAddresses();
   if (!address) throw new Error("The wallet did not share an address.");
@@ -85,18 +85,18 @@ export function newTestWallet(): Signer {
 }
 
 export async function isOnArc(s: Signer): Promise<boolean> {
-  return s.kind !== "browser" || (await s.client.getChainId()) === arcTestnet.id;
+  return s.kind !== "browser" || (await s.client.getChainId()) === arc.id;
 }
 
 /** Switch the wallet to Arc testnet, adding the network first if the wallet does not know it. */
 export async function switchToArc(s: Signer): Promise<void> {
   if (s.kind !== "browser") return;
   try {
-    await s.client.switchChain({ id: arcTestnet.id });
+    await s.client.switchChain({ id: arc.id });
   } catch (err) {
     if (codeOf(err) !== 4902 && !/4902|unrecognized chain|not been added|unknown chain/i.test(messageOf(err))) throw err;
-    await s.client.addChain({ chain: arcTestnet });
-    await s.client.switchChain({ id: arcTestnet.id }).catch(() => undefined);
+    await s.client.addChain({ chain: arc });
+    await s.client.switchChain({ id: arc.id }).catch(() => undefined);
   }
 }
 
@@ -150,9 +150,9 @@ export function walletErrorText(err: unknown): string {
 
 /** An approver co-signs one exact claim on-chain (a transaction from their own wallet: it needs gas). */
 export async function sendCosign(s: Signer, org: Address, claimHex: Hex): Promise<Hex> {
-  const call = { address: org, abi: mandateAbi, functionName: "cosign", args: [claimHex], chain: arcTestnet } as const;
+  const call = { address: org, abi: mandateAbi, functionName: "cosign", args: [claimHex], chain: arc } as const;
   if (s.kind === "test") {
-    return createWalletClient({ account: s.account, chain: arcTestnet, transport: http("/api/rpc") }).writeContract(call);
+    return createWalletClient({ account: s.account, chain: arc, transport: http("/api/rpc") }).writeContract(call);
   }
   if (s.kind === "passkey") throw new Error("Co-sign with the wallet that approves payments for this org.");
   return s.client.writeContract({ ...call, account: s.address });

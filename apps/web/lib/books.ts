@@ -2,7 +2,7 @@
 // and the treasury's closing balance on each payment day (archive state at that day's last block).
 // Payee names are added in the browser; the server never has them.
 import { erc20Abi, parseEventLogs, type Address, type Hex } from "viem";
-import { arcTestnet, deployment, mandateAbi } from "@sendsure/chain";
+import { arc, deployment, mandateAbi } from "@sendsure/chain";
 import { getDb } from "./db";
 import { serverClient } from "./relayer";
 
@@ -11,7 +11,7 @@ const day = (unix: bigint | number) => new Date(Number(unix) * 1000).toISOString
 /** The last block at or before a unix time, from the Arc explorer (Blockscout API). */
 async function blockAtOrBefore(unix: number): Promise<bigint | null> {
   try {
-    const url = `${arcTestnet.blockExplorers.default.url}/api?module=block&action=getblocknobytime&timestamp=${unix}&closest=before`;
+    const url = `${arc.blockExplorers.default.url}/api?module=block&action=getblocknobytime&timestamp=${unix}&closest=before`;
     const out = (await (await fetch(url, { signal: AbortSignal.timeout(10_000) })).json()) as {
       result?: { blockNumber?: string };
     };

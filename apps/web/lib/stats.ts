@@ -3,7 +3,7 @@
 //   first-party production orgs owned by our own keys (demos, dogfooding)
 //   sandbox     tier-SANDBOX orgs (tests, judges' test wallets): never counted
 import type { Address } from "viem";
-import { SENDSURE_AGENTS, formatUsdc } from "@sendsure/chain";
+import { SENDSURE_AGENT_LIST, formatUsdc } from "@sendsure/chain";
 import { getDb } from "./db";
 import { usageTotals } from "./notify";
 
@@ -14,9 +14,10 @@ const BUILT_IN = [
   "0x3460E7c7aA9439db630eAf9468653920e9900Dad", // smoke-test payee
   "0x1B66e68D3F61D84B5498013b0981537DBef28b73", // relayer
   "0xfB7e93f580d95c86973ae428b470368c355848b4", // arc-canteen test wallet
-  SENDSURE_AGENTS.circleAgentWallet,
   "0x1222c4c16376961881cdcfffd6d737137f425dc3", // the Circle agent wallet's backing EOA (pays x402 calls)
-  SENDSURE_AGENTS.serverAgent,
+  "0x000E2DD8c423637Ce7AFb28559419080b3c34b05", // mainnet deployer
+  "0x51c38105b546bE9BD7cD420743778Dc74f89Cf19", // mainnet relayer
+  ...SENDSURE_AGENT_LIST,
 ];
 
 export function firstParty(): Set<string> {

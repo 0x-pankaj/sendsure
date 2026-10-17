@@ -6,7 +6,7 @@
 // native transfer from the faucet key, which holds no role in any contract.
 import { createWalletClient, formatEther, http, parseEther, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { arcTestnet, explorerTx } from "@sendsure/chain";
+import { arc, explorerTx } from "@sendsure/chain";
 import { getDb } from "./db";
 import { RelayError, sendAndWait, serverClient } from "./relayer";
 
@@ -45,7 +45,7 @@ function makeFaucet() {
   if (!key || !/^0x[0-9a-fA-F]{64}$/.test(key))
     throw new RelayError(503, "The testnet faucet is not set up on this server. Use faucet.circle.com (pick Arc testnet).", "NOT_CONFIGURED");
   // The faucet key only sends test USDC. It holds no role in any contract.
-  return createWalletClient({ account: privateKeyToAccount(key as Hex), chain: arcTestnet, transport: http(process.env.ARC_RPC_URL || undefined) });
+  return createWalletClient({ account: privateKeyToAccount(key as Hex), chain: arc, transport: http(process.env.ARC_RPC_URL || undefined) });
 }
 let faucetClient: ReturnType<typeof makeFaucet> | undefined;
 const faucet = () => (faucetClient ??= makeFaucet());

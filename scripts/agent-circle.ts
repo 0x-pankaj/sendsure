@@ -11,7 +11,7 @@ import { arg, loadEnv } from "./lib/env";
 import { api } from "./lib/relay";
 
 /** Checksummed: the sign-in text must match the server's, character for character. */
-export const CIRCLE_AGENT = getAddress(SENDSURE_AGENTS.circleAgentWallet);
+export const CIRCLE_AGENT = getAddress(SENDSURE_AGENTS.circleAgentWallet!); // testnet only (Circle CLI session)
 
 function circle(args: string[]): string {
   const r = spawnSync("circle", args, { encoding: "utf8", timeout: 180_000 });

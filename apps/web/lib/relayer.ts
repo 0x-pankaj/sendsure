@@ -19,7 +19,7 @@ import {
   PAYEE_STATES,
   REGISTRY_ERROR_TEXT,
   ZERO_BYTES32,
-  arcTestnet,
+  arc,
   bindTypedData,
   changeTypedData,
   controllerRoleOf,
@@ -44,7 +44,7 @@ export class RelayError extends Error {
 
 const registry = deployment.payeeRegistry as Address;
 const transport = http(process.env.ARC_RPC_URL || undefined);
-export const serverClient = createPublicClient({ chain: arcTestnet, transport });
+export const serverClient = createPublicClient({ chain: arc, transport });
 
 let walletClient: ReturnType<typeof makeWallet> | undefined;
 function makeWallet() {
@@ -54,7 +54,7 @@ function makeWallet() {
   }
   // The relayer key only pays gas. It holds no role in any contract.
   const account = privateKeyToAccount(key as Hex, { nonceManager });
-  return createWalletClient({ account, chain: arcTestnet, transport });
+  return createWalletClient({ account, chain: arc, transport });
 }
 export function relayer() {
   walletClient ??= makeWallet();
@@ -245,7 +245,7 @@ export async function sendAndWait(send: () => Promise<Hex>, from?: Address): Pro
       txHash = await serial(send);
     } catch (err) {
       if (!from || attempt >= 3 || !isNonceError(err)) throw err;
-      nonceManager.reset({ address: from, chainId: arcTestnet.id });
+      nonceManager.reset({ address: from, chainId: arc.id });
     }
   }
   try {

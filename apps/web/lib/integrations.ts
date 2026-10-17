@@ -6,7 +6,7 @@
 import { getAddress, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import {
   REASON_TEXT,
-  arcTestnet,
+  arc,
   deployment,
   formatUsdc,
   mandateAbi,
@@ -125,7 +125,7 @@ export async function orgInfo(org: Address) {
     org,
     owner,
     tier: tier === 2 ? "sandbox" : "production",
-    chain: { id: arcTestnet.id, name: arcTestnet.name },
+    chain: { id: arc.id, name: arc.name },
     token: { symbol: "USDC", address: deployment.usdc, decimals: 6 },
     // What the org can pay right now, read from Arc. The contract checks these when the payee signs a bill, and a
     // claim that fails them is refused for good, so the books check them before sending a bill.

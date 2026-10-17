@@ -8,16 +8,21 @@ import {
   type Hex,
   type PublicClient,
 } from "viem";
-import { deployment, mandateAbi } from "./generated";
+import { arc, deployment, IS_MAINNET, NETWORK_NAME } from "./chain";
+import { mandateAbi } from "./generated";
 
 /**
- * SendSure's agents. A new org authorises both: either may call settle(), neither can change the
- * rules, the caps or the payees. The Circle agent wallet (Circle CLI) is the primary one.
+ * SendSure's agents. A new org authorises all of them: any may call settle(), none can change the
+ * rules, the caps or the payees. On testnet the Circle agent wallet (Circle CLI) is the primary one; the
+ * mainnet beta has only the server agent (a Circle agent wallet there needs a production Circle account).
  */
-export const SENDSURE_AGENTS = {
-  circleAgentWallet: "0x9f977c4efff254a9284e69a0ae2b03e4ab851c07",
-  serverAgent: "0xdE71581E008DD869241C550182A8B2FFa8063E30",
-} as const satisfies Record<string, Address>;
+export const SENDSURE_AGENTS: { readonly circleAgentWallet?: Address; readonly serverAgent: Address } = IS_MAINNET
+  ? { serverAgent: "0x59f34EBD58571F98267b6CDbA0dC478BeB05035B" }
+  : { circleAgentWallet: "0x9f977c4efff254a9284e69a0ae2b03e4ab851c07", serverAgent: "0xdE71581E008DD869241C550182A8B2FFa8063E30" };
+/** Every SendSure agent on this network, the Circle agent wallet first. */
+export const SENDSURE_AGENT_LIST: Address[] = [SENDSURE_AGENTS.circleAgentWallet, SENDSURE_AGENTS.serverAgent].filter(
+  (a): a is Address => Boolean(a),
+);
 
 /** Mirrors Mandate.TIER_PRODUCTION / TIER_SANDBOX. */
 export const ORG_TIER = { PRODUCTION: 1, SANDBOX: 2 } as const;
@@ -48,13 +53,25 @@ export interface NewOrgInput {
   tier?: number;
 }
 
-/** Test-sized defaults for a new org on Arc testnet (the faucet gives 10 USDC at a time). */
-export const DEFAULT_CAPS: CapsInput = {
+/**
+ * The mainnet beta's ceiling (the contracts are not audited): a new org's caps can't go above these, and the
+ * server refuses to create an org that asks for more. Real money, so small.
+ */
+export const MAINNET_BETA_MAX_CAPS: CapsInput = {
   orgPeriodCap: usdc(100),
   payeePeriodCap: usdc(50),
-  claimMax: usdc(50),
-  coSignThreshold: usdc(25),
+  claimMax: usdc(10),
+  coSignThreshold: usdc(5),
 };
+/** Defaults for a new org: test-sized on Arc testnet (the faucet gives 10 USDC at a time), the beta ceiling on mainnet. */
+export const DEFAULT_CAPS: CapsInput = IS_MAINNET
+  ? MAINNET_BETA_MAX_CAPS
+  : {
+      orgPeriodCap: usdc(100),
+      payeePeriodCap: usdc(50),
+      claimMax: usdc(50),
+      coSignThreshold: usdc(25),
+    };
 export const DEFAULT_PERIOD_SECONDS = 30n * 86_400n;
 export const DEFAULT_CHANGE_COOLDOWN_SECONDS = 86_400n;
 
@@ -63,7 +80,7 @@ export function initParams(input: NewOrgInput) {
   return {
     owner: input.owner,
     treasury: input.treasury,
-    agents: [SENDSURE_AGENTS.circleAgentWallet, SENDSURE_AGENTS.serverAgent] as Address[],
+    agents: [...SENDSURE_AGENT_LIST],
     approvers: [...input.approvers],
     tokens: [deployment.usdc as Address],
     caps: [input.caps],
@@ -98,7 +115,9 @@ export async function readMandate(client: Reader, org: Address): Promise<Mandate
     client.readContract({ ...m, functionName: "tier" }),
     client.readContract({ ...m, functionName: "periodLength" }),
     client.readContract({ ...m, functionName: "caps", args: [token] }),
-    client.readContract({ ...m, functionName: "isAgent", args: [SENDSURE_AGENTS.circleAgentWallet] }),
+    SENDSURE_AGENTS.circleAgentWallet
+      ? client.readContract({ ...m, functionName: "isAgent", args: [SENDSURE_AGENTS.circleAgentWallet] })
+      : false,
   ]);
   const [allowance, treasuryBalance] = await Promise.all([
     client.readContract({ address: token, abi: erc20Abi, functionName: "allowance", args: [treasury, org] }),
@@ -138,14 +157,14 @@ export function createOrgMessage(rules: OrgRules, validUntil: bigint): string {
   const c = rules.caps;
   return [
     rules.sandbox
-      ? "SendSure: create a TEST payer org (sandbox) on Arc testnet."
-      : "SendSure: create my payer org on Arc testnet.",
+      ? `SendSure: create a TEST payer org (sandbox) on ${NETWORK_NAME}.`
+      : `SendSure: create my payer org on ${NETWORK_NAME}.`,
     `Owner and treasury: ${rules.owner}`,
     `Approvers (co-sign payments): ${rules.approvers.join(", ")}`,
     `Budget per ${days(rules.periodLength)} days: ${formatUsdc(c.orgPeriodCap)} USDC in total, ${formatUsdc(c.payeePeriodCap)} per payee, ${formatUsdc(c.claimMax)} per claim.`,
     `A person co-signs every payment above ${formatUsdc(c.coSignThreshold)} USDC and every first payment to a new address.`,
     `A payee's change of address waits ${days(rules.changeCooldown)} day(s).`,
-    `SendSure agents that may pay inside these rules: ${SENDSURE_AGENTS.circleAgentWallet}, ${SENDSURE_AGENTS.serverAgent}.`,
+    `SendSure agents that may pay inside these rules: ${SENDSURE_AGENT_LIST.join(", ")}.`,
     `Valid until: ${new Date(Number(validUntil) * 1000).toISOString()}`,
   ].join("\n");
 }
@@ -164,11 +183,11 @@ export const inviteBatchHash = (payeeRefs: readonly Hex[]): Hex =>
 
 // ------------------------------------------------------------------ USDC permit (EIP-2612)
 
-/** Arc testnet USDC's EIP-712 domain (name "USDC", version "2"); checked against DOMAIN_SEPARATOR in tests. */
+/** Arc USDC's EIP-712 domain (name "USDC", version "2", same on mainnet); checked against DOMAIN_SEPARATOR in tests. */
 export const usdcDomain = {
   name: "USDC",
   version: "2",
-  chainId: 5042002,
+  chainId: arc.id,
   verifyingContract: deployment.usdc as Address,
 } as const;
 

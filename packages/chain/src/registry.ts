@@ -1,5 +1,6 @@
 import type { Address, Hex, PublicClient } from "viem";
-import { deployment, payeeRegistryAbi } from "./generated";
+import { deployment } from "./chain";
+import { payeeRegistryAbi } from "./generated";
 import { bindTypes, changeTypes, registryDomain } from "./typed";
 
 /** Mirrors PayeeRegistry.State and PayeeRegistry.Tier (same order as the Solidity enums). */

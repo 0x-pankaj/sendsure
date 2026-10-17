@@ -7,7 +7,7 @@
 // chooses this, so nobody else downloads it.
 import { createPublicClient, encodeFunctionData, erc20Abi, getAddress, zeroHash, type Address, type Hex } from "viem";
 import { createBundlerClient, toWebAuthnAccount, type BundlerClient, type SmartAccount } from "viem/account-abstraction";
-import { arcTestnet, deployment, encodeClaim, mandateAbi, payeeRegistryAbi, type Claim } from "@sendsure/chain";
+import { arc, deployment, encodeClaim, mandateAbi, payeeRegistryAbi, type Claim } from "@sendsure/chain";
 
 // A Client Key is public by design (it only works from the domains set for it in Circle's Console).
 const CLIENT_KEY = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY ?? "";
@@ -27,8 +27,8 @@ export const passkeysAvailable = (): boolean =>
 async function fromCredential(credential: unknown): Promise<PasskeySigner> {
   const sdk = await import("@circle-fin/modular-wallets-core");
   const transport = sdk.toModularTransport(`${CLIENT_URL}/arcTestnet`, CLIENT_KEY);
-  const client = createPublicClient({ chain: arcTestnet, transport: transport as never });
-  const bundler = createBundlerClient({ chain: arcTestnet, transport: transport as never }) as unknown as BundlerClient;
+  const client = createPublicClient({ chain: arc, transport: transport as never });
+  const bundler = createBundlerClient({ chain: arc, transport: transport as never }) as unknown as BundlerClient;
   const account = (await sdk.toCircleSmartAccount({
     client: client as never,
     owner: toWebAuthnAccount({ credential: credential as never }) as never,

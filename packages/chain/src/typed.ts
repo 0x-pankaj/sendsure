@@ -1,17 +1,16 @@
 import type { Address } from "viem";
-import { arcTestnet } from "./chain";
-import { deployment } from "./generated";
+import { arc, deployment } from "./chain";
 
 /** EIP-712 domains. Both include chainId and verifyingContract, so signatures cannot be replayed elsewhere. */
 export const registryDomain = {
   name: "SendSure PayeeRegistry",
   version: "1",
-  chainId: arcTestnet.id,
+  chainId: arc.id,
   verifyingContract: deployment.payeeRegistry as Address,
 } as const;
 
 export const mandateDomain = (org: Address) =>
-  ({ name: "SendSure Mandate", version: "1", chainId: arcTestnet.id, verifyingContract: org }) as const;
+  ({ name: "SendSure Mandate", version: "1", chainId: arc.id, verifyingContract: org }) as const;
 
 export const bindTypes = {
   Bind: [
