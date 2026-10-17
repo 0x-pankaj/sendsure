@@ -8,18 +8,31 @@
 ## Resume here
 
 - **Status:** see the task table; ✅ = done and pushed.
-- **Oct 17: mainnet beta started (branch `mainnet`)** for the [Arc OSS mainnet bounty](https://arc-oss.thecanteenapp.com/#mainnet-bounty)
-  (deploy to Arc mainnet, verify on Blockscout or Sourcify, post on X, re-run `arc-canteen submit-showcase`). One build
-  switch, `NEXT_PUBLIC_ARC_NETWORK=mainnet`, picks the chain (5042, `rpc.mainnet.arc.io`, explorer.arc.io), the deployment,
-  the EIP-712 domains and the agents. Mainnet USDC is the same `0x3600…` (6 decimals, same permit domain, checked on-chain).
-  Fresh mainnet keys, never committed: deployer `0x000E…4b05` (`contracts/.env.mainnet`), relayer `0x51c3…Cf19` and server
-  agent `0x59f3…035B` (`apps/web/.env.mainnet.local`). D1 `sendsure-mainnet` created. Done: chain switch (b70b551),
-  beta limits and page texts, Worker env `mainnet` in `wrangler.jsonc`, `cf:deploy:mainnet`, `scripts/record-deployment.mjs`.
-  **Left, in order:** Pankaj funds the three keys (1 + 5 + 5 USDC) → `forge script script/Deploy.s.sol --rpc-url arc_mainnet
-  --broadcast` with `.env.mainnet` → `node scripts/record-deployment.mjs mainnet && pnpm gen` → verify the contracts →
-  D1 migrations (`--env mainnet`) → `wrangler secret bulk --env mainnet` → `pnpm --filter @sendsure/web cf:deploy:mainnet`
-  → one real payment end to end with Pankaj's own wallets (first-party, not traction) → README note → X post (honest:
-  no outside users yet) → `arc-canteen submit-showcase`.
+- **Oct 17: mainnet beta (branch `mainnet`, worktree `../sendsure-mainnet`; `main` and the testnet site untouched)** for
+  the [Arc OSS mainnet bounty](https://arc-oss.thecanteenapp.com/#mainnet-bounty) (deploy to Arc mainnet, verify on
+  Blockscout or Sourcify, post on X, re-run `arc-canteen submit-showcase`). One build switch,
+  `NEXT_PUBLIC_ARC_NETWORK=mainnet`, picks the chain (5042), deployment, EIP-712 domains, agents and relayer. Mainnet USDC
+  is byte-identical to testnet's (proxy and implementation code hashes checked). Beta limits, enforced by the relayer and
+  by the agent at every run: 10 USDC a bill, 50 per payee, 100 a period, co-sign above 5, periods of 30+ days, budgets of
+  100 or less, production orgs only; a daily gas budget per key. Off on mainnet: faucet, /try and test wallets, passkeys,
+  x402, Circle agent wallet, ERP add-on keys (their emails still say testnet). Server RPCs fail over across Circle's,
+  QuickNode's, dRPC's and Blockdaemon's mainnet endpoints (`ARC_RPC_URL`, comma-separated).
+  **Checked before funding:** an independent review (1 blocker, 4 high, all fixed: 55bd4c7), `scripts/rehearse-mainnet.sh`
+  36/36 on an anvil fork of Arc mainnet with the real deployer key (same addresses as the real deploy), and a mainnet
+  production build with no key in the bundle. Fresh keys, never committed: deployer `0x000E…4b05`
+  (`contracts/.env.mainnet`), relayer `0x51c3…Cf19`, server agent `0x59f3…035B` (`apps/web/.env.mainnet.local`, which
+  also holds the Worker's other secrets). D1 `sendsure-mainnet` migrated. The same invite/autopilot blocker exists on
+  `main` (testnet gas only): fix it there after the hackathon submission, with Pankaj's OK.
+  **Left, in order (from the worktree):**
+  1. Pankaj funds deployer 1, relayer 5, agent 5 USDC on Arc mainnet.
+  2. `cd contracts && set -a && . ./.env.mainnet && set +a && forge script script/Deploy.s.sol --rpc-url arc_mainnet --broadcast`
+     (expect PayeeRegistry `0xdDAd…0db3`, MandateFactory `0x444E…af93`, implementation `0x6a98…6BBC`).
+  3. `node scripts/record-deployment.mjs mainnet && pnpm gen`; verify on Sourcify: PayeeRegistry (constructor arg USDC),
+     MandateFactory (arg registry), Mandate implementation; set `verified: true`; commit.
+  4. `wrangler secret bulk --env mainnet` from `apps/web/.env.mainnet.local` (never echoed); `pnpm --filter @sendsure/web
+     cf:deploy:mainnet` from the worktree (it has no `.env.local`, so no testnet value is bundled).
+  5. One small real payment with Pankaj's own wallets (`FIRST_PARTY_ADDRESSES`: first-party, never traction).
+  6. README note, honest X post (no outside users yet), `arc-canteen submit-showcase`.
 - **Oct 15: Canteen updated** (missed since Oct 10): `arc-canteen update product` (Oct 11–15 work, compare 676ef63...5afea74) and `update traction` (external 0; 26 ERP companies emailed Oct 14, 3 detailed replies; only Brian Pond named, with his permission). Post the next pair at the re-submission on Oct 16.
 - **Oct 15, 11:30 check:** the site still said "Odoo 19 / ERPNext 15" and old test counts on the home page, nav, /docs and /books: now Odoo 16–19 and ERPNext 15–16, 37 and 29 tests, and a Codespaces link on /docs (live ea5c075). Demo org 0x2cE9… has 1.75 USDC, budget 9.75; local Odoo 19 is connected, Northwind invited, INV-2041 and INV-2042 in draft.
 - **Oct 14 evening: usable in one call (T42).** Odoo 16–19 and ERPNext 15–16 supported and tested; "Run the agent now"; funds checked before a bill is sent; a payer can't prove their own wallet as a supplier. A test copy on a lead's version: `ODOO_VERSION=17 ./run.sh up` (port 18017) or `ERPNEXT_VERSION=16 ./run.sh up` (port 18086); `pnpm demo-kit` connects it to a sandbox org with no wallet (the local Odoo 19 demo already is: org 0x2cE9…, key in `.sendsure-demo.json`). Leads without Docker: the Codespaces links in the README.
