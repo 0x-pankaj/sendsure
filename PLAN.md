@@ -64,7 +64,9 @@
 - **Oct 18: submitted.** Pankaj submitted the Tameion form with his own-voice video (https://youtu.be/lUCKLU_cWYI,
   2:46; `sendsure-video/make-me.sh`). Canteen `update traction` posted: all outreach replies in one place (4 of 26
   replied; only Brian Pond named; what changed because of them), and two teams in talks about a mainnet payment,
-  unconfirmed, so not named or counted.
+  unconfirmed, so not named or counted. Then, with Pankaj's OK: README on `main` (51b0db2: the video, Oct 18 numbers for
+  testnet and the mainnet beta, the outreach replies), the GitHub About box (website, 12 topics, dates to Oct 17), and a
+  Canteen `update product` with the video link.
 - **Oct 17, 20:55: Canteen updated** (the Oct 16 pair was missed): `arc-canteen update product` (the mainnet beta and
   the Oct 16–17 testnet fixes, compare 5afea74...mainnet) and `update traction` (external 0 on testnet and mainnet;
   our first mainnet payment as first-party; Brian Pond's paper-check reply, by name with his permission; a German
