@@ -1,0 +1,18 @@
+{
+  "what": "The first SendSure payment on Arc mainnet: first-party test wallets, through Odoo. Not traction.",
+  "at": "2026-10-17T10:16:15.223Z",
+  "site": "https://sendsure-mainnet.0xpankaj.workers.dev",
+  "odoo": "https://8-231-105-211.sslip.io",
+  "org": "0x279Da879611C0C6448FA755F3c337663f2c37B56",
+  "payer": "0x140Fa3b2aD2a8d75e6B5b6C46EE37fc8E734f32D",
+  "payee": "0xeEE7d77c47EB86324FE7187f1d19ec18672343A9",
+  "bill": {
+    "odoo": "BILL/2026/10/0001",
+    "ref": "SENDSURE-MAINNET-1",
+    "usd": "1"
+  },
+  "settleTx": "0x6122b62e987efe480740cba5d8ebfafd0e231a95ea8c03cf1770a875459c5bae",
+  "explorer": "https://explorer.arc.io/tx/0x6122b62e987efe480740cba5d8ebfafd0e231a95ea8c03cf1770a875459c5bae",
+  "receipt": "https://sendsure-mainnet.0xpankaj.workers.dev/receipt?tx=0x6122b62e987efe480740cba5d8ebfafd0e231a95ea8c03cf1770a875459c5bae",
+  "odooPayment": "PSSU/2026/00001"
+}

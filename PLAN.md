@@ -43,7 +43,17 @@
      `CLOUDFLARE_ACCOUNT_ID`). 8 secrets from `apps/web/.env.mainnet.local`. Checked: /api/status chain 5042 with both
      keys funded, every page 200, /try → testnet, faucet 404 NOT_ON_MAINNET, /api/org/keys 401 without a session,
      `x-sendsure-chain: 5042`, /api/rpc chain 0x13b2, the cron's indexer cursor moving.
-  3. One small real payment with Pankaj's own wallets (`FIRST_PARTY_ADDRESSES`: first-party, never traction).
+  3. ~~First real payment~~ **done Oct 17, 16:01 Kathmandu, through a hosted Odoo** (`scripts/first-mainnet-payment.ts`,
+     15/15; `deployments/first-mainnet-payment.json`): first-party test wallets A `0x140F…f32D` (payer, funded 1.1 by
+     Pankaj) and B `0xeEE7…43A9` (vendor), keys in `.env.mainnet-test`, both in `FIRST_PARTY_ADDRESSES`. Org
+     `0x279Da879611C0C6448FA755F3c337663f2c37B56`; bill SENDSURE-MAINNET-1 (1 USD) sent from Odoo, signed by the vendor,
+     escalated (first payment), co-signed by A, paid by the agent (settle `0x6122b62e…5bae`), recorded in Odoo as
+     PSSU/2026/00001 with 0 open. /api/stats: external 0, first-party 1 org / 1 payment / 1 USDC.
+     **Hosted Odoo:** https://8-231-105-211.sslip.io (Odoo 19 + Postgres 16 + add-on from the `mainnet` branch, Caddy
+     with Let's Encrypt), GCP project `sendsure-odoo-070286` on Pankaj's personal billing (never ClasSync's or
+     Praxli's), VM `sendsure-odoo` e2-medium asia-south1-a, static IP 8.231.105.211, ports 80/443 only (+ GCP's default
+     SSH). Admin and master passwords in `.env.mainnet-odoo` (git-ignored); admin/admin refused, database manager off.
+     Setup: `scripts/hosting/odoo-gcp-startup.sh` (passwords from instance metadata, removed after setup).
   4. README note, honest X post (no outside users yet), `arc-canteen submit-showcase`.
 - **Oct 15: Canteen updated** (missed since Oct 10): `arc-canteen update product` (Oct 11–15 work, compare 676ef63...5afea74) and `update traction` (external 0; 26 ERP companies emailed Oct 14, 3 detailed replies; only Brian Pond named, with his permission). Post the next pair at the re-submission on Oct 16.
 - **Oct 15, 11:30 check:** the site still said "Odoo 19 / ERPNext 15" and old test counts on the home page, nav, /docs and /books: now Odoo 16–19 and ERPNext 15–16, 37 and 29 tests, and a Codespaces link on /docs (live ea5c075). Demo org 0x2cE9… has 1.75 USDC, budget 9.75; local Odoo 19 is connected, Northwind invited, INV-2041 and INV-2042 in draft.

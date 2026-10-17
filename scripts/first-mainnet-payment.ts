@@ -75,11 +75,6 @@ async function rpc(service: string, method: string, args: unknown[]) {
   if (out.error) throw new Error(out.error.data?.message ?? out.error.message ?? "Odoo error");
   return out.result as any;
 }
-const uid = await rpc("common", "login", [DB, "admin", odooPassword]);
-if (!uid) throw new Error(`cannot sign in to Odoo at ${odooUrl} (database ${DB})`);
-const odoo = (model: string, method: string, args: unknown[] = [], kwargs: Record<string, unknown> = {}) =>
-  rpc("object", "execute_kw", [DB, uid, odooPassword, model, method, args, kwargs]);
-check(true, `Odoo ${(await rpc("common", "version", [])).server_version} at ${odooUrl}`);
 
 // ------------------------------------------------------------------ 0. the site and the wallets
 
@@ -152,6 +147,12 @@ const ownerToken = await signInAs(base, owner);
 const payeeToken = await signInAs(base, payee);
 
 // ------------------------------------------------------------------ 3. Odoo connects with an integration key
+
+const uid = await rpc("common", "login", [DB, "admin", odooPassword]);
+if (!uid) throw new Error(`cannot sign in to Odoo at ${odooUrl} (database ${DB})`);
+const odoo = (model: string, method: string, args: unknown[] = [], kwargs: Record<string, unknown> = {}) =>
+  rpc("object", "execute_kw", [DB, uid, odooPassword, model, method, args, kwargs]);
+check(true, `Odoo ${(await rpc("common", "version", [])).server_version} at ${odooUrl}`);
 
 if (!state.odooConnected) {
   const created = await api(base, "/api/org/keys", { token: ownerToken, body: { org, label: "Odoo (first mainnet payment)" } });
