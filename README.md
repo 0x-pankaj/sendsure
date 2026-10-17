@@ -6,6 +6,9 @@ claim that payee signed, and only inside a budget an Arc contract enforces. Then
 payment into the books the team already keeps: Odoo, ERPNext, beancount, hledger or CSV, exact to
 the last decimal.
 
+**Demo video (2:46):** https://youtu.be/lUCKLU_cWYI · one real fraud case and how SendSure stops that bill, the
+full flow on Arc testnet, ERPNext and the books, and the first real payment on Arc mainnet.
+
 **Live on Arc testnet:** https://sendsure.0xpankaj.workers.dev · [Roadmap](ROADMAP.md) · [What we store](https://sendsure.0xpankaj.workers.dev/data)
 
 **Mainnet beta, since Oct 17:** https://sendsure-mainnet.0xpankaj.workers.dev · real USDC on Arc mainnet (chain 5042),
@@ -28,27 +31,38 @@ our own tests runs on *sandbox* orgs and is never counted as traction; our own t
 
 ## For judges: a 3-minute tour
 
-1. [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet: a payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
-2. A payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim and the agent's anchored decision (a sandbox payment from our tests).
-3. [`/books`](https://sendsure.0xpankaj.workers.dev/books): how a payment lands in Odoo and ERPNext, and the same ledger as beancount, hledger and CSV, downloadable from the demo org.
-4. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
-5. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, `integrations/erpnext/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
+1. The [2:46 video](https://youtu.be/lUCKLU_cWYI), narrated by the builder: the case, the flow, and the first mainnet payment.
+2. [`/try`](https://sendsure.0xpankaj.workers.dev/try), no wallet: a payee proves their address, a look-alike and a forged claim are refused on-chain, a real payment is co-signed and paid, and Claude holds an inbox of tricky claims with reasons.
+3. A payment's [receipt](https://sendsure.0xpankaj.workers.dev/receipt?tx=0xcfbb0de697f5a1349997b798de2443e358844ad39b47eb26a36553bd3128e89e): the payee's proof of address, their signed claim and the agent's anchored decision (a sandbox payment from our tests).
+4. [`/books`](https://sendsure.0xpankaj.workers.dev/books): how a payment lands in Odoo and ERPNext, and the same ledger as beancount, hledger and CSV, downloadable from the demo org.
+5. [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard): every number counted from chain events, with external, first-party and sandbox kept apart.
+6. With no keys at all: `forge test` in [`contracts/`](contracts/), `pnpm test`, `integrations/odoo/run.sh test`, `integrations/erpnext/run.sh test`, and `claude mcp add --transport http sendsure https://sendsure.0xpankaj.workers.dev/api/mcp`.
 
 Every claim in this file links to a file, a test or a live run. Each live run's record lists every
 check it made, so the counts can be recounted.
 
 ## Traction so far
 
-Honest numbers on Oct 11 (live, always current: [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard), [`/api/stats`](https://sendsure.0xpankaj.workers.dev/api/stats)):
+Honest numbers on Oct 18 (live, always current: [`/dashboard`](https://sendsure.0xpankaj.workers.dev/dashboard), [`/api/stats`](https://sendsure.0xpankaj.workers.dev/api/stats); mainnet: [`/dashboard`](https://sendsure-mainnet.0xpankaj.workers.dev/dashboard)):
 
 | Tier | Orgs | Payments | Notes |
 |---|---|---|---|
-| External (outside teams) | 0 | 0 | Outreach started Sep 30; the traction week runs Oct 11–17. |
-| First-party (our own wallets) | 5 | 3 (0.6 USDC) | Through the real site and a real wallet: our MetaMask run, the video's run, and the browser-wallet test's runs. |
-| Sandbox (our tests, never counted) | 67 | 51 (10.77 USDC) | Throwaway keys; every run record is in [`deployments/`](deployments/). |
+| External (outside teams) | 0 | 0 | None yet, on testnet or on the mainnet beta. |
+| First-party (our own wallets) | 9 | 8 (3.55 USDC) | Through the real site and a real wallet: our MetaMask run, the videos' runs, and the browser-wallet tests' runs. |
+| First-party, mainnet beta | 1 | 1 (1 USDC) | Our own test wallets, through a hosted Odoo 19 ([receipt](https://sendsure-mainnet.0xpankaj.workers.dev/receipt?tx=0x6122b62e987efe480740cba5d8ebfafd0e231a95ea8c03cf1770a875459c5bae)). |
+| Sandbox (our tests, never counted) | 101 | 76 (17 USDC) | Throwaway keys; every run record is in [`deployments/`](deployments/). |
 
-Paid agent calls over Circle Gateway (x402): 12, all first-party. Agent runs on sandbox orgs: 110, of
-which 8 started by autopilot.
+Paid agent calls over Circle Gateway (x402): 14, all first-party. Agent runs on sandbox orgs: 151, of
+which 15 started by autopilot.
+
+**Outreach:** on Oct 14 we wrote one personal email each to 26 companies that run their own Odoo, ERPNext or
+beancount (found from their own code on GitHub). 4 replied; these are conversations, not users. Brian Pond
+(Datahenge, a US ERPNext consultant; quoted with his permission), on what happens when a supplier's bank details change:
+"I suspect new bank details probably are not being caught/noticed." And: "That's a real gap someone like you could
+solve." A Swiss ERPNext partner (not named) said his clients pay suppliers by bank, so stablecoins don't fit them
+today, though verifying the payee once and matching each payment to its invoice makes sense. A German hardware company
+(not named) said none of its suppliers take stablecoins. What we build next because of them: a check-only mode for teams
+not ready to pay in stablecoins.
 
 ## The problem
 
