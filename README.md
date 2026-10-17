@@ -8,10 +8,22 @@ the last decimal.
 
 **Live on Arc testnet:** https://sendsure.0xpankaj.workers.dev · [Roadmap](ROADMAP.md) · [What we store](https://sendsure.0xpankaj.workers.dev/data)
 
+**Mainnet beta, since Oct 17:** https://sendsure-mainnet.0xpankaj.workers.dev · real USDC on Arc mainnet (chain 5042),
+at most 10 USDC a bill, not audited. Contracts, verified on Sourcify: PayeeRegistry
+`0xdDAd8354D2Ad14DE137D4147B303747885D70db3`, MandateFactory `0x444Ee1C5721822ec2ECA2e52E85911CA5B1caf93`, Mandate
+implementation `0x6a98994c7348aE13024F2F252D9c7d68622b6BBC`. The first real payment: an Odoo bill for 1 USDC, signed by
+the vendor, co-signed by a person, paid by the agent and recorded in Odoo
+([receipt](https://sendsure-mainnet.0xpankaj.workers.dev/receipt?tx=0x6122b62e987efe480740cba5d8ebfafd0e231a95ea8c03cf1770a875459c5bae)).
+It used our own test wallets, so it counts as first-party, not traction. The mainnet build is on the
+[`mainnet`](https://github.com/0x-pankaj/sendsure/tree/mainnet) branch: one build switch picks the network, and its
+Odoo add-on (1.3.0) and ERPNext app (15.0.2) tell vendors when the USDC is real. This branch and the testnet site stay
+on testnet.
+
 Built during the **Tameion Agents Hackathon** (Canteen × Circle × Arc), which opened Sep 27, 2026, on
-Arc testnet (chain 5042002). Testnet only; not audited. The contracts, the payments and the Odoo and
-ERPNext records are all real Arc testnet transactions. Activity from our own tests runs on *sandbox*
-orgs and is never counted as traction; our own team's org is labelled *first-party*. The
+Arc testnet (chain 5042002). Everything below is on testnet unless it says mainnet; nothing is audited. The
+contracts, the payments and the Odoo and ERPNext records are all real Arc testnet transactions. Activity from
+our own tests runs on *sandbox* orgs and is never counted as traction; our own team's org is labelled
+*first-party*. The
 [dashboard](https://sendsure.0xpankaj.workers.dev/dashboard) keeps the three apart, from chain events alone.
 
 ## For judges: a 3-minute tour
