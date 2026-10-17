@@ -1,0 +1,35 @@
+{
+  "network": "Arc mainnet",
+  "chainId": 5042,
+  "explorer": "https://explorer.arc.io",
+  "deployedAtUtc": "2026-10-17T09:22:59.179Z",
+  "block": 26410298,
+  "sourceCommit": "80c82a45062f988e335224bac1b9775bce3e7b0a",
+  "deployer": "0x000E2DD8c423637Ce7AFb28559419080b3c34b05",
+  "usdc": "0x3600000000000000000000000000000000000000",
+  "contracts": {
+    "PayeeRegistry": {
+      "address": "0xdDAd8354D2Ad14DE137D4147B303747885D70db3",
+      "deployTx": "0x454688dd10a095da56489b0a517670d7cbace42e8f86a3ecc4fc769e7c6b90ef",
+      "verified": true,
+      "url": "https://explorer.arc.io/address/0xdDAd8354D2Ad14DE137D4147B303747885D70db3",
+      "sourcify": "https://sourcify.dev/server/v2/contract/5042/0xdDAd8354D2Ad14DE137D4147B303747885D70db3"
+    },
+    "MandateFactory": {
+      "address": "0x444Ee1C5721822ec2ECA2e52E85911CA5B1caf93",
+      "deployTx": "0xf125c7ec4e2328cc7ca5fed073e390c0ae8dfc4f324856a678d1e93f8e2048f5",
+      "verified": true,
+      "url": "https://explorer.arc.io/address/0x444Ee1C5721822ec2ECA2e52E85911CA5B1caf93",
+      "sourcify": "https://sourcify.dev/server/v2/contract/5042/0x444Ee1C5721822ec2ECA2e52E85911CA5B1caf93"
+    },
+    "MandateImplementation": {
+      "address": "0x6a98994c7348aE13024F2F252D9c7d68622b6BBC",
+      "deployedBy": "MandateFactory constructor",
+      "verified": true,
+      "url": "https://explorer.arc.io/address/0x6a98994c7348aE13024F2F252D9c7d68622b6BBC",
+      "sourcify": "https://sourcify.dev/server/v2/contract/5042/0x6a98994c7348aE13024F2F252D9c7d68622b6BBC"
+    }
+  },
+  "setFactoryTx": "0x07dfc262f2e0e11dbb130590ba4a0047119f938da25c78d6e625219796def97e",
+  "verification": "Sourcify, exact match for all three (forge verify-contract --verifier sourcify --chain 5042), Oct 17"
+}
