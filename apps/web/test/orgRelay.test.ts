@@ -10,7 +10,7 @@ import {
   usdc,
   type OrgRules,
 } from "@sendsure/chain";
-import { checkBetaLimits, parseCreateOrg, parseInvites, parsePermit, verifyCreateOrg, verifyPermit } from "../lib/orgRelay";
+import { checkBetaBudget, checkBetaLimits, parseCreateOrg, parseInvites, parsePermit, verifyCreateOrg, verifyPermit } from "../lib/orgRelay";
 
 const now = Math.floor(Date.now() / 1000);
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -102,5 +102,10 @@ describe("mainnet beta limits", () => {
     expect(() => checkBetaLimits({ ...max, orgPeriodCap: max.orgPeriodCap + 1n }, false)).toThrow(/mainnet beta/);
     expect(() => checkBetaLimits({ ...max, coSignThreshold: max.coSignThreshold + 1n }, false)).toThrow(/co-signing above 5/);
     expect(() => checkBetaLimits(max, true)).toThrow(/no test orgs/);
+  });
+
+  it("caps the budget an org lets its contract spend", () => {
+    expect(() => checkBetaBudget(MAINNET_BETA_MAX_CAPS.orgPeriodCap)).not.toThrow();
+    expect(() => checkBetaBudget(MAINNET_BETA_MAX_CAPS.orgPeriodCap + 1n)).toThrow(/budget of at most 100 USDC/);
   });
 });

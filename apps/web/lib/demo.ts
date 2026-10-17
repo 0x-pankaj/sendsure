@@ -1,7 +1,7 @@
 // Server only. /try: a guided sandbox for people without a wallet. SendSure plays the payee, an
 // attacker and the payer's approver, with keys derived per visitor session from DEMO_SECRET (never
 // stored). Every step is a real transaction on Arc testnet against the SANDBOX demo org.
-import { concatHex, createWalletClient, getAddress, http, keccak256, toHex, type Address, type Hex } from "viem";
+import { concatHex, createWalletClient, getAddress, keccak256, toHex, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
   SIGNATURE_TTL_SECONDS,
@@ -29,6 +29,7 @@ import { getDb } from "./db";
 import { appendDecision } from "./decisionLog";
 import { agentWallet } from "./orgRelay";
 import { RelayError, relayBind, sendAndWait, serverClient, toRelayError, verifyChange } from "./relayer";
+import { arcTransport } from "./rpc";
 
 export type Scene = "bind" | "attack" | "change" | "pay" | "inbox";
 
@@ -242,7 +243,7 @@ async function pay(session: string) {
   const approver = createWalletClient({
     account: privateKeyToAccount(env("DEMO_APPROVER_PRIVATE_KEY") as Hex),
     chain: arc,
-    transport: http(process.env.ARC_RPC_URL || undefined),
+    transport: arcTransport(),
   });
   const { request } = await serverClient.simulateContract({
     account: approver.account,

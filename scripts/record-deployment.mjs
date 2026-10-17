@@ -22,7 +22,8 @@ const factory = created("MandateFactory");
 const setFactory = run.transactions.find((t) => t.transactionType === "CALL" && t.function?.startsWith("setFactory"));
 const receipt = run.receipts.find((r) => r.transactionHash === registry.deployTx);
 
-const client = createPublicClient({ transport: http(net.rpc) });
+// RECORD_RPC_URL: read from a local fork instead (scripts/rehearse-mainnet.sh).
+const client = createPublicClient({ transport: http(process.env.RECORD_RPC_URL || net.rpc) });
 const implementation = await client.readContract({
   address: factory.address,
   abi: parseAbi(["function implementation() view returns (address)"]),

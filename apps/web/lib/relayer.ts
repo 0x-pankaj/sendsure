@@ -6,7 +6,6 @@ import {
   createWalletClient,
   formatEther,
   getAddress,
-  http,
   isAddress,
   nonceManager,
   recoverTypedDataAddress,
@@ -30,6 +29,7 @@ import {
   type BindMessage,
   type ChangeMessage,
 } from "@sendsure/chain";
+import { arcTransport } from "./rpc";
 
 /** An error the relayer returns to the caller as { error, code } with an HTTP status. */
 export class RelayError extends Error {
@@ -43,7 +43,7 @@ export class RelayError extends Error {
 }
 
 const registry = deployment.payeeRegistry as Address;
-const transport = http(process.env.ARC_RPC_URL || undefined);
+const transport = arcTransport();
 export const serverClient = createPublicClient({ chain: arc, transport });
 
 let walletClient: ReturnType<typeof makeWallet> | undefined;

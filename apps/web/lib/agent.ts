@@ -459,7 +459,15 @@ export async function runAgent(
   const decided = items.map((item) => {
     const rules = rulesDecision(item.outcome, item.reason, item.flags, item.cosigned);
     const m = model?.decisions.get(item.row.claim_id);
-    return { item, rules, m, final: combine(rules, m, item.cosigned), waitsForCash: false };
+    let final = combine(rules, m, item.cosigned);
+    // Mainnet beta (contracts not audited): above the ceiling the agent holds the bill instead of deciding to pay it.
+    if (IS_MAINNET && final.action === "pay" && item.claim.amount > MAINNET_BETA_MAX_CAPS.claimMax) {
+      final = {
+        action: "hold",
+        reason: `Above the mainnet beta limit of ${formatUsdc(MAINNET_BETA_MAX_CAPS.claimMax)} USDC a bill, so SendSure's agent will not pay it. Pay it yourself, outside SendSure.`,
+      };
+    }
+    return { item, rules, m, final, waitsForCash: false };
   });
   const toPay = decided.filter((d) => d.final.action === "pay");
   const sum = (list: typeof decided) => list.reduce((total, d) => total + d.item.claim.amount, 0n);

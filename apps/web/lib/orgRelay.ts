@@ -4,7 +4,6 @@
 //   invites     -> SendSure's server agent, an agent of the org, calls Mandate.openSlots
 import {
   createWalletClient,
-  http,
   nonceManager,
   parseEventLogs,
   parseSignature,
@@ -54,6 +53,7 @@ import {
   type RelayResult,
 } from "./relayer";
 import { claimSignature, releaseSignature } from "./signatures";
+import { arcTransport } from "./rpc";
 
 const factory = deployment.mandateFactory as Address;
 const errorsOnly = <T extends readonly { type: string }[]>(abi: T) => abi.filter((x) => x.type === "error");
@@ -109,6 +109,17 @@ export function checkBetaLimits(caps: CapsInput, sandbox: boolean): void {
         `${formatUsdc(max.orgPeriodCap)} in all per period, with a person co-signing above ${formatUsdc(max.coSignThreshold)}.`,
       "BETA_LIMIT",
     );
+  }
+}
+
+/**
+ * Mainnet beta: the most an org can let its contract spend, through SendSure. If the unaudited contracts had a
+ * bug, this allowance is what could be lost, so it stays at the beta's period budget.
+ */
+export function checkBetaBudget(value: bigint): void {
+  const max = MAINNET_BETA_MAX_CAPS.orgPeriodCap;
+  if (value > max) {
+    throw new RelayError(400, `The mainnet beta allows a budget of at most ${formatUsdc(max)} USDC.`, "BETA_LIMIT");
   }
 }
 
@@ -205,11 +216,13 @@ export interface PermitRequest {
 export function parsePermit(body: unknown, nowSec = Math.floor(Date.now() / 1000)): PermitRequest {
   const b = toObject(body);
   if (!isSignature(b.signature)) throw new RelayError(400, "signature must be 65 bytes of hex.", "BAD_INPUT");
+  const value = toUint(b.value, 256, "value");
+  if (IS_MAINNET) checkBetaBudget(value);
   return {
     message: {
       owner: toAddress(b.owner, "owner"),
       spender: toAddress(b.spender, "spender"),
-      value: toUint(b.value, 256, "value"),
+      value,
       nonce: toUint(b.nonce, 256, "nonce"),
       deadline: toValidUntil(b.deadline, nowSec),
     },
@@ -267,7 +280,7 @@ function makeAgent() {
   const account = privateKeyToAccount(key as Hex, { nonceManager });
   if (account.address !== SENDSURE_AGENTS.serverAgent)
     throw new RelayError(503, "AGENT_PRIVATE_KEY is not the SendSure server agent.", "NOT_CONFIGURED");
-  return createWalletClient({ account, chain: arc, transport: http(process.env.ARC_RPC_URL || undefined) });
+  return createWalletClient({ account, chain: arc, transport: arcTransport() });
 }
 /** SendSure's server agent (an agent of every UI-created org): opens invites, settles, anchors. */
 export const agentWallet = () => (agentClient ??= makeAgent());
