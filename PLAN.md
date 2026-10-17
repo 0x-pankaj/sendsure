@@ -35,10 +35,14 @@
   (exact match). `deployments/arc-mainnet.json`, `pnpm gen` done. The deployer (0.363 USDC left) has no power left:
   `setFactory` was its one call. Send its leftover back to Pankaj once he names an address.
   **Left, in order (from the worktree):**
-  1. ~~Fund the deployer, deploy, record, verify~~ (done, above). Pankaj funds relayer 1 and agent 1 USDC (gas ~21.7
-     gwei, base fee flat at 20: a new org ~0.01, a payee proof ~0.003, a payment 0.002–0.008; an idle site sends nothing).
-  2. `wrangler secret bulk --env mainnet` from `apps/web/.env.mainnet.local` (never echoed); `pnpm --filter @sendsure/web
-     cf:deploy:mainnet` from the worktree (it has no `.env.local`, so no testnet value is bundled).
+  1. ~~Fund, deploy, record, verify~~ (done, above). Relayer 1 and agent 1 USDC funded by Pankaj (gas ~21.7 gwei, base
+     fee flat at 20: a new org ~0.01, a payee proof ~0.003, a payment 0.002–0.008; an idle site sends nothing). The
+     deployer's 0.363 USDC stays as a gas reserve (Pankaj, Oct 17).
+  2. ~~Site~~ **live Oct 17, 15:35 Kathmandu**: https://sendsure-mainnet.0xpankaj.workers.dev (Worker `sendsure-mainnet`,
+     version ae5ceaf8, commit 292d9a0, Cloudflare account 50e0…079a: wrangler now also sees a second account, so set
+     `CLOUDFLARE_ACCOUNT_ID`). 8 secrets from `apps/web/.env.mainnet.local`. Checked: /api/status chain 5042 with both
+     keys funded, every page 200, /try → testnet, faucet 404 NOT_ON_MAINNET, /api/org/keys 401 without a session,
+     `x-sendsure-chain: 5042`, /api/rpc chain 0x13b2, the cron's indexer cursor moving.
   3. One small real payment with Pankaj's own wallets (`FIRST_PARTY_ADDRESSES`: first-party, never traction).
   4. README note, honest X post (no outside users yet), `arc-canteen submit-showcase`.
 - **Oct 15: Canteen updated** (missed since Oct 10): `arc-canteen update product` (Oct 11–15 work, compare 676ef63...5afea74) and `update traction` (external 0; 26 ERP companies emailed Oct 14, 3 detailed replies; only Brian Pond named, with his permission). Post the next pair at the re-submission on Oct 16.
