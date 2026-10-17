@@ -7,7 +7,7 @@ import { keccak256, toHex, type Hex } from "viem";
 import { checkPayout, parsePayoutCsv } from "@sendsure/core";
 import { runScene, savedScenes, type Scene } from "./demo";
 import { lookupPayee } from "./lookup";
-import { receiptFor } from "./receipt";
+import { receiptFor, txHashProblem } from "./receipt";
 import { RelayError, serverClient, toAddress } from "./relayer";
 import { stats } from "./stats";
 import { indexerTick } from "./indexer";
@@ -106,7 +106,8 @@ const TOOLS: Tool[] = [
     annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
     run: async (a) => {
       const tx = String(a.tx_hash ?? "");
-      if (!/^0x[0-9a-fA-F]{64}$/.test(tx)) throw new RelayError(400, "tx_hash must be a transaction hash.", "BAD_INPUT");
+      const problem = txHashProblem(tx);
+      if (problem) throw new RelayError(400, problem, "BAD_INPUT");
       return (await receiptFor(tx as Hex)) as unknown as Json;
     },
   },

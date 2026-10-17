@@ -7,6 +7,18 @@ import { indexerTick } from "./indexer";
 import { RelayError, serverClient } from "./relayer";
 import { firstParty, tierOf } from "./stats";
 
+/**
+ * Why this is not a transaction hash, in words a person can act on, or null if it is one. Long receipt links get
+ * cut where a terminal or an email wraps them, so a short hash says so.
+ */
+export function txHashProblem(tx: string): string | null {
+  if (/^0x[0-9a-fA-F]{64}$/.test(tx)) return null;
+  const hex = /^0x[0-9a-fA-F]+$/.test(tx) ? tx.length - 2 : 0;
+  if (hex > 0 && hex < 64)
+    return `This link looks cut off: a transaction hash has 64 characters after 0x, and this one has ${hex}. Copy the whole link and open it again.`;
+  return "This is not a transaction hash: it should be 0x followed by 64 hex characters.";
+}
+
 export async function receiptFor(txHash: Hex) {
   const r = await serverClient.getTransactionReceipt({ hash: txHash }).catch(() => null);
   if (!r) throw new RelayError(404, `No such transaction on ${NETWORK_NAME}.`, "NOT_FOUND");
