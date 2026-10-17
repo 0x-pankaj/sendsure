@@ -61,6 +61,10 @@
      A "VoidScout Signal" account quoted it (a summary, not a user: never traction). The hosted Odoo stays up at least
      until Nov 17 (Pankaj) to show users; logins on request, never the admin's.
   5. Next: the two companies Pankaj says agreed to test (their ERP and version; their OK in writing before naming them).
+- **Oct 17, 20:55: Canteen updated** (the Oct 16 pair was missed): `arc-canteen update product` (the mainnet beta and
+  the Oct 16–17 testnet fixes, compare 5afea74...mainnet) and `update traction` (external 0 on testnet and mainnet;
+  our first mainnet payment as first-party; Brian Pond's paper-check reply, by name with his permission; a German
+  hardware company's "no", not named). Post the next pair when an outside team pays on mainnet.
 - **Oct 15: Canteen updated** (missed since Oct 10): `arc-canteen update product` (Oct 11–15 work, compare 676ef63...5afea74) and `update traction` (external 0; 26 ERP companies emailed Oct 14, 3 detailed replies; only Brian Pond named, with his permission). Post the next pair at the re-submission on Oct 16.
 - **Oct 15, 11:30 check:** the site still said "Odoo 19 / ERPNext 15" and old test counts on the home page, nav, /docs and /books: now Odoo 16–19 and ERPNext 15–16, 37 and 29 tests, and a Codespaces link on /docs (live ea5c075). Demo org 0x2cE9… has 1.75 USDC, budget 9.75; local Odoo 19 is connected, Northwind invited, INV-2041 and INV-2042 in draft.
 - **Oct 14 evening: usable in one call (T42).** Odoo 16–19 and ERPNext 15–16 supported and tested; "Run the agent now"; funds checked before a bill is sent; a payer can't prove their own wallet as a supplier. A test copy on a lead's version: `ODOO_VERSION=17 ./run.sh up` (port 18017) or `ERPNEXT_VERSION=16 ./run.sh up` (port 18086); `pnpm demo-kit` connects it to a sandbox org with no wallet (the local Odoo 19 demo already is: org 0x2cE9…, key in `.sendsure-demo.json`). Leads without Docker: the Codespaces links in the README.
