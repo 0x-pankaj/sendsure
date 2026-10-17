@@ -38,3 +38,4 @@ CLAUDE.md
 
 # pnpm demo-kit: the sandbox demo org and its owner key (test money only)
 .sendsure-demo.json
+.sendsure-mainnet-first.json
