@@ -61,6 +61,16 @@
      A "VoidScout Signal" account quoted it (a summary, not a user: never traction). The hosted Odoo stays up at least
      until Nov 17 (Pankaj) to show users; logins on request, never the admin's.
   5. Next: the two companies Pankaj says agreed to test (their ERP and version; their OK in writing before naming them).
+- **Oct 19: the supplier page speaks dollars (mainnet only).** Nitrokey's CEO answered the check question: they check
+  the bank details on the invoice once, keep them for known suppliers, and need no outside check (quote only as "a German
+  hardware company"). The replies so far say the supplier, not the payer, is the hard part, so `/verify` on the mainnet
+  beta now explains USDC to someone who never held it: the lede says 1 USDC is 1 US dollar and that nobody can redirect
+  payments without the payee's wallet; a "Getting paid in USDC" section (`components/GettingPaid.tsx`) answers what USDC
+  is, how to get it into a bank (an exchange that takes USDC on Arc, e.g. Kraken or Gate, both since Sept 16, 2026: deposit
+  on the Arc network, sell, withdraw), what it costs and how to keep it safe; the no-wallet notice says MetaMask is free
+  and to keep the recovery phrase offline; the wallet hint says an exchange deposit address can't sign. Testnet text
+  unchanged (`IS_MAINNET`). Passkeys stay off on mainnet: Circle's docs still list Gas Station for Arc testnet only.
+  Web typecheck and 67 tests pass; previewed in mainnet mode on the first-party invite.
 - **Oct 18: submitted.** Pankaj submitted the Tameion form with his own-voice video (https://youtu.be/lUCKLU_cWYI,
   2:46; `sendsure-video/make-me.sh`). Canteen `update traction` posted: all outreach replies in one place (4 of 26
   replied; only Brian Pond named; what changed because of them), and two teams in talks about a mainnet payment,

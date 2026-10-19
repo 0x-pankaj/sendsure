@@ -26,6 +26,7 @@ import {
   type PendingChange,
 } from "@sendsure/chain";
 import { PayeeClaims } from "../../components/Claims";
+import { GettingPaid } from "../../components/GettingPaid";
 import { PasskeyWallet } from "../../components/PasskeyWallet";
 import { publicClient } from "../../lib/arc";
 import { bindWithPasskey, passkeyWallet, passkeysAvailable, savedPasskeyWallet } from "../../lib/passkey";
@@ -281,10 +282,19 @@ export default function VerifyPage() {
       {loaded.kind === "error" && <p className="notice">{loaded.text}</p>}
       {loaded.kind === "ready" && invite && (
         <>
-          <p className="lede">
-            {payer} wants to pay you through SendSure. Sign once with the wallet you want to be paid to. After that, SendSure pays
-            only that address, and changing it needs a signature from this wallet too.
-          </p>
+          {IS_MAINNET ? (
+            <p className="lede">
+              {payer} wants to pay you in USDC, a digital US dollar from Circle: 1 USDC is 1 US dollar. Sign once with the wallet
+              you want to be paid to. After that, {payer} can pay only that address, and nobody can redirect your payments
+              without your wallet, not even someone who emails {payer} pretending to be you. How to get USDC into your bank is
+              below.
+            </p>
+          ) : (
+            <p className="lede">
+              {payer} wants to pay you through SendSure. Sign once with the wallet you want to be paid to. After that, SendSure
+              pays only that address, and changing it needs a signature from this wallet too.
+            </p>
+          )}
           <InviteFacts invite={invite} payee={loaded.payee} />
 
           {!loaded.org.registered ? (
@@ -318,6 +328,13 @@ export default function VerifyPage() {
                           <b>No wallet in this browser.</b> On a phone, open this page inside your wallet app. On a computer,
                           install MetaMask or Rabby, then reload.
                         </p>
+                        {IS_MAINNET && (
+                          <p>
+                            New to wallets? MetaMask is free. When it shows you a recovery phrase, write it on paper and keep it
+                            offline: it is the only way back into your wallet, and nobody from SendSure or {payer} will ever ask
+                            for it.
+                          </p>
+                        )}
                         <div className="row" style={{ marginTop: 8 }}>
                           <a className="btn" href={metamaskLink()}>
                             Open in MetaMask
@@ -361,7 +378,9 @@ export default function VerifyPage() {
                     <p className="hint">
                       {sandboxOrg
                         ? "This is a test org. The test wallet is for trying SendSure only; for real payouts, use your own wallet."
-                        : "Use a wallet you control: this address is where you will be paid. Works with MetaMask, Rabby and other EVM wallets."}
+                        : IS_MAINNET
+                          ? "Use a wallet only you control: this is where your money lands. MetaMask, Rabby and other EVM wallets work. An exchange deposit address does not, because it cannot sign."
+                          : "Use a wallet you control: this address is where you will be paid. Works with MetaMask, Rabby and other EVM wallets."}
                     </p>
                   </>
                 )}
@@ -488,6 +507,9 @@ export default function VerifyPage() {
               . The gas was paid {signer?.kind === "passkey" ? "by Circle Gas Station" : "by the SendSure relayer"}.
             </p>
           )}
+          {IS_MAINNET &&
+            loaded.org.registered &&
+            (loaded.payee.state === "OPEN" || loaded.payee.state === "BOUND") && <GettingPaid payer={payer} />}
         </>
       )}
       <Help topic="confirming your address" />
@@ -590,6 +612,7 @@ function BindingState(props: {
         {waiting ? `Payments can start after ${activeAt.toLocaleString()}. ` : ""}
         The first payment to a new address still needs a person at {payer} to approve it.
       </p>
+      {IS_MAINNET && <p>When {payer} pays, the USDC arrives in this wallet. How to move it to your bank is below.</p>}
       <p>
         <b>Keep this link.</b> Each invoice {payer} sends for payment shows up here, for you to check and sign; they may
         also email you when one is waiting.

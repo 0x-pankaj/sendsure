@@ -408,6 +408,8 @@ dl.facts dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
 .faq details[open] summary::after { content: "–"; }
 .faq summary:focus-visible { outline: 3px solid rgba(13, 122, 87, 0.35); outline-offset: 2px; border-radius: 6px; }
 .faq details p { color: var(--muted); margin: 0 0 16px; }
+.faq details ol { color: var(--muted); margin: 0 0 12px; padding-left: 22px; }
+.faq details li + li { margin-top: 6px; }
 .doc .cta-band { margin-top: 88px; }
 /* Phones: each table row becomes a small card with labelled cells, so no column hides off-screen. */
 @media (max-width: 640px) {
