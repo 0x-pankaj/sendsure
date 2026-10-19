@@ -70,7 +70,7 @@
   on the Arc network, sell, withdraw), what it costs and how to keep it safe; the no-wallet notice says MetaMask is free
   and to keep the recovery phrase offline; the wallet hint says an exchange deposit address can't sign. Testnet text
   unchanged (`IS_MAINNET`). Passkeys stay off on mainnet: Circle's docs still list Gas Station for Arc testnet only.
-  Web typecheck and 67 tests pass; previewed in mainnet mode on the first-party invite. **Live Oct 19, 15:58
+  Web typecheck and 67 tests pass; previewed in mainnet mode on the first-party invite. **Live Oct 19, 15:43
   Kathmandu** (Worker `sendsure-mainnet` version a6e645bb, from a8bc8cb); checked on the live page.
 - **Oct 18: submitted.** Pankaj submitted the Tameion form with his own-voice video (https://youtu.be/lUCKLU_cWYI,
   2:46; `sendsure-video/make-me.sh`). Canteen `update traction` posted: all outreach replies in one place (4 of 26
