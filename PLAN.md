@@ -72,6 +72,9 @@
   unchanged (`IS_MAINNET`). Passkeys stay off on mainnet: Circle's docs still list Gas Station for Arc testnet only.
   Web typecheck and 67 tests pass; previewed in mainnet mode on the first-party invite. **Live Oct 19, 15:43
   Kathmandu** (Worker `sendsure-mainnet` version a6e645bb, from a8bc8cb); checked on the live page.
+  **Decision (Pankaj, Oct 19): no bank mode for now.** Odoo users already pay by bank; SendSure's job is USDC. Build
+  a bank-payment check only when a real user asks for it (the Swiss partner and Brian's paper-check client said they
+  would look); the registry's real-account field (`bindWithSig`/`setRealAccount`) could carry it then.
 - **Oct 18: submitted.** Pankaj submitted the Tameion form with his own-voice video (https://youtu.be/lUCKLU_cWYI,
   2:46; `sendsure-video/make-me.sh`). Canteen `update traction` posted: all outreach replies in one place (4 of 26
   replied; only Brian Pond named; what changed because of them), and two teams in talks about a mainnet payment,
