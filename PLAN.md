@@ -61,9 +61,17 @@
      A "VoidScout Signal" account quoted it (a summary, not a user: never traction). The hosted Odoo stays up at least
      until Nov 17 (Pankaj) to show users; logins on request, never the admin's.
   5. Next: the two companies Pankaj says agreed to test (their ERP and version; their OK in writing before naming them).
-- **Oct 19: the supplier page speaks dollars (mainnet only).** Nitrokey's CEO answered the check question: they check
-  the bank details on the invoice once, keep them for known suppliers, and need no outside check (quote only as "a German
-  hardware company"). The replies so far say the supplier, not the payer, is the hard part, so `/verify` on the mainnet
+- **Oct 24: mainnet bounty check + an update in #after-the-build.** The $500 Arc Mainnet Bounty (~20 teams) needs:
+  mainnet deploy, contracts verified on Blockscout or Sourcify, an X post tagging @thecanteenapp, `submit-showcase`
+  again; all four done Oct 17. Re-checked today: all six contracts (mainnet and testnet) are an exact match on Sourcify
+  and verified on Blockscout; a company's Mandate clone shows as an EIP-1167 proxy to the verified Mandate. Winners are
+  picked on repo activity, real mainnet users (`arc-canteen update-traction`; we have 0 outside so far) and growth.
+  Posted a short update in Canteen's #after-the-build (Pankaj's OK, 12:36 Kathmandu): contracts verified, what outreach
+  taught us, the supplier page, next is the first outside company paying on mainnet. Removed a company's name from the
+  Oct 19 entry below: it may be quoted only as "a German hardware company".
+- **Oct 19: the supplier page speaks dollars (mainnet only).** A German hardware company answered the check question:
+  they check the bank details on the invoice once, keep them for known suppliers, and need no outside check (quote only
+  as "a German hardware company", never by name). The replies so far say the supplier, not the payer, is the hard part, so `/verify` on the mainnet
   beta now explains USDC to someone who never held it: the lede says 1 USDC is 1 US dollar and that nobody can redirect
   payments without the payee's wallet; a "Getting paid in USDC" section (`components/GettingPaid.tsx`) answers what USDC
   is, how to get it into a bank (an exchange that takes USDC on Arc, e.g. Kraken or Gate, both since Sept 16, 2026: deposit
